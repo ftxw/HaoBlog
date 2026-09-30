@@ -1,11 +1,11 @@
-allowBuilds:
-  '@prisma/client': true
-  '@prisma/engines': true
-  core-js: true
-  es5-ext: true
-  esbuild: true
-  prisma: true
-  sharp: true
-  unrs-resolver: true
+# pnpm 10 默认拦截依赖的生命周期脚本，这里显式放行需要的那几个。
+# 键名是 onlyBuiltDependencies —— allowBuilds 是 pnpm 10.26+ 的新名字，本项目的 10.20.0 不认（静默失效）。
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver
 overrides:
   unrs-resolver: 1.12.2
