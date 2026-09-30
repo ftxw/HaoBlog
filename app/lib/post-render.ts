@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { unstable_cache } from "next/cache";
 import { normalizeMarkdown, createMarkdownProcessor } from "./markdown-core";
-import { thumbUrlOf, resolveImageUrl, getCdnDomain } from "./image-thumb";
+import { thumbUrlOf, resolveImageUrl } from "./image-thumb";
 import { assignHeadingIds, extractToc } from "./toc-ids";
 import type { TocItem } from "./toc-ids";
 
@@ -9,8 +9,15 @@ import type { TocItem } from "./toc-ids";
 export type { TocItem };
 
 export interface RenderPostOptions {
-  /** 图床直链域名。服务端渲染期应由调用方从站点配置读取后显式传入。 */
-  cdnDomain?: string;
+  /**
+   * 图床直链域名（未配置图床域名时传空串）。
+   *
+   * **必须由调用方显式传入**，不要退回读 `getCdnDomain()` 那个模块级单例：
+   * 单例由 `RootLayout` 在渲染期设置，而 layout 与 page 是并发渲染的，
+   * page 有可能先跑到这里 → 读到空串 → 正文图片静默丢掉缩略图与 data-original。
+   * 设成必填就是为了让「忘记传」在编译期直接暴露。
+   */
+  cdnDomain: string;
 }
 
 /** 正则元字符转义（供拼接图床域名用）。 */
@@ -33,10 +40,10 @@ function buildImgSrcPattern(domain: string): RegExp {
 
 export async function renderPostContent(
   content: string,
-  options: RenderPostOptions = {}
+  options: RenderPostOptions
 ): Promise<{ contentHtml: string; toc: TocItem[] }> {
   const mdContent = normalizeMarkdown(content);
-  const domain = options.cdnDomain ?? getCdnDomain();
+  const domain = options.cdnDomain;
 
   const processed = await createMarkdownProcessor().process(mdContent);
 
@@ -69,21 +76,21 @@ const RENDER_CACHE_VERSION = "v7-img-direct-link";
 
 const RENDER_CACHE_TTL_SEC = 3600;
 
-/** 渲染正文（带 Data Cache）。 */
-export const cachedRenderPost = async (content: string, cdnDomain?: string) => {
-  const domain = cdnDomain ?? getCdnDomain();
-  if (!domain) {
-    return renderPostContent(content, { cdnDomain: domain });
+/** 渲染正文（带 Data Cache）。`cdnDomain` 必传，理由见 RenderPostOptions。 */
+export const cachedRenderPost = async (content: string, cdnDomain: string) => {
+  // 没配图床域名时无需缓存：此时图片改写对代理路径是恒等变换，开销可以忽略。
+  if (!cdnDomain) {
+    return renderPostContent(content, { cdnDomain });
   }
   const keyParts = [
     "post-render",
     RENDER_CACHE_VERSION,
     createHash("sha1").update(content).digest("hex"),
-    domain,
+    cdnDomain,
   ];
   return unstable_cache(
     (c: string, d: string) => renderPostContent(c, { cdnDomain: d }),
     keyParts,
     { revalidate: RENDER_CACHE_TTL_SEC }
-  )(content, domain);
+  )(content, cdnDomain);
 };

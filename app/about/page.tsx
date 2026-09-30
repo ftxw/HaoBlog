@@ -8,6 +8,7 @@ import { siteConfig } from "@/siteConfig";
 import { getDbSiteConfig } from "@/app/lib/site-config-db";
 import { formatDateCN } from "@/app/lib/format";
 import { aboutContentDefault } from "@/app/lib/site-config-defs";
+import { normalizeCdnDomain } from "@/app/lib/image-thumb";
 import FadeIn from "@/components/ui/FadeIn";
 import ThumbCoverImg from "@/components/ui/ThumbCoverImg";
 import AboutMarkdown from "@/components/about/AboutMarkdown";
@@ -25,6 +26,7 @@ export default async function AboutPage() {
   const authorBio = dbConfig.bio || siteConfig.bio;
   const markdown = dbConfig.aboutContent || aboutContentDefault;
   const coverImage = dbConfig.aboutCover || siteConfig.aboutCover;
+  const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
 
   const recentPosts = await prisma.post
     .findMany({
@@ -72,7 +74,7 @@ export default async function AboutPage() {
 
             <div className="w-full border-t border-hairline mb-6 md:mb-8" />
 
-            <AboutMarkdown markdown={markdown} />
+            <AboutMarkdown markdown={markdown} cdnDomain={cdnDomain} />
           </div>
         </article>
 

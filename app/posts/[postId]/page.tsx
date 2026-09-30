@@ -99,7 +99,7 @@ export default async function PostPage({
 }) {
   const { postId } = await params;
 
-  const [post, recentPosts] = await Promise.all([
+  const [post, recentPosts, dbConfig] = await Promise.all([
     getPostDetail(postId),
     prisma.post.findMany({
       where: { status: "published", id: { not: postId } },
@@ -107,11 +107,14 @@ export default async function PostPage({
       take: 3,
       select: { id: true, title: true, published_at: true },
     }),
+    getDbSiteConfig(),
   ]);
 
   if (!post || post.status !== "published") notFound();
 
-  const { contentHtml, toc } = await cachedRenderPost(post.content);
+  // 显式取图床域名再传给渲染器：不能依赖 RootLayout 渲染期设置的那个模块单例。
+  const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
+  const { contentHtml, toc } = await cachedRenderPost(post.content, cdnDomain);
 
   const date = post.published_at ? formatDateCN(new Date(post.published_at)) : "";
   const tags = post.tags.map((t) => t.tag.name);
@@ -123,7 +126,7 @@ export default async function PostPage({
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card">
           <div className="w-full aspect-video max-h-[300px] bg-surface-muted relative overflow-hidden">
             <SafeImage
-              src={thumbUrlOf(post.cover || siteConfig.defaultPostCover)}
+              src={thumbUrlOf(post.cover || siteConfig.defaultPostCover, cdnDomain)}
               alt={post.title || "封面"}
               fill
               priority
