@@ -1,7 +1,6 @@
 /** 全站 HTTP API 的响应信封类型与客户端解包工具。 */
 export type ApiOk<T> = { code: 0; message: string; data: T };
 export type ApiErr<D = null> = { code: 1; message: string; data: D };
-export type ApiResponse<T, E = null> = ApiOk<T> | ApiErr<E>;
 
 export class ApiEnvelopeError extends Error {
   readonly status: number;

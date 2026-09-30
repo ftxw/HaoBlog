@@ -16,15 +16,8 @@ import PageHeader from "@/components/ui/PageHeader";
 import InlineSearch from "@/components/ui/InlineSearch";
 import Reveal from "@/components/ui/Reveal";
 import { thumbUrlOf, fallbackThumbImage } from "@/app/lib/image-thumb";
-
-const MOOD_META: Record<string, { emoji: string; label: string }> = {
-  happy: { emoji: "😄", label: "开心" },
-  sad: { emoji: "😢", label: "难过" },
-  angry: { emoji: "😠", label: "愤怒" },
-  calm: { emoji: "😌", label: "平静" },
-  tired: { emoji: "😪", label: "疲惫" },
-  thinking: { emoji: "🤔", label: "思考" },
-};
+import { MOOD_META } from "@/app/lib/mood-meta";
+import { useToast } from "@/components/providers/ToastProvider";
 
 /** 展示形态由 @/app/lib/moment-item 定义：首屏在服务端映射、续拉在客户端映射。 */
 export type Moment = MomentItem;
@@ -37,9 +30,15 @@ function momentHasImage(moment: Moment): boolean {
   return Array.isArray(moment.images) && moment.images.length > 0;
 }
 
-function timeAgo(dateStr: string) {
+/**
+ * 相对时间依赖「现在」：now 为 null 表示还没挂载，此时退回绝对日期。
+ * SSR 与水合首帧都走这一支，两边的输出才一致（挂载后才切成「x分钟前」）。
+ */
+function timeAgo(dateStr: string, now: number | null): string {
+  if (now === null) return formatDateCN(new Date(dateStr));
   return relativeTime(dateStr, {
     dateFormat: (d) => formatDateCN(d),
+    now: new Date(now),
   });
 }
 
@@ -54,7 +53,13 @@ function MomentActions({
   commentsOpen: boolean;
   onToggleComments: () => void;
 }) {
-  const { likes, liked, busy, toggle } = useEntityLike("chatter", moment.id, moment.likes);
+  const { likes, liked, busy, error, toggle } = useEntityLike("chatter", moment.id, moment.likes);
+  const { addToast } = useToast();
+
+  useEffect(() => {
+    if (error) addToast("error", error);
+  }, [error, addToast]);
+
   return (
     <div className="flex items-center gap-1 md:gap-2 shrink-0">
       <button
@@ -111,6 +116,10 @@ export default function MomentListClient({
 }) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments);
   const [loadingMore, setLoadingMore] = useState(false);
+  /** 挂载后才取「现在」，否则服务端与水合首帧的相对时间会不一致。 */
+  const [now, setNow] = useState<number | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: 相对时间门控，首帧须与 SSR 同值
+  useEffect(() => setNow(Date.now()), []);
   const [hasMore, setHasMore] = useState(initialMoments.length < total);
   // 已从服务端收到的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
   const receivedRef = useRef(initialMoments.length);
@@ -429,7 +438,7 @@ export default function MomentListClient({
         <div className="min-w-0 flex-1 pr-2 flex items-center gap-1.5 md:gap-2">
           <span className="inline-flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-tone-neutral-soft text-tone-neutral shrink-0 border border-hairline-soft">
             <Clock size={10} className="md:w-3 md:h-3 shrink-0" />
-            {timeAgo(moment.date)}
+            {timeAgo(moment.date, now)}
           </span>
           {moment.location && (
             <span className="inline-flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-accent-soft text-accent max-w-full truncate border border-accent-hairline">

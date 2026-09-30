@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { BusinessError, InvalidTokenError } from "@/app/lib/business-error";
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
@@ -168,15 +169,15 @@ async function verifyLocally(token: string): Promise<AppUser | null> {
   }
 }
 
-/** 「鉴权上游不可用」这一类的错误标记。 */
-export class UpstreamAuthError extends Error {
+/** 「鉴权上游不可用」这一类的错误标记（503，不再当 401 处理）。 */
+export class UpstreamAuthError extends BusinessError {
   constructor(message: string) {
-    super(message);
+    super(message, 503);
     this.name = "UpstreamAuthError";
   }
 }
 
-/** GoTrue 对无效/过期令牌返回的文案（中英两种都覆盖） */
+/** GoTrue 对无效/过期令牌返回的原文 —— 匹配的是外部服务的文案，不是本站约定。 */
 const INVALID_TOKEN_MESSAGES = new Set([
   "invalid jwt",
   "invalid claim: missing sub claim",
@@ -186,7 +187,7 @@ const INVALID_TOKEN_MESSAGES = new Set([
 ]);
 
 function isDefinitelyInvalidToken(e: unknown): boolean {
-  if (e instanceof Error && e.message === "无效的令牌") return true;
+  if (e instanceof InvalidTokenError) return true;
   return e instanceof Error && INVALID_TOKEN_MESSAGES.has(e.message.toLowerCase());
 }
 
@@ -201,19 +202,11 @@ export async function verifyAccessToken(token: string): Promise<AppUser> {
   try {
     const json = await authFetchWithToken(token, "/user");
     const user = mapUser(json as never);
-    if (!user) throw new Error("无效的令牌");
+    if (!user) throw new InvalidTokenError();
     return user;
   } catch (e) {
-    if (
-      e instanceof Error &&
-      e.message === "Supabase 未配置：请设置 SUPABASE_URL / SUPABASE_ANON_KEY"
-    ) {
-      throw e;
-    }
-    // 令牌确实无效（GoTrue 明确拒绝）→ 保持「无效的令牌」语义（映射成 401）。
-    if (isDefinitelyInvalidToken(e)) throw new Error("无效的令牌");
-
-    // 其余（超时、网络失败、上游 5xx）→ 归为「鉴权服务不可用」。
+    // GoTrue 明确拒绝 → 401；其余（超时、网络失败、上游 5xx）→ 503。
+    if (isDefinitelyInvalidToken(e)) throw new InvalidTokenError();
     console.error("[supabase] 校验 access token 时上游不可用:", e);
     throw new UpstreamAuthError("鉴权服务暂时不可用，请稍后重试");
   }
@@ -250,4 +243,9 @@ export async function supabaseUpdatePassword(token: string, newPassword: string)
     body: JSON.stringify({ password: newPassword }),
   });
   return mapUser(json as never);
+}
+
+/** 吊销上游会话：让该 access/refresh token 立即失效（不只是本地忘记它）。 */
+export async function supabaseLogout(token: string): Promise<void> {
+  await authFetchWithToken(token, "/logout", { method: "POST" });
 }

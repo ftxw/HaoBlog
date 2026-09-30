@@ -7,13 +7,13 @@ export default function AdminPanelLoading() {
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1.5">
-          <div className="h-7 w-28 animate-pulse rounded bg-slate-200" />
+          <div className="h-7 w-28 animate-pulse rounded bg-admin-neutral-strong" />
           <div className="h-3 w-44 animate-pulse rounded bg-slate-200/70" />
         </div>
-        <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-200" />
+        <div className="h-9 w-24 animate-pulse rounded-lg bg-admin-neutral-strong" />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-admin-border bg-admin-surface p-5 shadow-sm">
         <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4">

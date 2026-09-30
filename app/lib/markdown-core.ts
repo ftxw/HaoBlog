@@ -77,25 +77,9 @@ export function createMarkdownProcessor({ rich = true }: MarkdownProcessorOption
   return built;
 }
 
+/** 只做与内容无关的机械归一：统一换行符、丢掉只含空格的行。不做任何容错补正。 */
 export function normalizeMarkdown(content: string): string {
-  let md = content;
-
-  md = md.replace(/^(\s*\d+)\.([^ \n])/gm, "$1. $2");
-
-  md = md.replace(/\r\n/g, "\n").replace(/^[ \t]+$/gm, "");
-
-  const blocks = md.split(/(```[\s\S]*?```)/g);
-  md = blocks
-    .map((block, index) => {
-      if (index % 2 === 1) return block;
-      return block.replace(
-        /\n{3,}/g,
-        (match) => "\n\n" + "<br/>".repeat(match.length - 2) + "\n\n"
-      );
-    })
-    .join("");
-
-  return md;
+  return content.replace(/\r\n/g, "\n").replace(/^[ \t]+$/gm, "");
 }
 
 export async function renderMarkdownToHtml(

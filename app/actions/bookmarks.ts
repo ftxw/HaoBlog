@@ -16,36 +16,24 @@ import type {
   BookmarkReorderInput,
   BookmarkSiteInput,
 } from "@/app/lib/mutations/bookmarks";
-import { purgePath } from "@/app/lib/revalidate";
 
-/** 写完之后让前台书签页的缓存失效。 */
-function revalidatePublicBookmarks() {
-  purgePath("/bookmark");
-}
+/* 缓存失效由 mutations 层统一负责（invalidateBookmarkCaches 已清 /bookmark 路径），
+   这里不再重复 purgePath。 */
 
 export async function createBookmarkCategoryAction(input: BookmarkCategoryInput) {
-  return runAdminAction(async () => {
-    const data = await createBookmarkCategory(input);
-    revalidatePublicBookmarks();
-    return data;
-  });
+  return runAdminAction(async () => createBookmarkCategory(input));
 }
 
 export async function updateBookmarkCategoryAction(
   id: string,
   input: BookmarkCategoryInput
 ) {
-  return runAdminAction(async () => {
-    const data = await updateBookmarkCategory(id, input);
-    revalidatePublicBookmarks();
-    return data;
-  });
+  return runAdminAction(async () => updateBookmarkCategory(id, input));
 }
 
 export async function deleteBookmarkCategoryAction(id: string) {
   return runAdminAction(async () => {
     await deleteBookmarkCategory(id);
-    revalidatePublicBookmarks();
     return null;
   });
 }
@@ -53,31 +41,21 @@ export async function deleteBookmarkCategoryAction(id: string) {
 export async function reorderBookmarkCategoriesAction(input: BookmarkReorderInput) {
   return runAdminAction(async () => {
     await reorderBookmarkCategories(input);
-    revalidatePublicBookmarks();
     return null;
   });
 }
 
 export async function createBookmarkSiteAction(input: BookmarkSiteInput) {
-  return runAdminAction(async () => {
-    const data = await createBookmarkSite(input);
-    revalidatePublicBookmarks();
-    return data;
-  });
+  return runAdminAction(async () => createBookmarkSite(input));
 }
 
 export async function updateBookmarkSiteAction(id: string, input: BookmarkSiteInput) {
-  return runAdminAction(async () => {
-    const data = await updateBookmarkSite(id, input);
-    revalidatePublicBookmarks();
-    return data;
-  });
+  return runAdminAction(async () => updateBookmarkSite(id, input));
 }
 
 export async function deleteBookmarkSiteAction(id: string) {
   return runAdminAction(async () => {
     await deleteBookmarkSite(id);
-    revalidatePublicBookmarks();
     return null;
   });
 }
@@ -85,7 +63,6 @@ export async function deleteBookmarkSiteAction(id: string) {
 export async function reorderBookmarkSitesAction(input: BookmarkReorderInput) {
   return runAdminAction(async () => {
     await reorderBookmarkSites(input);
-    revalidatePublicBookmarks();
     return null;
   });
 }

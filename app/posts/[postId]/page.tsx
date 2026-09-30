@@ -11,7 +11,6 @@ import "highlight.js/styles/vs2015.css";
 import "katex/dist/katex.min.css";
 import { prisma } from "@/app/lib/prisma";
 import { getPostDetail } from "@/app/lib/queries/posts";
-import { siteConfig } from "@/siteConfig";
 import { cachedRenderPost } from "@/app/lib/post-render";
 import FadeIn from "@/components/ui/FadeIn";
 import SafeImage from "@/components/ui/SafeImage";
@@ -28,7 +27,7 @@ import {
   proxyUrlOf,
   thumbUrlOf,
 } from "@/app/lib/image-thumb";
-import { getDbSiteConfig } from "@/app/lib/site-config-db";
+import { getDbSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
 import { formatDateCN } from "@/app/lib/format";
 
@@ -61,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ postId: s
   const base = await resolveSiteBaseUrl();
   const title = post.title || "文章";
   const description = post.description || undefined;
-  const cover = post.cover || dbConfig.defaultPostCover || siteConfig.defaultPostCover;
+  const cover = post.cover || pickConfigValue(dbConfig, "defaultPostCover");
   // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
   const image = absoluteUrlOf(
     proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
@@ -119,6 +118,11 @@ export default async function PostPage({
   const date = post.published_at ? formatDateCN(new Date(post.published_at)) : "";
   const tags = post.tags.map((t) => t.tag.name);
 
+  const cover = post.cover || pickConfigValue(dbConfig, "defaultPostCover");
+  const avatarUrl = pickConfigValue(dbConfig, "avatarUrl");
+  const authorName = pickConfigValue(dbConfig, "authorName");
+  const authorBio = pickConfigValue(dbConfig, "bio");
+
   return (
     <div className="relative pb-20">
       <ViewCounter postId={postId} />
@@ -126,12 +130,12 @@ export default async function PostPage({
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card">
           <div className="w-full aspect-video max-h-[300px] bg-surface-muted relative overflow-hidden">
             <SafeImage
-              src={thumbUrlOf(post.cover || siteConfig.defaultPostCover, cdnDomain)}
+              src={thumbUrlOf(cover, cdnDomain)}
               alt={post.title || "封面"}
               fill
               priority
               sizes="(max-width: 768px) 100vw, 70vw"
-              unoptimized={imageUnoptimized(post.cover || siteConfig.defaultPostCover)}
+              unoptimized={imageUnoptimized(cover)}
               className="object-cover opacity-90"
             />
             <div className="scrim-bottom pointer-events-none absolute inset-0"></div>
@@ -173,17 +177,17 @@ export default async function PostPage({
             <div className="accent-ring w-20 h-20 mx-auto rounded-full p-1 shadow-md mb-4 transition-transform duration-500 hover:rotate-3">
               <div className="w-full h-full rounded-full overflow-hidden bg-surface-strong">
                 <Image
-                  src={siteConfig.avatarUrl}
+                  src={avatarUrl}
                   alt="avatar"
                   width={80}
                   height={80}
-                  unoptimized={imageUnoptimized(siteConfig.avatarUrl)}
+                  unoptimized={imageUnoptimized(avatarUrl)}
                   className="w-full h-full rounded-full object-cover"
                 />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-ink mb-2">{siteConfig.authorName}</h3>
-            <p className="text-xs text-ink-2 leading-relaxed font-medium mb-4">{siteConfig.bio}</p>
+            <h3 className="text-xl font-bold text-ink mb-2">{authorName}</h3>
+            <p className="text-xs text-ink-2 leading-relaxed font-medium mb-4">{authorBio}</p>
             <ClientSocials />
           </div>
 

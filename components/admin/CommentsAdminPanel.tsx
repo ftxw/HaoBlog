@@ -24,6 +24,7 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import { FILTER_BAR } from "@/components/admin/styles";
 
 interface CommentItem {
   id: string;
@@ -83,7 +84,7 @@ function UserCell({ comment }: { comment: CommentItem }) {
           alt=""
           className="h-6 w-6 rounded-full"
         />
-        <span className="text-sm text-slate-700">
+        <span className="text-sm text-admin-ink-2">
           {comment.email_user_name || "匿名用户"}
         </span>
       </div>
@@ -91,10 +92,10 @@ function UserCell({ comment }: { comment: CommentItem }) {
   }
   return (
     <div className="flex items-center gap-2">
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] text-slate-500">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-admin-neutral text-[10px] text-admin-ink-4">
         {(comment.email_user_name || "匿").slice(0, 1)}
       </div>
-      <span className="text-sm text-slate-700">
+      <span className="text-sm text-admin-ink-2">
         {comment.email_user_name || "匿名用户"}
       </span>
     </div>
@@ -113,15 +114,15 @@ function CommentRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg bg-slate-50 p-3",
-        comment._depth ? "bg-white border border-slate-100" : ""
+        "flex items-start gap-3 rounded-lg bg-admin-surface-muted p-3",
+        comment._depth ? "bg-admin-surface border border-admin-border-soft" : ""
       )}
       style={{ marginLeft: (comment._depth ?? 0) * 24 }}
     >
       <UserCell comment={comment} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-relaxed text-slate-800">{comment.content}</p>
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        <p className="text-sm leading-relaxed text-admin-ink">{comment.content}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-admin-ink-5">
           <StatusBadge status={comment.status} />
           <span>{formatDate(comment.created_at)}</span>
           <span className="font-mono">{comment.ip || "-"}</span>
@@ -141,7 +142,7 @@ function CommentRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(comment)}
         >
           删除
@@ -237,7 +238,7 @@ export default function CommentsAdminPanel({
 
   return (
     <>
-      <Card className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3">
+      <Card className={FILTER_BAR}>
         <Select
           value={status}
           onChange={(e) => {
@@ -260,7 +261,7 @@ export default function CommentsAdminPanel({
           >
             上一页
           </Button>
-          <span className="text-sm tabular-nums text-slate-400">第 {page} 页</span>
+          <span className="text-sm tabular-nums text-admin-ink-5">第 {page} 页</span>
           <Button
             variant="secondary"
             size="sm"
@@ -283,18 +284,18 @@ export default function CommentsAdminPanel({
             const isExpanded = expanded.has(comment.id);
             return (
               <div key={comment.id} className="space-y-2">
-                <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-3">
+                <div className="flex items-start gap-3 rounded-lg border border-admin-border-soft bg-admin-surface p-3">
                   <UserCell comment={comment} />
                   <div className="min-w-0 flex-1">
                     {showOwner && ownerTitle(comment, kind) && (
-                      <p className="mb-1 truncate text-xs text-indigo-500">
+                      <p className="mb-1 truncate text-xs text-admin-accent">
                         《{ownerTitle(comment, kind)}》
                       </p>
                     )}
-                    <p className="text-sm leading-relaxed text-slate-800">
+                    <p className="text-sm leading-relaxed text-admin-ink">
                       {comment.content}
                     </p>
-                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-admin-ink-5">
                       <StatusBadge status={comment.status} />
                       <span>{formatDate(comment.created_at)}</span>
                       <span className="font-mono">{comment.ip || "-"}</span>
@@ -322,7 +323,7 @@ export default function CommentsAdminPanel({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
                       onClick={() => handleDelete(comment)}
                     >
                       删除
@@ -334,7 +335,7 @@ export default function CommentsAdminPanel({
                   <div className="pl-4">
                     <button type="button"
                       onClick={() => toggleExpand(comment.id)}
-                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 cursor-pointer"
+                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-admin-ink-4 hover:bg-admin-neutral cursor-pointer"
                     >
                       {isExpanded ? (
                         <ChevronDown className="h-3.5 w-3.5" />

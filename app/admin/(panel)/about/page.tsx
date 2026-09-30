@@ -18,8 +18,7 @@ import { runAction, useApi, uploadImage } from "@/components/admin/lib";
 import { saveSiteConfigAction } from "@/app/actions/site-config";
 import { Button, Card, Loading, PageHeader, cn } from "@/components/admin/ui";
 import ImageUploader from "@/components/admin/ImageUploader";
-import { aboutContentDefault } from "@/app/lib/site-config-defs";
-import { siteConfig } from "@/siteConfig";
+import { aboutContentDefault, defaultConfigValue } from "@/app/lib/site-config-defs";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
 import { POST_BODY_STYLE } from "@/app/lib/post-body-style";
 
@@ -33,18 +32,18 @@ export default function AdminAboutPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [initialized, setInitialized] = useState(false);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [cover, setCover] = useState("");
-  const [content, setContent] = useState("");
+  /* 草稿为 null 表示「用户还没改过」，此时跟随接口值；避免在渲染期 setState 去灌初值。 */
+  const [coverDraft, setCoverDraft] = useState<string | null>(null);
+  const [contentDraft, setContentDraft] = useState<string | null>(null);
 
-  if (config.data && !initialized) {
-    setInitialized(true);
-    setCover(config.data.aboutCover || siteConfig.aboutCover);
-    setContent(config.data.aboutContent || aboutContentDefault);
-  }
+  const initialized = Boolean(config.data);
+  const cover =
+    coverDraft ?? (config.data?.aboutCover || defaultConfigValue("aboutCover"));
+  const content =
+    contentDraft ?? (config.data?.aboutContent || aboutContentDefault);
 
   const previewHtml = useMarkdownPreview(content, tab === "preview");
 
@@ -56,7 +55,7 @@ export default function AdminAboutPage() {
     const selected = content.slice(start, end) || defaultText;
     const next =
       content.slice(0, start) + before + selected + after + content.slice(end);
-    setContent(next);
+    setContentDraft(next);
     requestAnimationFrame(() => {
       el.focus();
       el.selectionStart = start + before.length;
@@ -92,7 +91,7 @@ export default function AdminAboutPage() {
   };
 
   const toolbarBtn =
-    "rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 cursor-pointer disabled:opacity-50";
+    "rounded-md p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink cursor-pointer disabled:opacity-50";
 
   return (
     <>
@@ -114,7 +113,7 @@ export default function AdminAboutPage() {
         <div className="grid gap-4 lg:grid-cols-4">
           <div className="lg:col-span-3">
             <Card>
-              <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+              <div className="flex items-center justify-between border-b border-admin-border-soft px-3 py-2">
                 <div className="flex items-center gap-0.5">
                   <button
                     type="button"
@@ -195,14 +194,14 @@ export default function AdminAboutPage() {
                     }
                   />
                 </div>
-                <div className="flex rounded-lg bg-slate-100 p-0.5 text-xs">
+                <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
                   <button
                     type="button"
                     className={cn(
                       "rounded-md px-2.5 py-1 cursor-pointer",
                       tab === "edit"
-                        ? "bg-white font-medium text-slate-900 shadow-sm"
-                        : "text-slate-500"
+                        ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
+                        : "text-admin-ink-4"
                     )}
                     onClick={() => setTab("edit")}
                   >
@@ -213,8 +212,8 @@ export default function AdminAboutPage() {
                     className={cn(
                       "rounded-md px-2.5 py-1 cursor-pointer",
                       tab === "preview"
-                        ? "bg-white font-medium text-slate-900 shadow-sm"
-                        : "text-slate-500"
+                        ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
+                        : "text-admin-ink-4"
                     )}
                     onClick={() => setTab("preview")}
                   >
@@ -227,9 +226,9 @@ export default function AdminAboutPage() {
                 <textarea
                   ref={textareaRef}
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => setContentDraft(e.target.value)}
                   placeholder="在此输入关于页正文（Markdown）…"
-                  className="min-h-[460px] w-full resize-y px-4 py-3 font-mono text-sm leading-relaxed text-slate-800 focus:outline-none"
+                  className="min-h-[460px] w-full resize-y px-4 py-3 font-mono text-sm leading-relaxed text-admin-ink focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.ctrlKey && e.key.toLowerCase() === "b") {
                       e.preventDefault();
@@ -258,7 +257,7 @@ export default function AdminAboutPage() {
                   />
                 </div>
               )}
-              <div className="flex justify-between border-t border-slate-100 px-4 py-2 text-xs text-slate-400">
+              <div className="flex justify-between border-t border-admin-border-soft px-4 py-2 text-xs text-admin-ink-5">
                 <span>Markdown 编辑 · 支持粘贴/上传插图</span>
                 <span>{content.length} 字</span>
               </div>
@@ -267,15 +266,15 @@ export default function AdminAboutPage() {
 
           <div className="space-y-4">
             <Card className="p-5">
-              <p className="mb-2 text-sm font-medium text-slate-700">关于页封面</p>
+              <p className="mb-2 text-sm font-medium text-admin-ink-2">关于页封面</p>
               <ImageUploader
                 mode="single"
                 value={cover}
-                onChange={(urls) => setCover(urls[0] || "")}
+                onChange={(urls) => setCoverDraft(urls[0] || "")}
                 height="h-40"
                 category="system"
               />
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-admin-ink-5">
                 顶部大图，上传后自动保存到图床；留空使用默认封面
               </p>
             </Card>

@@ -4,6 +4,7 @@ import { normalizeMarkdown, createMarkdownProcessor } from "./markdown-core";
 import { thumbUrlOf, resolveImageUrl } from "./image-thumb";
 import { assignHeadingIds, extractToc } from "./toc-ids";
 import type { TocItem } from "./toc-ids";
+import { escapeRegExp } from "./utils";
 
 /** 目录项与「markdown 源 → 目录项 → 写回 HTML id」的纯计算实现都在 ./toc-ids。 */
 export type { TocItem };
@@ -18,11 +19,6 @@ export interface RenderPostOptions {
    * 设成必填就是为了让「忘记传」在编译期直接暴露。
    */
   cdnDomain: string;
-}
-
-/** 正则元字符转义（供拼接图床域名用）。 */
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -58,7 +54,8 @@ export async function renderPostContent(
     }
   );
 
-  // toc 项里的 id 就是 assignHeadingIds 要写进 HTML 的那一份（extractToc
+  // toc 项里的 id 就是 assignHeadingIds 要写进 HTML 的那一份（extractToc 与
+  // assignHeadingIds 共用同一套 slug 规则，见 toc-ids.ts）。
   const toc = extractToc(mdContent);
   contentHtml = assignHeadingIds(
     contentHtml,
@@ -71,8 +68,9 @@ export async function renderPostContent(
   };
 }
 
-// v7：图片重写同时覆盖「图床域名直链」，此前配了 imageCdnDomain 的图会漏掉缩略图。
-const RENDER_CACHE_VERSION = "v7-img-direct-link";
+// v8：normalizeMarkdown 不再做容错补正（去掉「1.文本」补空格与「3+ 换行转 <br/>」），
+// 渲染结果随之改变，必须换 key 让旧缓存失效。
+const RENDER_CACHE_VERSION = "v8-no-md-fallback";
 
 const RENDER_CACHE_TTL_SEC = 3600;
 

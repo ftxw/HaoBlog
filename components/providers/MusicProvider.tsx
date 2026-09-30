@@ -1,12 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo, ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { siteConfig } from "@/siteConfig";
-import { useSiteConfig } from "@/components/providers/SiteConfigProvider";
+import { useConfigJson, useConfigValue } from "@/components/providers/SiteConfigProvider";
 import { unwrapApi } from "@/app/lib/api-types";
 import { errorText } from "@/app/lib/response";
-
 function parseLrc(lrcText: string) {
   if (!lrcText || lrcText.length > 30000) return [];
   const lines = lrcText.split(/\r?\n/);
@@ -75,6 +73,8 @@ interface MusicContextType {
 
 const MusicContext = createContext<MusicContextType | null>(null);
 
+const NO_IDS: string[] = [];
+
 const PLAYLIST_CACHE_PREFIX = "music-playlist:v1:";
 
 function playlistFingerprint(playlistId: string, ids: readonly string[]): string {
@@ -139,21 +139,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   // 云音乐配置直接复用 SiteConfigProvider 的上下文。
-  const { config } = useSiteConfig();
-  const cloudMusicPlaylistId =
-    config.cloudMusicPlaylistId || siteConfig.cloudMusicPlaylistId;
-  const cloudMusicIdsRaw = config.cloudMusicIds || "";
-
-  const cloudMusicIds = useMemo<string[]>(() => {
-    if (cloudMusicIdsRaw) {
-      try {
-        const parsed = JSON.parse(cloudMusicIdsRaw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed as string[];
-      } catch {
-      }
-    }
-    return siteConfig.cloudMusicIds as string[];
-  }, [cloudMusicIdsRaw]);
+  const cloudMusicPlaylistId = useConfigValue("cloudMusicPlaylistId");
+  const cloudMusicIds = useConfigJson<string[]>("cloudMusicIds", NO_IDS);
 
   const fetchMusicData = useCallback(
     async (opts?: { silent?: boolean }) => {

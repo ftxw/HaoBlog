@@ -17,6 +17,7 @@ import AuthCard, {
 import {
   saveCommentSession,
   clearCommentSession,
+  dropCommentSession,
   loadCommentUser,
   type CommentSessionUser,
 } from "@/app/lib/api-client/request";
@@ -27,7 +28,6 @@ import { errorText } from "@/app/lib/response";
 
 interface CommentAuthValue {
   user: CommentSessionUser | null;
-  refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, nickname: string) => Promise<boolean>;
   logout: () => void;
@@ -49,10 +49,6 @@ interface MeData {
   email?: string;
   nickname?: string;
   avatar?: string;
-  bio?: string;
-  is_admin?: boolean;
-  roles?: string[];
-  permissions?: string[];
 }
 
 /** 会话探测的结果。 */
@@ -142,10 +138,7 @@ export default function CommentAuthProvider({
           setUser(r.user);
           return;
         }
-        try {
-          localStorage.removeItem("anonymous_user");
-        } catch {
-        }
+        dropCommentSession();
         setUser(null);
       })
       .catch(() => {
@@ -201,7 +194,7 @@ export default function CommentAuthProvider({
 
   const logout = useCallback(() => {
     clearCommentSession();
-    // 登出后必须丢掉本标签页缓存的点赞状态，否则当前页面会残留上一个账号的
+    // 登出后必须丢掉本标签页缓存的点赞状态，否则当前页面会残留上一个账号的点赞高亮。
     resetLikeStateCache();
     setUser(null);
   }, []);
@@ -210,7 +203,7 @@ export default function CommentAuthProvider({
   const closeLogin = useCallback(() => setLoginOpen(false), []);
 
   const value = useMemo<CommentAuthValue>(
-    () => ({ user, refresh: async () => {}, login, register, logout, openLogin, closeLogin, loginOpen }),
+    () => ({ user, login, register, logout, openLogin, closeLogin, loginOpen }),
     [user, login, register, logout, openLogin, closeLogin, loginOpen]
   );
 

@@ -11,10 +11,10 @@ export default function SiteFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
 
-  const icpName = useConfigValue("icp_name", "");
-  const icpLink = useConfigValue("icp_link", "");
-  const gonganName = useConfigValue("gongan_name", "");
-  const gonganLink = useConfigValue("gongan_link", "");
+  const icpName = useConfigValue("icp_name");
+  const icpLink = useConfigValue("icp_link");
+  const gonganName = useConfigValue("gongan_name");
+  const gonganLink = useConfigValue("gongan_link");
   const hasIcp = Boolean(icpName || gonganName);
 
   if (isAdmin) {

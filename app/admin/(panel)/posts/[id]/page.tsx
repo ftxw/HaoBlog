@@ -10,7 +10,7 @@ export default function AdminPostEditPage({
 }) {
   const { id } = use(params);
   if (!id) {
-    return <p className="py-24 text-center text-sm text-slate-400">无效的文章 ID</p>;
+    return <p className="py-24 text-center text-sm text-admin-ink-5">无效的文章 ID</p>;
   }
   return <PostEditor postId={id} />;
 }

@@ -5,6 +5,7 @@ import { isAdminRequest } from "@/app/lib/auth";
 import { fail, ok, parsePagination } from "@/app/lib/http";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { listPosts } from "@/app/lib/queries/posts";
+import { parseContentStatus } from "@/app/lib/content-status";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,8 @@ export async function GET(req: NextRequest) {
 
     // 安全：匿名访客不得通过 ?status=draft 拉取草稿列表。
     const isAdmin = await isAdminRequest(req);
-    const effectiveStatus = isAdmin ? statusParam : "published";
+    /* 非管理员恒定 "published"；管理员传非法值等价于「不过滤」。 */
+    const effectiveStatus = parseContentStatus(isAdmin ? statusParam : "published");
 
     // 后台带 status 的请求（或管理员请求）不走公开缓存：缓存键只按 URL。
     const bypassCache = isAdmin || Boolean(statusParam);

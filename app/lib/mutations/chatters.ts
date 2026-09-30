@@ -12,6 +12,7 @@ import {
   parseCommentStatus,
 } from "@/app/lib/comment-rules";
 import { toChatterItem } from "@/app/lib/queries/chatters";
+import { CONTENT_STATUSES, type ContentStatusValue } from "@/app/lib/content-status";
 import { BusinessError } from "@/app/lib/business-error";
 import { isRecordNotFound, purgeContentLikes, requireId, requireStringArray } from "@/app/lib/mutations/shared";
 
@@ -34,16 +35,13 @@ export interface CommentAuthor {
   email_user_avatar: string;
 }
 
-const CHATTER_STATUSES = ["published", "draft"] as const;
-type ChatterStatusValue = (typeof CHATTER_STATUSES)[number];
-
 function normalizeChatterStatus(
   value: unknown,
-  fallback: ChatterStatusValue
-): ChatterStatusValue {
+  fallback: ContentStatusValue
+): ContentStatusValue {
   if (value === undefined || value === null || value === "") return fallback;
-  if ((CHATTER_STATUSES as readonly unknown[]).includes(value)) {
-    return value as ChatterStatusValue;
+  if ((CONTENT_STATUSES as readonly unknown[]).includes(value)) {
+    return value as ContentStatusValue;
   }
   throw new BusinessError("无效的说说状态", 400);
 }

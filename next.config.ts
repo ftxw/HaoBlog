@@ -70,7 +70,13 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // 响应头规则：多条命中同一请求时按顺序合并，后者覆盖前者。
+  // 响应头规则：多条命中同一请求时按顺序合并，同一 key 后者覆盖前者。
+  //
+  // 与 route 的关系是另一层，且已核实：Next 在把请求交给处理器**之前**就把这里的头写到
+  // res 上（router-server.js 里 resHeaders 的应用点在 invokeRender 之前），处理器随后
+  // setHeader 会覆盖同 key。Vercel 文档亦明确「Function 返回的 Cache-Control 优先于
+  // next.config.js 中的同路由声明」。
+  // => 下面的规则是**默认值**，route 自己声明的优先。故 API 通吃 no-store 是安全的兜底。
   async headers() {
     return [
       // 1. 安全响应头（生产环境额外追加 HSTS），覆盖全部路径
@@ -97,8 +103,9 @@ const nextConfig: NextConfig = {
         source: "/uploads/:path*",
         headers: [{ key: "Cache-Control", value: CACHE_IMAGE }],
       },
-      // 5. /api/img-proxy 与 /api/music/lyrics 的缓存策略由各自 route 声明。
-      //    这里不能加：headers() 只能按路径匹配、无法按状态码区分，会把 404/503 也一起长缓存。
+      // 5. /api/img-proxy 与 /api/music/* 的缓存策略由各自 route 声明 —— 它们会覆盖上面第 2 条，
+      //    所以这里不需要、也不该再按路径补一条：headers() 只能按路径匹配、无法按状态码区分，
+      //    补了反而会把 404/503 也一起长缓存。
     ];
   },
   images: {

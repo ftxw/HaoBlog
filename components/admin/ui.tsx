@@ -23,15 +23,15 @@ export function Button({
 }) {
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-indigo-600",
+      "bg-admin-accent text-admin-accent-ink hover:bg-admin-accent-hover focus-visible:outline-admin-accent",
     secondary:
-      "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:outline-slate-400",
+      "bg-admin-surface text-admin-ink-2 border border-admin-border-control hover:bg-admin-neutral focus-visible:outline-admin-ink-5",
     danger:
-      "bg-red-600 text-white hover:bg-red-700 focus-visible:outline-red-600",
+      "bg-admin-danger text-admin-accent-ink hover:bg-admin-danger-hover focus-visible:outline-admin-danger",
     success:
-      "bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:outline-emerald-600",
+      "bg-admin-success text-admin-accent-ink hover:bg-admin-success-strong focus-visible:outline-admin-success",
     ghost:
-      "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+      "bg-transparent text-admin-ink-3 hover:bg-admin-neutral hover:text-admin-ink",
   };
   const sizes = {
     sm: "px-2.5 py-1 text-xs",
@@ -57,7 +57,7 @@ export function Button({
 }
 
 const inputBase =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500";
+  "w-full rounded-lg border border-admin-border-control bg-admin-surface px-3 py-2 text-sm text-admin-ink placeholder:text-admin-ink-5 focus:border-admin-accent-border focus:outline-none focus:ring-1 focus:ring-admin-accent-border disabled:bg-admin-surface-muted disabled:text-admin-ink-4";
 
 export function Input({
   className,
@@ -105,12 +105,12 @@ export function Field({
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-admin-ink-2">
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span className="text-admin-danger ml-0.5">*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="text-xs text-admin-ink-5">{hint}</p>}
     </div>
   );
 }
@@ -133,17 +133,17 @@ export function Switch({
       <span
         className={cn(
           "relative inline-flex h-5.5 w-10 items-center rounded-full transition-colors",
-          checked ? "bg-indigo-600" : "bg-slate-300"
+          checked ? "bg-admin-accent" : "bg-slate-300"
         )}
       >
         <span
           className={cn(
-            "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
+            "inline-block h-4 w-4 transform rounded-full bg-admin-surface shadow transition-transform",
             checked ? "translate-x-5" : "translate-x-1"
           )}
         />
       </span>
-      {label && <span className="text-sm text-slate-700">{label}</span>}
+      {label && <span className="text-sm text-admin-ink-2">{label}</span>}
     </button>
   );
 }
@@ -177,27 +177,27 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-admin-scrim backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          "relative flex max-h-[85vh] w-full flex-col rounded-2xl bg-white shadow-2xl",
+          "relative flex max-h-[85vh] w-full flex-col rounded-2xl bg-admin-surface shadow-2xl",
           wide ? "max-w-3xl" : "max-w-lg"
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <div className="flex items-center justify-between border-b border-admin-border-soft px-5 py-3.5">
+          <h3 className="text-base font-semibold text-admin-ink">{title}</h3>
           <button type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+            className="rounded-lg p-1 text-admin-ink-5 hover:bg-admin-neutral hover:text-admin-ink-3 cursor-pointer"
           >
             <X className="w-4.5 h-4.5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3.5">
+          <div className="flex justify-end gap-2 border-t border-admin-border-soft px-5 py-3.5">
             {footer}
           </div>
         )}
@@ -243,7 +243,7 @@ export function useConfirm() {
         </>
       }
     >
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-admin-ink-3">
         {state.message || "此操作不可撤销，确定继续吗？"}
       </p>
     </Modal>
@@ -257,20 +257,20 @@ function okVariantOf(title: string): ButtonVariant {
 }
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  published: { label: "已发布", cls: "bg-emerald-50 text-emerald-700" },
-  draft: { label: "草稿", cls: "bg-slate-100 text-slate-600" },
-  active: { label: "显示中", cls: "bg-emerald-50 text-emerald-700" },
-  hidden: { label: "已隐藏", cls: "bg-slate-100 text-slate-600" },
-  approved: { label: "已通过", cls: "bg-emerald-50 text-emerald-700" },
-  pending: { label: "待审核", cls: "bg-amber-50 text-amber-700" },
-  rejected: { label: "已拒绝", cls: "bg-red-50 text-red-700" },
+  published: { label: "已发布", cls: "bg-admin-success-soft text-admin-success-strong" },
+  draft: { label: "草稿", cls: "bg-admin-neutral text-admin-ink-3" },
+  active: { label: "显示中", cls: "bg-admin-success-soft text-admin-success-strong" },
+  hidden: { label: "已隐藏", cls: "bg-admin-neutral text-admin-ink-3" },
+  approved: { label: "已通过", cls: "bg-admin-success-soft text-admin-success-strong" },
+  pending: { label: "待审核", cls: "bg-admin-warning-soft text-admin-warning-strong" },
+  rejected: { label: "已拒绝", cls: "bg-admin-danger-soft text-admin-danger-hover" },
 };
 
 export function StatusBadge({ status }: { status: string }) {
   const conf = STATUS_MAP[status];
   if (!conf) {
     return (
-      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+      <span className="inline-flex rounded-full bg-admin-neutral px-2 py-0.5 text-xs text-admin-ink-3">
         {status}
       </span>
     );
@@ -301,20 +301,20 @@ export function Pagination({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (total <= 0) return null;
   return (
-    <div className="flex items-center justify-between px-1 pt-3 text-sm text-slate-500">
+    <div className="flex items-center justify-between px-1 pt-3 text-sm text-admin-ink-4">
       <span>
         共 {total} 条 · 第 {page} / {totalPages} 页
       </span>
       <div className="flex items-center gap-1">
         <button type="button"
-          className="rounded-lg border border-slate-200 p-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          className="rounded-lg border border-admin-border p-1.5 hover:bg-admin-neutral disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <button type="button"
-          className="rounded-lg border border-slate-200 p-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          className="rounded-lg border border-admin-border p-1.5 hover:bg-admin-neutral disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           disabled={page >= totalPages}
           onClick={() => onChange(page + 1)}
         >
@@ -327,7 +327,7 @@ export function Pagination({
 
 export function Loading({ text = "加载中…" }: { text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400">
+    <div className="flex flex-col items-center justify-center gap-2 py-16 text-admin-ink-5">
       <Loader2 className="w-6 h-6 animate-spin" />
       <span className="text-sm">{text}</span>
     </div>
@@ -336,7 +336,7 @@ export function Loading({ text = "加载中…" }: { text?: string }) {
 
 export function EmptyState({ text = "暂无数据" }: { text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400">
+    <div className="flex flex-col items-center justify-center gap-2 py-16 text-admin-ink-5">
       <Inbox className="w-8 h-8" />
       <span className="text-sm">{text}</span>
     </div>
@@ -346,7 +346,7 @@ export function EmptyState({ text = "暂无数据" }: { text?: string }) {
 export function ErrorState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16">
-      <span className="text-sm text-red-500">{message}</span>
+      <span className="text-sm text-admin-danger">{message}</span>
     </div>
   );
 }
@@ -363,12 +363,46 @@ export function PageHeader({
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+        <h1 className="text-xl font-bold text-admin-ink">{title}</h1>
         {description && (
-          <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+          <p className="mt-0.5 text-xs text-admin-ink-4">{description}</p>
         )}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/** 后台二级导航的分段控件；`action` 渲染在行尾（通常是「新建」按钮）。 */
+export function AdminTabBar<T extends string>({
+  tabs,
+  active,
+  onChange,
+  action,
+}: {
+  tabs: ReadonlyArray<{ key: T; label: React.ReactNode }>;
+  active: T;
+  onChange: (key: T) => void;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex gap-1 rounded-lg bg-slate-200/60 p-1 text-sm">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => onChange(tab.key)}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+            active === tab.key
+              ? "bg-admin-surface text-admin-ink shadow-sm"
+              : "text-admin-ink-4 hover:text-admin-ink-2"
+          )}
+        >
+          {tab.label}
+        </button>
+      ))}
+      {action}
     </div>
   );
 }
@@ -383,7 +417,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200 bg-white shadow-sm",
+        "rounded-xl border border-admin-border bg-admin-surface shadow-sm",
         className
       )}
     >

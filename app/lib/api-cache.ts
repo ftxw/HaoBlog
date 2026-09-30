@@ -148,6 +148,7 @@ export function invalidateBusinessLinkCaches(): void {
 
 export function invalidateCommentCaches(): void {
   // 评论数（comments_count）由 /api/posts 列表与 /posts 页展示，而它们缓存在
+  // posts / postsCount 命名空间下，所以这几个都要一起清。
   for (const ns of [
     CACHE_NAMESPACE.comments,
     CACHE_NAMESPACE.posts,

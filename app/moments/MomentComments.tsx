@@ -1,6 +1,6 @@
 "use client";
 
-import Comments from "@/components/Comments";
+import Comments from "@/components/comments/Comments";
 import {
   getChatterComments,
   createChatterComment,

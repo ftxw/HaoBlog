@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { BusinessError } from "@/app/lib/business-error";
 
-export type { ApiOk, ApiErr, ApiResponse } from "@/app/lib/api-types";
-
 export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ code: 0, message: "ok", data }, init);
 }
@@ -44,24 +42,20 @@ export function parsePagination(
   };
 }
 
-/** ⚠️ 只有业务自抛的提示能原样回给客户端；其余（Prisma/Supabase 原文含表名、约束名、连接串片段）会泄露内部结构 */
-const BUSINESS_HINTS = /^(未登录|无效的令牌|需要管理员权限|请先登录|未授权|鉴权服务暂时不可用)/;
-
+/**
+ * ⚠️ 只有业务自抛的提示能原样回给客户端；其余（Prisma / Supabase 原文含表名、约束名、
+ * 连接串片段）会泄露内部结构。业务错误一律用 BusinessError，别再靠文案比对放行。
+ */
 export function safeErrMessage(err: unknown, fallback = "服务器错误"): string {
   if (err instanceof BusinessError) return err.message || fallback;
   const raw = err instanceof Error ? err.message : "";
   if (process.env.NODE_ENV !== "production") return raw || fallback;
-  return BUSINESS_HINTS.test(raw) ? raw : fallback;
+  return fallback;
 }
 
-/** 鉴权类错误必须映射成语义正确的状态码。 */
+/** 业务错误自带语义正确的状态码（401/403/503…），其余一律 500。 */
 export function errorStatus(err: unknown): number {
-  if (err instanceof BusinessError) return err.status;
-  const raw = err instanceof Error ? err.message : "";
-  if (raw === "未登录" || raw === "无效的令牌") return 401;
-  if (raw === "需要管理员权限") return 403;
-  if (err instanceof Error && err.name === "UpstreamAuthError") return 503;
-  return 500;
+  return err instanceof BusinessError ? err.status : 500;
 }
 
 export function businessFail(err: unknown, fallback = "服务器错误") {

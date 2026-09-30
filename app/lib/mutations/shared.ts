@@ -40,6 +40,23 @@ export function isUniqueViolation(err: unknown): boolean {
   );
 }
 
+/** 解析 JSON 请求体：空体 / 非法 JSON 统一回 400，不任其冒成 500。 */
+export async function parseJsonBody<T>(request: Request): Promise<T> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw new BusinessError("请求体格式错误", 400);
+  }
+}
+
+/** 解析可选日期输入：空值 → undefined；非法日期回 400（而不是让 Prisma 抛 500）。 */
+export function parseOptionalDate(value: unknown, message: string): Date | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) throw new BusinessError(message, 400);
+  return date;
+}
+
 /** 可以承载点赞的目标类型 —— 与 `schema.prisma` 的 `ContentLike.target_type` 白名单一致。 */
 export type LikeTargetType = "post" | "chatter" | "project";
 

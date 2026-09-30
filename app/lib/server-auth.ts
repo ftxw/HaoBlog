@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { checkAuthorizedAccessToken, type CurrentUser } from "@/app/lib/auth";
 import {
@@ -5,10 +6,14 @@ import {
   parseSessionValue,
 } from "@/app/lib/session-cookie";
 
-export async function getServerAuth(): Promise<{
+/**
+ * 同一请求内只验一次上游 token：layout 与 page 会并发渲染，各自都调它。
+ * cache() 只在请求作用域内生效（无 dispatcher 时退化为普通调用），故对 CLI/脚本无副作用。
+ */
+export const getServerAuth = cache(async (): Promise<{
   user: CurrentUser;
   accessToken: string;
-} | null> {
+} | null> => {
   const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -26,7 +31,7 @@ export async function getServerAuth(): Promise<{
   if (!user) return null;
 
   return { user, accessToken: session.accessToken };
-}
+});
 
 export async function getServerAdmin(): Promise<CurrentUser | null> {
   const auth = await getServerAuth();

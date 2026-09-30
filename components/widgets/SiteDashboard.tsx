@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Shield, ShieldCheck } from "lucide-react";
-import { siteConfig } from "@/siteConfig";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
 
 function LiveClock() {
@@ -45,13 +44,13 @@ function Uptime({ startDate }: { startDate: number }) {
 }
 
 export default function SiteDashboard() {
-  const buildDate = useConfigValue("buildDate", siteConfig.buildDate);
+  const buildDate = useConfigValue("buildDate");
   const START_DATE = useMemo(() => new Date(buildDate).getTime(), [buildDate]);
 
-  const icpName = useConfigValue("icp_name", "");
-  const icpLink = useConfigValue("icp_link", "");
-  const gonganName = useConfigValue("gongan_name", "");
-  const gonganLink = useConfigValue("gongan_link", "");
+  const icpName = useConfigValue("icp_name");
+  const icpLink = useConfigValue("icp_link");
+  const gonganName = useConfigValue("gongan_name");
+  const gonganLink = useConfigValue("gongan_link");
 
   return (
     <div className="group glass flex h-auto flex-col items-stretch overflow-hidden rounded-card transition-colors duration-700 md:h-20 md:flex-row">

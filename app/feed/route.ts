@@ -4,10 +4,9 @@ export const revalidate = 300;
 
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
-import { siteConfig } from "@/siteConfig";
 import { renderMarkdownToHtml } from "@/app/lib/markdown-core";
 import { prisma } from "@/app/lib/prisma";
-import { getDbSiteConfig } from "@/app/lib/site-config-db";
+import { getDbSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
 import {
   absoluteUrlOf,
@@ -18,12 +17,12 @@ import {
 export async function GET() {
   try {
     const dbConfig = await getDbSiteConfig();
-    const title = dbConfig.title || siteConfig.title;
+    const title = pickConfigValue(dbConfig, "title");
     const url = await resolveSiteBaseUrl();
     const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
-    const bio = dbConfig.bio || siteConfig.bio;
-    const authorName = dbConfig.authorName || siteConfig.authorName;
-    const authorEmail = (dbConfig.authorEmail || "").trim();
+    const bio = pickConfigValue(dbConfig, "bio");
+    const authorName = pickConfigValue(dbConfig, "authorName");
+    const authorEmail = pickConfigValue(dbConfig, "authorEmail").trim();
     const feedAuthor = authorEmail ? `${authorEmail} (${authorName})` : authorName;
 
     const posts = await prisma.post

@@ -72,13 +72,13 @@ function SortableLinkCard({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex cursor-grab items-center gap-3 rounded-lg border border-slate-100 bg-white p-3 active:cursor-grabbing",
+        "flex cursor-grab items-center gap-3 rounded-lg border border-admin-border-soft bg-admin-surface p-3 active:cursor-grabbing",
         isDragging && "z-10 opacity-60 shadow-lg"
       )}
       {...attributes}
       {...listeners}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-admin-neutral text-sm text-admin-ink-4">
         {link.icon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={link.icon} alt="" className="h-6 w-6 rounded" />
@@ -88,20 +88,20 @@ function SortableLinkCard({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-800">
+          <span className="text-sm font-medium text-admin-ink">
             {link.name}
           </span>
           <StatusBadge status={link.status} />
         </div>
-        <p className="truncate text-xs text-slate-400">{link.url}</p>
+        <p className="truncate text-xs text-admin-ink-5">{link.url}</p>
         {link.description && (
-          <p className="truncate text-xs text-slate-500">
+          <p className="truncate text-xs text-admin-ink-4">
             {link.description}
           </p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <span className="mr-0.5 text-slate-300">
+        <span className="mr-0.5 text-admin-ink-none">
           <GripVertical className="h-4 w-4" />
         </span>
         <Button
@@ -122,7 +122,7 @@ function SortableLinkCard({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(link)}
         >
           删除

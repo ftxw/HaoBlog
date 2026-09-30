@@ -9,7 +9,7 @@ import {
 import { applySortChanges } from "@/app/lib/mutations/sort-order";
 import { deleteImageByUrl, deleteImagesByUrls } from "@/app/lib/s3-image-host";
 import { BusinessError } from "@/app/lib/business-error";
-import { isRecordNotFound, requireId } from "@/app/lib/mutations/shared";
+import { isRecordNotFound, parseOptionalDate, requireId } from "@/app/lib/mutations/shared";
 
 export interface AlbumInput {
   title?: string;
@@ -45,7 +45,7 @@ export async function createAlbum(input: AlbumInput) {
       cover: String(input.cover ?? ""),
       layout: input.layout === "timeline" ? "timeline" : "grid",
       sort: typeof input.sort === "number" ? input.sort : 0,
-      published_at: input.published_at ? new Date(input.published_at) : undefined,
+      published_at: parseOptionalDate(input.published_at, "相册时间格式不正确"),
     },
   });
 
@@ -69,7 +69,9 @@ export async function updateAlbum(albumId: string, input: AlbumInput) {
   }
   if (input.sort !== undefined) data.sort = input.sort;
   if (input.published_at !== undefined) {
-    data.published_at = input.published_at ? new Date(input.published_at) : null;
+    data.published_at = input.published_at
+      ? parseOptionalDate(input.published_at, "相册时间格式不正确")
+      : null;
   }
 
   try {
@@ -143,7 +145,7 @@ export async function createPhoto(input: PhotoInput) {
       album_id: albumId,
       url,
       caption: String(input.caption || ""),
-      taken_at: input.taken_at ? new Date(input.taken_at) : undefined,
+      taken_at: parseOptionalDate(input.taken_at, "拍摄时间格式不正确"),
       w,
       h,
       sort: typeof input.sort === "number" ? input.sort : 0,
@@ -160,7 +162,7 @@ export async function updatePhoto(photoId: string, input: PhotoInput) {
   const data: Record<string, unknown> = {};
   if (input.caption !== undefined) data.caption = String(input.caption);
   if (input.taken_at !== undefined && input.taken_at) {
-    data.taken_at = new Date(input.taken_at);
+    data.taken_at = parseOptionalDate(input.taken_at, "拍摄时间格式不正确");
   }
 
   try {

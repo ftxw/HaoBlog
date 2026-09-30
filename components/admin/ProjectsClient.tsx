@@ -12,7 +12,14 @@ import {
   deleteProjectAction,
   reorderProjectsAction,
 } from "@/app/actions/projects";
-import { Button, Card, PageHeader, cn, useConfirm } from "@/components/admin/ui";
+import {
+  AdminTabBar,
+  Button,
+  Card,
+  PageHeader,
+  useConfirm,
+} from "@/components/admin/ui";
+import { TABLE_HEAD_CELL } from "@/components/admin/styles";
 import CommentsAdminPanel from "@/components/admin/CommentsAdminPanel";
 import {
   useDragSort,
@@ -126,38 +133,24 @@ export default function ProjectsClient({
         }
       />
 
-      <div className="mb-4 flex gap-1 rounded-lg bg-slate-200/60 p-1 text-sm">
-        {(
-          [
-            { key: "projects", label: `项目（${data?.total ?? 0}）` },
-            { key: "comments", label: `评论（${commentsCount.data?.total ?? 0}）` },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <AdminTabBar
+        tabs={[
+          { key: "projects", label: `项目（${data?.total ?? 0}）` },
+          { key: "comments", label: `评论（${commentsCount.data?.total ?? 0}）` },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "comments" ? (
         <CommentsAdminPanel kind="project" showOwner onChanged={refresh} />
       ) : (
         <Card className="overflow-hidden p-0">
-          <div className="grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] border-b border-slate-200 text-xs font-semibold text-slate-500 bg-slate-50/50">
+          <div className="grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
             {["项目", "状态", "技术栈", "点赞", "排序", "创建时间", "操作"].map((h) => (
               <div
                 key={h}
-                className="flex h-11 overflow-hidden items-center justify-center px-4"
+                className={TABLE_HEAD_CELL}
               >
                 {h}
               </div>
@@ -182,7 +175,7 @@ export default function ProjectsClient({
               ))}
             </SortableContext>
           </DndContext>
-          <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500">
+          <div className="px-4 py-3 flex items-center justify-between text-sm text-admin-ink-4">
             <span>共 {data?.total ?? 0} 个项目</span>
             {data && data.total > PAGE_SIZE && (
               <div className="flex items-center gap-2">
@@ -237,8 +230,8 @@ function SortableProjectRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
         isDragging
-          ? "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-indigo-400 grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] cursor-grab border-b border-slate-100 bg-white text-slate-700 hover:bg-slate-50/70 active:cursor-grabbing"
-          : "grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] cursor-grab border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70 active:cursor-grabbing"
+          ? "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-admin-accent-ring grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] cursor-grab border-b border-admin-border-soft bg-admin-surface text-admin-ink-2 hover:bg-admin-row-hover active:cursor-grabbing"
+          : "grid grid-cols-[28%_10%_16%_8%_8%_16%_14%] cursor-grab border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover active:cursor-grabbing"
       }
       {...attributes}
       {...listeners}
@@ -256,10 +249,10 @@ function SortableProjectRow({
           />
         )}
         <div className="min-w-0">
-          <span className="block truncate font-medium text-slate-900">
+          <span className="block truncate font-medium text-admin-ink">
             {project.name}
             {project.is_featured && (
-              <span className="ml-1 text-xs text-amber-500">★</span>
+              <span className="ml-1 text-xs text-admin-warning">★</span>
             )}
           </span>
         </div>
@@ -268,24 +261,24 @@ function SortableProjectRow({
         <span className="text-xs">
           {project.status}
           {project.status_label && (
-            <span className="ml-1 text-xs text-slate-400">
+            <span className="ml-1 text-xs text-admin-ink-5">
               {project.status_label}
             </span>
           )}
         </span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate text-xs text-slate-500">
+        <span className="truncate text-xs text-admin-ink-4">
           {(project.tech_stack ?? []).join(" / ") || "-"}
         </span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 tabular-nums">
         {project.likes}
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-slate-300">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-admin-ink-none">
         <GripVertical className="h-4 w-4" />
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-slate-500">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-admin-ink-4">
         {formatDate(project.created_at)}
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
@@ -295,7 +288,7 @@ function SortableProjectRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(project)}
         >
           删除

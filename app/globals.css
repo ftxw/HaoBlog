@@ -211,6 +211,69 @@ html:has(.theme-light) {
   --color-tone-neutral-soft: var(--app-tones-neutral-soft);
 }
 
+/* ─────────────── 后台色板（恒定浅色，不参与主题切换）─────────────── */
+/* AdminShell 挂的是 .theme-light + color-scheme: light，后台永远是浅色，
+   所以这套 token 直接写常量，不做暗色分支。
+   刻意不复用上面的 --app-*：那套面是半透明玻璃（rgb(255 255 255 / .26)），
+   后台要的是不透明实底。 */
+/* static：让整层 token 始终产出 CSS 变量，不随「有没有被工具类用到」被摇掉 ——
+   后台有内联 style 直接引用 var(--color-admin-*) 的地方。 */
+@theme static {
+  /* 面 */
+  --color-admin-canvas: #f1f5f9; /* slate-100 页面底 */
+  --color-admin-surface: #ffffff; /* white 卡片 / 顶栏 / 浮层底 */
+  --color-admin-surface-muted: #f8fafc; /* slate-50 表头底 / 内层浅底 / 只读块 */
+  --color-admin-neutral: #f1f5f9; /* slate-100 中性填充：徽标底 / 头像 / 悬停底 */
+  --color-admin-row-hover: rgb(248 250 252 / 0.7); /* slate-50/70 表体行悬停（半透明，别用不透明的表头底） */
+  --color-admin-neutral-strong: #e2e8f0; /* slate-200 骨架块 */
+  --color-admin-overlay: rgb(255 255 255 / 0.9); /* 压在图片上的浮层按钮底 */
+  --color-admin-scrim: rgb(15 23 42 / 0.6); /* 模态 / 抽屉遮罩 */
+
+  /* 侧边栏（后台唯一的大块深色区域） */
+  --color-admin-sidebar: #0f172a; /* slate-900 */
+  --color-admin-sidebar-hover: #1e293b; /* slate-800 */
+  --color-admin-sidebar-ink: #ffffff;
+  --color-admin-sidebar-ink-2: #e2e8f0; /* slate-200 */
+  --color-admin-sidebar-divider: #1e293b; /* slate-800 */
+  --color-admin-sidebar-active: rgb(99 102 241 / 0.2); /* indigo-500/20 */
+  --color-admin-sidebar-active-ink: #a5b4fc; /* indigo-300 */
+
+  /* 线 */
+  --color-admin-border: #e2e8f0; /* slate-200 容器外框 / 表头下沿 */
+  --color-admin-border-soft: #f1f5f9; /* slate-100 内部细分隔 / 表体行下沿 */
+  --color-admin-border-control: #cbd5e1; /* slate-300 输入控件描边 */
+
+  /* 文字：5 级 + 空值占位 */
+  --color-admin-ink: #0f172a; /* slate-900 标题 / 主文字 / 激活项 */
+  --color-admin-ink-2: #334155; /* slate-700 表单 label / 表格正文 */
+  --color-admin-ink-3: #475569; /* slate-600 浮层文案 / 中性徽标文字 */
+  --color-admin-ink-4: #64748b; /* slate-500 次要文字 / 表头 / 未激活 tab */
+  --color-admin-ink-5: #94a3b8; /* slate-400 hint / 时间戳 / 空态 */
+  --color-admin-ink-none: #cbd5e1; /* slate-300 空值占位符，比 hint 更弱 */
+
+  /* 主色：indigo 在后台同时承担实底、文字、浅底徽标、聚焦、拖拽落点 */
+  --color-admin-accent: #4f46e5; /* indigo-600 实底按钮 / 勾选框 */
+  --color-admin-accent-hover: #4338ca; /* indigo-700 实底悬停 */
+  --color-admin-accent-ink: #ffffff; /* 实底上的文字 */
+  --color-admin-accent-soft: #eef2ff; /* indigo-50 浅底徽标 */
+  --color-admin-accent-soft-ink: #4338ca; /* indigo-700 浅底徽标文字 */
+  --color-admin-accent-border: #6366f1; /* indigo-500 控件聚焦描边 */
+  --color-admin-accent-ring: #818cf8; /* indigo-400 拖拽落点 / 悬停描边 */
+
+  /* 语义色 */
+  --color-admin-danger: #dc2626; /* red-600 文字 / 图标 / 实底 */
+  --color-admin-danger-hover: #b91c1c; /* red-700 实底悬停 / 浅底文字 */
+  --color-admin-danger-soft: #fef2f2; /* red-50 浅底（含浅底悬停） */
+
+  --color-admin-success: #059669; /* emerald-600 实底 / 文字 */
+  --color-admin-success-strong: #047857; /* emerald-700 更深的成功文字 */
+  --color-admin-success-soft: #ecfdf5; /* emerald-50 浅底 */
+
+  --color-admin-warning: #f59e0b; /* amber-500 图标 */
+  --color-admin-warning-strong: #b45309; /* amber-700 文字 */
+  --color-admin-warning-soft: #fffbeb; /* amber-50 浅底 */
+}
+
 /* ═══════════════ 基础样式 ═══════════════ */
 @layer base {
   * {
@@ -290,12 +353,6 @@ html:has(.theme-light) {
 @utility mono-num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-/* 文本强调色：用于标题内的高亮片段 */
-@utility text-glow {
-  color: var(--app-accent);
-  text-shadow: 0 0 18px var(--app-accent-soft);
 }
 
 /* 歌词条文字外发光 */
@@ -849,19 +906,6 @@ html:has(.theme-light) {
   scrollbar-width: none;
 }
 
-/* 轻量淡入（灯箱 / 图片的入场动画） */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
 /* 唱片高光：conic 渐变走 token（--app-stage-ink 为两主题同源的白色系） */
 .disc-sheen {
   background: conic-gradient(
@@ -900,9 +944,5 @@ html:has(.theme-light) {
   .eq-bar {
     animation: none;
     height: 60%;
-  }
-
-  .animate-fade-in {
-    animation: none;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import Comments from "@/components/Comments";
+import Comments from "@/components/comments/Comments";
 import CommentAuthProvider from "@/components/providers/CommentAuthProvider";
 import {
   getPostComments,
@@ -16,7 +16,6 @@ export default function PostComments({ postId }: { postId: string }) {
         <Comments
           targetId={postId}
           kind="post"
-          likedKey="liked_comments"
           showErrorRetry
           getComments={getPostComments}
           createComment={(d) =>

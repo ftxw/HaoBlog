@@ -7,7 +7,7 @@ export default async function EditProjectPage({
 }) {
   const { id } = await params;
   if (!id) {
-    return <div className="p-8 text-slate-500">无效的项目 ID</div>;
+    return <div className="p-8 text-admin-ink-4">无效的项目 ID</div>;
   }
   return <ProjectEditor projectId={id} />;
 }

@@ -1,6 +1,8 @@
 import { prisma } from "@/app/lib/prisma";
 import { checkAuthorizedAccessToken, getRequestToken } from "@/app/lib/auth";
 import { businessFail, fail, ok } from "@/app/lib/http";
+import { parseJsonBody } from "@/app/lib/mutations/shared";
+import { hitRateLimit } from "@/app/lib/rate-limit";
 import {
   invalidateChatterCaches,
   invalidatePostCaches,
@@ -73,6 +75,10 @@ export async function GET(request: Request) {
   }
 }
 
+/* 登录态写操作按账号限流：用 user.id 比 IP 更准（同一 NAT 下多个账号互不影响）。 */
+const LIKE_LIMIT = 60;
+const LIKE_WINDOW_MS = 60_000;
+
 export async function POST(request: Request) {
   try {
     const token = getRequestToken(request);
@@ -84,7 +90,17 @@ export async function POST(request: Request) {
       return fail("无效的令牌", 401);
     }
 
-    const body = await request.json();
+    const limit = await hitRateLimit(`like:${user.id}`, LIKE_LIMIT, LIKE_WINDOW_MS);
+    if (!limit.allowed) {
+      return fail("操作过于频繁，请稍后再试", 429);
+    }
+
+    const body =
+      (await parseJsonBody<{
+        targetType?: string;
+        targetId?: string;
+        liked?: boolean;
+      } | null>(request)) ?? {};
     const rawType = body.targetType;
     const targetId = String(body.targetId || "");
     const wantLike = body.liked === true;
@@ -117,7 +133,8 @@ export async function POST(request: Request) {
       liked: wantLike,
     });
   } catch (err) {
-    /* 不要用 errMsg(err) === "无效的令牌" 做控制流判断 —— 那依赖一条人写的 */
+    /* 「令牌无效」由 checkAuthorizedAccessToken 返回 null 表达（其内部抛 InvalidTokenError），
+       「上游不可用」才抛 UpstreamAuthError —— 两者都不该靠比对 errMsg(err) 的文案做控制流。 */
     console.error("[POST /api/like] error:", err);
     return businessFail(err, "点赞失败");
   }

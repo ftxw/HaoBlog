@@ -29,10 +29,6 @@ export function configureCdnDomain(domain?: string | null): void {
   cdnDomain = normalizeCdnDomain(domain);
 }
 
-export function getCdnDomain(): string {
-  return cdnDomain;
-}
-
 /** 解析图片 URL。 */
 export function resolveImageUrl(url: string, cdnDomainArg?: string): string {
   const domain = cdnDomainArg ?? cdnDomain;

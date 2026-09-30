@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
+import { parseContentStatus } from "@/app/lib/content-status";
 
 export interface ProjectItem {
   id: string;
@@ -66,9 +67,8 @@ export async function listProjects(
   options: ListProjectsOptions = {}
 ): Promise<ProjectItem[]> {
   const { status, page = 1, size = 500 } = options;
-  const where: Prisma.ProjectWhereInput = status
-    ? { status: status as Prisma.ProjectWhereInput["status"] }
-    : {};
+  const statusValue = parseContentStatus(status);
+  const where: Prisma.ProjectWhereInput = statusValue ? { status: statusValue } : {};
   const safePage = Math.max(1, page);
   const safeSize = Math.min(500, Math.max(1, size));
 
@@ -99,9 +99,8 @@ export async function listProjects(
 
 export async function countProjects(options: { status?: string } = {}) {
   const { status } = options;
-  const where: Prisma.ProjectWhereInput = status
-    ? { status: status as Prisma.ProjectWhereInput["status"] }
-    : {};
+  const statusValue = parseContentStatus(status);
+  const where: Prisma.ProjectWhereInput = statusValue ? { status: statusValue } : {};
   return prisma.project.count({ where });
 }
 

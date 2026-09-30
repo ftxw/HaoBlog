@@ -50,10 +50,10 @@ function SortableAlbumCard({
       <Card
         className={cn(
           "relative flex flex-col overflow-hidden transition-shadow hover:shadow-md",
-          isDragging && "opacity-70 ring-2 ring-inset ring-indigo-400"
+          isDragging && "opacity-70 ring-2 ring-inset ring-admin-accent-ring"
         )}
       >
-        <div className="aspect-video w-full overflow-hidden bg-slate-100">
+        <div className="aspect-video w-full overflow-hidden bg-admin-neutral">
           {album.cover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -65,31 +65,31 @@ function SortableAlbumCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-slate-300">
+            <div className="flex h-full items-center justify-center text-admin-ink-none">
               <Images className="h-8 w-8" />
             </div>
           )}
         </div>
         <div className="flex flex-1 flex-col p-3">
-          <p className="truncate font-medium text-slate-900">{album.title}</p>
+          <p className="truncate font-medium text-admin-ink">{album.title}</p>
           {album.description ? (
-            <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+            <p className="mt-0.5 line-clamp-2 text-xs text-admin-ink-4">
               {album.description}
             </p>
           ) : null}
           <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-            <p className="truncate text-xs text-slate-400">
+            <p className="truncate text-xs text-admin-ink-5">
               {album.photo_count} 张照片 ·{" "}
               {album.layout === "timeline" ? "时间轴" : "网格"}
             </p>
-            <p className="shrink-0 text-xs text-slate-400">
+            <p className="shrink-0 text-xs text-admin-ink-5">
               {formatDateOnly(album.published_at || album.updated_at)}
             </p>
           </div>
         </div>
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-white/90 text-slate-500 shadow-sm"
+          className="pointer-events-none absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-admin-overlay text-admin-ink-4 shadow-sm"
         >
           <GripVertical className="h-3.5 w-3.5" />
         </div>
@@ -100,7 +100,7 @@ function SortableAlbumCard({
               e.stopPropagation();
               onOpen(album.id);
             }}
-            className="rounded-md bg-white/90 p-1 text-slate-600 hover:text-indigo-600 cursor-pointer"
+            className="rounded-md bg-admin-overlay p-1 text-admin-ink-3 hover:text-admin-accent cursor-pointer"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -110,7 +110,7 @@ function SortableAlbumCard({
               e.stopPropagation();
               onDelete(album);
             }}
-            className="rounded-md bg-white/90 p-1 text-slate-600 hover:text-red-600 cursor-pointer"
+            className="rounded-md bg-admin-overlay p-1 text-admin-ink-3 hover:text-admin-danger cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

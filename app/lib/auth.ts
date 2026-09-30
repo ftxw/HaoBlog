@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { verifyAccessToken, type AppUser } from "@/app/lib/supabase";
+import { BusinessError } from "@/app/lib/business-error";
 import { prisma } from "@/app/lib/prisma";
 import { readAccessTokenFromCookieHeader } from "@/app/lib/session-cookie";
 import {
@@ -49,7 +50,7 @@ async function withAdminFlag(u: AppUser): Promise<CurrentUser> {
   let isAdmin = false;
   try {
     const row = await prisma.user.findUnique({
-      where: { username: u.email },
+      where: { email: u.email },
       select: { is_admin: true },
     });
     isAdmin = Boolean(row?.is_admin);
@@ -70,16 +71,17 @@ export async function ensureUserAndBootstrapAdmin(u: AppUser) {
     await tx.$queryRaw`SELECT 1 AS ok FROM (SELECT pg_advisory_xact_lock(${BOOTSTRAP_ADMIN_LOCK_KEY}::bigint)) AS lock`;
 
     const existing = await tx.user.findUnique({
-      where: { username: u.email },
+      where: { email: u.email },
     });
     if (existing) return existing;
 
     // 咨询锁已把「查 → 判 → 建」串行化，因此这里的 count 与下面的 create 之间
+    // 不会被其他事务插入，不会出现两个「第一个管理员」。
     const adminCount = await tx.user.count({ where: { is_admin: true } });
 
     return tx.user.create({
       data: {
-        username: u.email,
+        email: u.email,
         is_admin: adminCount === 0,
       },
     });
@@ -105,13 +107,13 @@ export function getRequestToken(request: Request): string {
 
 export async function getCurrentUser(request: Request): Promise<CurrentUser> {
   const token = getRequestToken(request);
-  if (!token) throw new Error("未登录");
+  if (!token) throw new BusinessError("未登录", 401);
   return resolveCurrentUser(token);
 }
 
 export async function requireAdmin(request: Request): Promise<CurrentUser> {
   const user = await getCurrentUser(request);
-  if (!user.is_admin) throw new Error("需要管理员权限");
+  if (!user.is_admin) throw new BusinessError("需要管理员权限", 403);
   return user;
 }
 

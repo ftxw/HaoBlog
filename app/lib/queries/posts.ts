@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { prisma } from "@/app/lib/prisma";
 import { escapeLike } from "./like-escape";
+import { parseContentStatus } from "@/app/lib/content-status";
 
 export interface PostRowShape {
   id: string;
@@ -102,7 +103,8 @@ export async function listPosts(
   const { status, categorySlug, tagSlug, keyword, page = 1, size = 10 } = options;
 
   const where: Prisma.PostWhereInput = {};
-  if (status) where.status = status as Prisma.PostWhereInput["status"];
+  const statusValue = parseContentStatus(status);
+  if (statusValue) where.status = statusValue;
 
   /* 分类与标签的 slug 解析并行发出（两者互不依赖）。 */
   const [cat, tag] = await Promise.all([

@@ -46,8 +46,8 @@ export default function AdminAccountPage() {
 
       <Card className="h-fit p-5 lg:max-w-xl">
         <div className="mb-4 flex items-center gap-2">
-          <KeyRound className="h-4.5 w-4.5 text-indigo-600" />
-          <h2 className="text-base font-semibold text-slate-900">修改密码</h2>
+          <KeyRound className="h-4.5 w-4.5 text-admin-accent" />
+          <h2 className="text-base font-semibold text-admin-ink">修改密码</h2>
         </div>
         <div className="space-y-4">
           <Field label="旧密码" required>

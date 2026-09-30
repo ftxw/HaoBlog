@@ -18,6 +18,7 @@ import {
   Modal,
   useConfirm,
 } from "@/components/admin/ui";
+import { TABLE_HEAD_CELL, TABLE_SHELL } from "@/components/admin/styles";
 import type { TagItem } from "@/app/lib/queries/catalog";
 
 interface FormState {
@@ -108,12 +109,12 @@ const TagsPanel = forwardRef<TagsPanelHandle, TagsPanelProps>(function TagsPanel
         ) : (data ?? []).length === 0 ? (
           <EmptyState text="暂无标签" />
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="grid grid-cols-[30%_25%_20%_25%] border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+          <div className={TABLE_SHELL}>
+            <div className="grid grid-cols-[30%_25%_20%_25%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
               {["名称", "slug", "文章数", "操作"].map((h) => (
                 <div
                   key={h}
-                  className="flex h-11 overflow-hidden items-center justify-center px-4"
+                  className={TABLE_HEAD_CELL}
                 >
                   {h}
                 </div>
@@ -122,10 +123,10 @@ const TagsPanel = forwardRef<TagsPanelHandle, TagsPanelProps>(function TagsPanel
             {(data ?? []).map((tag) => (
               <div
                 key={tag.id}
-                className="grid grid-cols-[30%_25%_20%_25%] border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70"
+                className="grid grid-cols-[30%_25%_20%_25%] border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover"
               >
                 <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-                  <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-sm text-indigo-600">
+                  <span className="rounded-full bg-admin-accent-soft px-2.5 py-0.5 text-sm text-admin-accent">
                     {tag.name}
                   </span>
                 </div>
@@ -150,7 +151,7 @@ const TagsPanel = forwardRef<TagsPanelHandle, TagsPanelProps>(function TagsPanel
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
                     onClick={() => handleDelete(tag)}
                   >
                     删除

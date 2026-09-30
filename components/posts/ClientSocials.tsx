@@ -1,20 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
-import { siteConfig } from '@/siteConfig';
-import { useConfigValue } from "@/components/providers/SiteConfigProvider";
+import { useConfigJson } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
 
+const NO_LOGOS: string[] = [];
+
 export default function ClientSocials() {
-  const socialLogosRaw = useConfigValue("socialLogos", JSON.stringify(siteConfig.socialLogos || []));
-  const socialLogos = useMemo(() => {
-    try {
-      const parsed = JSON.parse(socialLogosRaw || "[]");
-      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-    } catch {
-      return [];
-    }
-  }, [socialLogosRaw]);
+  const socialLogos = useConfigJson<string[]>("socialLogos", NO_LOGOS).filter(
+    (x) => typeof x === "string"
+  );
 
   if (socialLogos.length === 0) return null;
 

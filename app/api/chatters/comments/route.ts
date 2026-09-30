@@ -1,7 +1,11 @@
 import { getClientIp } from "@/app/lib/utils";
 import { getCommentUser } from "@/app/lib/comment-auth";
 import { businessFail, fail, ok } from "@/app/lib/http";
-import { createChatterComment } from "@/app/lib/mutations/chatters";
+import {
+  createChatterComment,
+  type ChatterCommentInput,
+} from "@/app/lib/mutations/chatters";
+import { parseJsonBody } from "@/app/lib/mutations/shared";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const comment = await createChatterComment(
-      await request.json(),
+      await parseJsonBody<ChatterCommentInput>(request),
       userInfo,
       getClientIp(request)
     );

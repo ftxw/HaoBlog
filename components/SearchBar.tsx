@@ -1,6 +1,6 @@
 "use client";
 
-import { Hash, Loader2, Search } from "lucide-react";
+import { AlertCircle, Hash, Loader2, RefreshCw, Search } from "lucide-react";
 import { useState, useRef, useEffect, useMemo, type ReactNode } from 'react';
 import Link from 'next/link';
 import { getPosts } from "@/app/lib/api-client";
@@ -40,6 +40,9 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
   const [remoteResults, setRemoteResults] = useState<SearchPost[] | null>(null);
   const [pendingQuery, setPendingQuery] = useState('');
   const [finishedQuery, setFinishedQuery] = useState('');
+  /** 请求失败的那个词。与「真的没搜到」分开，避免把网络故障渲染成空结果。 */
+  const [failedQuery, setFailedQuery] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -69,6 +72,7 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
 
       getPosts({ status: "published", keyword: query, page: 1, size: SEARCH_PANEL_LIMIT }, controller.signal)
         .then((data) => {
+          setFailedQuery('');
           setRemoteResults(
             data.map((p) => ({
               id: p.id,
@@ -79,7 +83,10 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
             }))
           );
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          // 换词/清空会 abort 掉上一个请求，这不是故障，不能提示。
+          if (err instanceof Error && err.name === "AbortError") return;
+          setFailedQuery(query);
         })
         .finally(() => {
           setFinishedQuery(query);
@@ -87,7 +94,14 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, retryTick]);
+
+  const retrySearch = () => {
+    // 清掉 finished/failed，让 in-flight 判定重新成立（否则重试期间不会显示「搜索中」）。
+    setFinishedQuery("");
+    setFailedQuery("");
+    setRetryTick((t) => t + 1);
+  };
 
   const localResults = useMemo(() => {
     if (!query) return [];
@@ -102,6 +116,7 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
 
   const searchResults = remoteResults ?? localResults;
   const searching = query !== '' && pendingQuery === query && finishedQuery !== query;
+  const searchFailed = query !== '' && failedQuery === query;
   const panelOpen = isOpen && query !== '';
 
   return (
@@ -131,6 +146,21 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
         <div className="glass-strong absolute left-0 right-0 top-full z-20 mt-4 max-h-[450px] overflow-y-auto rounded-card">
           {searchResults.length > 0 ? (
             <div className="flex flex-col py-3">
+              {searchFailed && (
+                <div className="mx-6 mb-3 flex items-center justify-between gap-3 rounded-card-sm bg-tone-danger-soft px-3 py-2 text-xs font-medium text-tone-danger">
+                  <span className="flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    远程搜索失败，以下为本地结果
+                  </span>
+                  <button
+                    type="button"
+                    onClick={retrySearch}
+                    className="shrink-0 cursor-pointer font-bold underline underline-offset-2"
+                  >
+                    重试
+                  </button>
+                </div>
+              )}
               {searchResults.map((post) => (
                 <Link
                   href={`/posts/${post.id}`}
@@ -175,6 +205,21 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
               <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
               <p className="text-sm font-medium text-ink-3">搜索中…</p>
+            </div>
+          ) : searchFailed ? (
+            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-tone-danger-soft">
+                <AlertCircle className="h-6 w-6 text-tone-danger" />
+              </div>
+              <p className="font-medium text-ink-3">搜索暂时不可用，请稍后重试</p>
+              <button
+                type="button"
+                onClick={retrySearch}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-pill bg-accent-soft px-4 py-1.5 text-sm font-bold text-accent transition-colors hover:bg-accent hover:text-accent-ink"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                重试
+              </button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">

@@ -14,6 +14,7 @@ import {
   requireId,
   requireStringArray,
 } from "@/app/lib/mutations/shared";
+import { CONTENT_STATUSES, type ContentStatusValue } from "@/app/lib/content-status";
 
 /** 项目写路径的入参。 */
 export interface ProjectInput {
@@ -29,11 +30,11 @@ export interface ProjectInput {
   sort?: number;
 }
 
-export type ProjectStatus = "published" | "draft";
+export type ProjectStatus = ContentStatusValue;
 
 function normalizeStatus(value: unknown, fallback: ProjectStatus): ProjectStatus {
   if (value === undefined) return fallback;
-  if (value === "published" || value === "draft") return value;
+  if ((CONTENT_STATUSES as readonly unknown[]).includes(value)) return value as ProjectStatus;
   throw new BusinessError("无效的项目状态", 400);
 }
 

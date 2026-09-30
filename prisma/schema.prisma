@@ -34,7 +34,7 @@ enum AlbumLayout {
 model User {
   id         String   @id @default(ulid())
   /// Supabase Auth 的邮箱，同时用作本站账号的唯一标识（所有查询都按它定位）
-  username   String   @unique
+  email      String   @unique
   is_admin   Boolean  @default(false)
   created_at DateTime @default(now()) @db.Timestamptz(3)
 
@@ -332,18 +332,18 @@ model ImageUpload {
 }
 
 model LoginLog {
-  id            String   @id @default(ulid())
-  user_id       String   @default("")
-  username      String   @default("")
-  ip            String   @default("")
-  address       String   @default("")
-  system        String   @default("")
-  browser       String   @default("")
-  summary       String   @default("")
-  operatingTime DateTime @default(now()) @map("operating_time") @db.Timestamptz(3)
+  id             String   @id @default(ulid())
+  user_id        String   @default("")
+  ip             String   @default("")
+  address        String   @default("")
+  system         String   @default("")
+  browser        String   @default("")
+  summary        String   @default("")
+  operating_time DateTime @default(now()) @db.Timestamptz(3)
 
-  @@index([user_id, operatingTime])
-  // 说明：保留期清理的谓词只有 operating_time，用不上上面那条复合索引（以 user_id 打头）。
+  @@index([user_id, operating_time])
+  /// 保留期清理只按 operating_time 过滤，用不上上面那条以 user_id 打头的复合索引
+  @@index([operating_time])
   @@map("login_log")
 }
 

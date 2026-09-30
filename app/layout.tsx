@@ -7,7 +7,7 @@ import { MusicProvider } from "@/components/providers/MusicProvider";
 import { SiteConfigProvider } from "@/components/providers/SiteConfigProvider";
 import SiteFrame from "@/components/layout/SiteFrame";
 import RevealObserver from "@/components/layout/RevealObserver";
-import { getDbSiteConfig, getPublicSiteConfig } from "@/app/lib/site-config-db";
+import { getDbSiteConfig, getPublicSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
 import {
   absoluteUrlOf,
@@ -15,15 +15,14 @@ import {
   normalizeCdnDomain,
   proxyUrlOf,
 } from "@/app/lib/image-thumb";
-import { siteConfig } from "@/siteConfig";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dbConfig = await getDbSiteConfig();
   const base = new URL(await resolveSiteBaseUrl());
-  const title = dbConfig.title || siteConfig.title;
-  const description = dbConfig.bio || siteConfig.bio;
+  const title = pickConfigValue(dbConfig, "title");
+  const description = pickConfigValue(dbConfig, "bio");
   const cover =
-    dbConfig.avatarUrl || dbConfig.defaultPostCover || siteConfig.avatarUrl || siteConfig.defaultPostCover;
+    pickConfigValue(dbConfig, "avatarUrl") || pickConfigValue(dbConfig, "defaultPostCover");
   // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
   const ogImage = absoluteUrlOf(
     proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
@@ -59,12 +58,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 必须是剔除私钥的子集：这份配置会作为 initialConfig 注入
+  // 必须是剔除私钥的子集：这份配置会作为 initialConfig 注入客户端 Provider。
   const dbConfig = await getPublicSiteConfig();
 
   configureCdnDomain(dbConfig.imageCdnDomain);
 
-  const defaultTheme = dbConfig.themeMode || siteConfig.themeMode;
+  const defaultTheme = pickConfigValue(dbConfig, "themeMode");
   const initialDark = defaultTheme !== "light";
 
   const themeInitScript = `(function(){try{var stored=localStorage.getItem("theme");var fallback=${JSON.stringify(

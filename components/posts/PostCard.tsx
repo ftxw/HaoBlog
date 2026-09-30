@@ -5,7 +5,6 @@ import { Clock } from "lucide-react";
 import Link from "next/link";
 import SafeImage from "@/components/ui/SafeImage";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
-import { siteConfig } from "@/siteConfig";
 import { formatDateCN } from "@/app/lib/format";
 import { thumbUrlOf } from "@/app/lib/image-thumb";
 import type { PostListItem } from "@/app/lib/queries/posts";
@@ -17,7 +16,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const defaultCover = useConfigValue("defaultPostCover", siteConfig.defaultPostCover);
+  const defaultCover = useConfigValue("defaultPostCover");
   const imageSrc = post.cover || defaultCover;
   const [thumbBroken, setThumbBroken] = useState(false);
   const [prevSrc, setPrevSrc] = useState(imageSrc);

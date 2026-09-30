@@ -19,6 +19,7 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import DateWheelPicker from "@/components/ui/DateWheelPicker";
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -72,7 +73,7 @@ function SortablePhoto({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "group relative cursor-grab overflow-hidden rounded-lg border border-slate-200 bg-slate-50 active:cursor-grabbing",
+        "group relative cursor-grab overflow-hidden rounded-lg border border-admin-border bg-admin-surface-muted active:cursor-grabbing",
         isDragging && "z-10 opacity-60 shadow-lg"
       )}
       {...attributes}
@@ -88,7 +89,7 @@ function SortablePhoto({
         className="aspect-square w-full object-cover"
       />
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-        <p className="truncate text-xs text-white">
+        <p className="truncate text-xs text-admin-sidebar-ink">
           {photo.caption || formatDateCN(new Date(photo.taken_at)) || "无说明"}
         </p>
       </div>
@@ -98,8 +99,8 @@ function SortablePhoto({
         className={cn(
           "absolute left-1.5 top-1.5 z-10 rounded-md p-1 transition-opacity cursor-pointer",
           isCover
-            ? "bg-indigo-500 text-white opacity-100"
-            : "bg-white/90 text-slate-600 opacity-0 hover:text-indigo-600 group-hover:opacity-100"
+            ? "bg-admin-accent text-admin-accent-ink opacity-100"
+            : "bg-admin-overlay text-admin-ink-3 opacity-0 hover:text-admin-accent group-hover:opacity-100"
         )}
       >
         <Pin className={cn("h-3.5 w-3.5", isCover && "fill-current")} />
@@ -108,14 +109,14 @@ function SortablePhoto({
         <button type="button"
           title="编辑信息"
           onClick={() => onEdit(photo)}
-          className="rounded-md bg-white/90 p-1 text-slate-600 hover:text-indigo-600 cursor-pointer"
+          className="rounded-md bg-admin-overlay p-1 text-admin-ink-3 hover:text-admin-accent cursor-pointer"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button type="button"
           title="删除照片"
           onClick={() => onDelete(photo)}
-          className="rounded-md bg-white/90 p-1 text-slate-600 hover:text-red-600 cursor-pointer"
+          className="rounded-md bg-admin-overlay p-1 text-admin-ink-3 hover:text-admin-danger cursor-pointer"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -367,7 +368,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
+      <div className="flex items-center justify-center gap-2 py-24 text-admin-ink-5">
         <Loader2 className="h-5 w-5 animate-spin" />
         <span className="text-sm">加载相册中…</span>
       </div>
@@ -378,10 +379,10 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-admin-ink">
             {isNew ? "新建相册" : "编辑相册"}
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-admin-ink-4">
             {updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
           </p>
         </div>
@@ -397,7 +398,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-4 lg:col-span-3">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="标题" required>
               <Input
                 value={title}
@@ -418,8 +419,8 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
           <Card className="p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">照片列表</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-base font-semibold text-admin-ink">照片列表</h2>
+                <p className="text-xs text-admin-ink-5">
                   {photoCount} 张照片，按 sort 升序展示
                 </p>
               </div>
@@ -487,7 +488,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
         </div>
 
         <div className="space-y-4">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="设置时间" hint="未设置时按最近更新时间显示">
               <DateWheelPicker
                 value={publishedAt}
@@ -504,7 +505,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
           </Card>
 
           <Card className="p-5">
-            <p className="mb-2 text-sm font-medium text-slate-700">封面图片</p>
+            <p className="mb-2 text-sm font-medium text-admin-ink-2">封面图片</p>
             <ImageUploader
               mode="single"
               value={cover}
@@ -514,7 +515,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
               folder={currentId ? String(currentId) : undefined}
               canDeleteImage={(url) => !photos.some((p) => p.url === url)}
             />
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-admin-ink-5">
               可上传新图，也可在照片列表中把某张照片设为封面
             </p>
           </Card>
@@ -544,7 +545,7 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
               alt=""
               loading="lazy"
               decoding="async"
-              className="max-h-52 w-full rounded-lg border border-slate-200 object-contain"
+              className="max-h-52 w-full rounded-lg border border-admin-border object-contain"
             />
           )}
           <Field label="照片说明">

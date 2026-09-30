@@ -90,16 +90,16 @@ export default function AdminShell({
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-800 px-5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500 text-sm font-bold text-white">
+      <div className="flex h-14 items-center gap-2 border-b border-admin-sidebar-divider px-5">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-admin-accent text-sm font-bold text-admin-accent-ink">
           管
         </div>
-        <span className="text-base font-bold text-white">博客后台</span>
+        <span className="text-base font-bold text-admin-sidebar-ink">博客后台</span>
       </div>
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.title}>
-            <p className="px-3 pb-1.5 text-xs font-medium uppercase tracking-wider text-slate-500">
+            <p className="px-3 pb-1.5 text-xs font-medium uppercase tracking-wider text-admin-ink-4">
               {group.title}
             </p>
             <div className="space-y-0.5">
@@ -114,8 +114,8 @@ export default function AdminShell({
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
                       active
-                        ? "bg-indigo-500/20 font-medium text-indigo-300"
-                        : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                        ? "bg-admin-sidebar-active font-medium text-admin-sidebar-active-ink"
+                        : "text-admin-ink-5 hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink-2"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -127,11 +127,11 @@ export default function AdminShell({
           </div>
         ))}
       </nav>
-      <div className="border-t border-slate-800 p-3">
+      <div className="border-t border-admin-sidebar-divider p-3">
         <Link prefetch={false}
           href="/"
           target="_blank"
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800/60 hover:text-slate-200"
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-admin-ink-5 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink-2"
         >
           <Home className="h-4 w-4" />
           回到前台
@@ -141,20 +141,20 @@ export default function AdminShell({
   );
 
   return (
-    <div className="theme-light flex min-h-screen bg-slate-100">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 bg-slate-900 lg:block">
+    <div className="theme-light flex min-h-screen bg-admin-canvas">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 bg-admin-sidebar lg:block">
         {sidebar}
       </aside>
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/60"
+            className="absolute inset-0 bg-admin-scrim"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-slate-900">
+          <aside className="absolute inset-y-0 left-0 w-64 bg-admin-sidebar">
             <button type="button"
-              className="absolute right-3 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-800 cursor-pointer"
+              className="absolute right-3 top-4 rounded-lg p-1 text-admin-ink-5 hover:bg-admin-sidebar-hover cursor-pointer"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -165,20 +165,20 @@ export default function AdminShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur lg:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-admin-border bg-admin-overlay px-4 backdrop-blur lg:px-6">
           <button type="button"
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden cursor-pointer"
+            className="rounded-lg p-1.5 text-admin-ink-4 bg-admin-canvas lg:hidden cursor-pointer"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="hidden truncate text-sm text-slate-500 lg:block">
+          <div className="hidden truncate text-sm text-admin-ink-4 lg:block">
             欢迎回来{authorName ? `，${authorName}` : ""}
           </div>
           <div className="flex items-center gap-3">
             <button type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600 cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-admin-ink-4 transition-colors bg-admin-canvas hover:text-admin-danger cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               退出

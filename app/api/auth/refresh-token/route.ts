@@ -42,24 +42,17 @@ export async function GET(request: Request) {
   }
 }
 
+/** POST：前端在拿到 401 + canRefresh 时就地续期，无需跳转。 */
 export async function POST(request: Request) {
   try {
-    let body: { refreshToken?: unknown } = {};
-    try {
-      body = await request.json();
-    } catch {
-    }
-
-    const refreshToken =
-      typeof body.refreshToken === "string" && body.refreshToken
-        ? body.refreshToken
-        : readRefreshTokenFromCookieHeader(request.headers.get("cookie") || "");
-
+    const refreshToken = readRefreshTokenFromCookieHeader(
+      request.headers.get("cookie") || ""
+    );
     if (!refreshToken) {
       return fail("缺少 refreshToken", 401);
     }
 
-    const session = await refreshSession(String(refreshToken));
+    const session = await refreshSession(refreshToken);
 
     const res = ok({ expires: session.expires });
     return setSessionCookie(res, session);

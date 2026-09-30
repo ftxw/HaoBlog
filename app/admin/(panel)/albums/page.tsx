@@ -1,6 +1,4 @@
 
-export const dynamic = "force-dynamic";
-
 import { redirect } from "next/navigation";
 import { getServerAdmin } from "@/app/lib/server-auth";
 import { listAlbums } from "@/app/lib/queries/albums";

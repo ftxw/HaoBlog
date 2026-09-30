@@ -10,6 +10,7 @@ import {
 } from "@/app/lib/s3-image-host";
 import { BusinessError } from "@/app/lib/business-error";
 import { isRecordNotFound, purgeContentLikes, requireId } from "@/app/lib/mutations/shared";
+import { CONTENT_STATUSES, type ContentStatusValue } from "@/app/lib/content-status";
 
 const POST_RELATIONS = {
   category: true,
@@ -28,11 +29,11 @@ export interface PostInput {
   published_at?: string | null;
 }
 
-export type PostStatus = "published" | "draft";
+export type PostStatus = ContentStatusValue;
 
 function normalizeStatus(value: unknown, fallback: PostStatus): PostStatus {
   if (value === undefined || value === null || value === "") return fallback;
-  if (value === "published" || value === "draft") return value;
+  if ((CONTENT_STATUSES as readonly unknown[]).includes(value)) return value as PostStatus;
   throw new BusinessError("无效的文章状态", 400);
 }
 

@@ -6,24 +6,19 @@ import { peekGeo, warmGeo, resolveGeo, formatAddress, isPrivateIp } from "@/app/
 import { parseBrowser } from "@/app/lib/ua";
 import { formatDateCN } from "@/app/lib/format";
 import { hitRateLimit } from "@/app/lib/rate-limit";
+import {
+  DAILY_UV_RETENTION_DAYS,
+  LOGIN_LOG_RETENTION_DAYS,
+  VISITOR_LOG_RETENTION_DAYS,
+  retentionCutoff,
+} from "@/app/lib/retention";
 
 function todayStr(): string {
   return formatDateCN(new Date());
 }
 
 function uvCutoffStr(): string {
-  return formatDateCN(new Date(Date.now() - 7 * 24 * 3600 * 1000));
-}
-
-function visitorCutoff(): Date {
-  return new Date(Date.now() - 30 * 24 * 3600 * 1000);
-}
-
-// 登录日志保留 180 天；表本身没有其它清理点，不设保留期会无限增长。
-const LOGIN_LOG_RETENTION_DAYS = 180;
-
-function loginLogCutoff(): Date {
-  return new Date(Date.now() - LOGIN_LOG_RETENTION_DAYS * 24 * 3600 * 1000);
+  return formatDateCN(retentionCutoff(DAILY_UV_RETENTION_DAYS));
 }
 
 const CLEAN_INTERVAL = 5 * 60 * 1000; // 5 分钟最多执行一次清理
@@ -38,8 +33,12 @@ async function cleanIfDue(): Promise<void> {
   try {
     await Promise.allSettled([
       prisma.dailyUv.deleteMany({ where: { date: { lt: uvCutoffStr() } } }),
-      prisma.visitorLog.deleteMany({ where: { created_at: { lt: visitorCutoff() } } }),
-      prisma.loginLog.deleteMany({ where: { operatingTime: { lt: loginLogCutoff() } } }),
+      prisma.visitorLog.deleteMany({
+        where: { created_at: { lt: retentionCutoff(VISITOR_LOG_RETENTION_DAYS) } },
+      }),
+      prisma.loginLog.deleteMany({
+        where: { operating_time: { lt: retentionCutoff(LOGIN_LOG_RETENTION_DAYS) } },
+      }),
     ]);
   } catch (e) {
     console.warn("[stats/record] 低频清理失败:", e);

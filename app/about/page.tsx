@@ -4,8 +4,7 @@ export const revalidate = 300;
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/app/lib/prisma";
-import { siteConfig } from "@/siteConfig";
-import { getDbSiteConfig } from "@/app/lib/site-config-db";
+import { getDbSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { formatDateCN } from "@/app/lib/format";
 import { aboutContentDefault } from "@/app/lib/site-config-defs";
 import { normalizeCdnDomain } from "@/app/lib/image-thumb";
@@ -21,11 +20,11 @@ export const metadata: Metadata = {
 
 export default async function AboutPage() {
   const dbConfig = await getDbSiteConfig();
-  const avatarUrl = dbConfig.avatarUrl || siteConfig.avatarUrl;
-  const authorName = dbConfig.authorName || siteConfig.authorName;
-  const authorBio = dbConfig.bio || siteConfig.bio;
+  const avatarUrl = pickConfigValue(dbConfig, "avatarUrl");
+  const authorName = pickConfigValue(dbConfig, "authorName");
+  const authorBio = pickConfigValue(dbConfig, "bio");
   const markdown = dbConfig.aboutContent || aboutContentDefault;
-  const coverImage = dbConfig.aboutCover || siteConfig.aboutCover;
+  const coverImage = pickConfigValue(dbConfig, "aboutCover");
   const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
 
   const recentPosts = await prisma.post

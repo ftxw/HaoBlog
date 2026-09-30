@@ -1,7 +1,8 @@
 import { getClientIp } from "@/app/lib/utils";
 import { getCommentUser } from "@/app/lib/comment-auth";
 import { businessFail, fail, ok } from "@/app/lib/http";
-import { createComment } from "@/app/lib/mutations/comments";
+import { createComment, type CommentInput } from "@/app/lib/mutations/comments";
+import { parseJsonBody } from "@/app/lib/mutations/shared";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const comment = await createComment(
-      await request.json(),
+      await parseJsonBody<CommentInput>(request),
       userInfo,
       getClientIp(request)
     );

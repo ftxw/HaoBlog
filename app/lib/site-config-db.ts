@@ -34,15 +34,18 @@ export async function getDbSiteConfig(): Promise<Record<string, string>> {
   }
 }
 
-export async function getDbConfigValue(key: string, defaultValue?: string): Promise<string> {
-  const config = await getDbSiteConfig();
+/**
+ * 取配置值：只有「键不存在」才回落默认值；空串是后台**显式清空**的语义
+ * （如 geoApiUrl 留空即关闭归属地查询），不能被默认值顶回来。
+ * 前端 useConfigValue 必须与此同语义 —— 改这里要一起改。
+ */
+export function pickConfigValue(config: Record<string, string>, key: string): string {
   const value = config[key];
-  // 键存在就按字面返回，哪怕是空串 —— 空串是后台「显式清空」的语义
-  // （例如 geoApiUrl 留空即表示关闭归属地查询），不能被默认值悄悄顶回来。
-  if (value !== undefined) return value;
-  // 键不存在 = 这个库没跑过 syncSiteConfig：优先用调用方给的默认值，
-  // 其次回落到 siteConfigDefs 里声明的默认值（与后台界面显示的那个一致）。
-  return defaultValue ?? defaultConfigValue(key);
+  return value === undefined ? defaultConfigValue(key) : value;
+}
+
+export async function getDbConfigValue(key: string): Promise<string> {
+  return pickConfigValue(await getDbSiteConfig(), key);
 }
 
 /* ── 敏感键过滤（单一出口）──────────────────────────────────────────── */

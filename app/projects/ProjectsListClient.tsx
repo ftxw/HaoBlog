@@ -10,7 +10,6 @@ import { mergeRows, shouldLoadMore } from "@/app/lib/paged-list";
 import CommentAuthProvider from "@/components/providers/CommentAuthProvider";
 import ProjectComments from "./ProjectComments";
 import { formatDateCN } from "@/app/lib/format";
-import { siteConfig } from "@/siteConfig";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
 import PageHeader from "@/components/ui/PageHeader";
 import SegmentedFilter from "@/components/ui/SegmentedFilter";
@@ -46,7 +45,7 @@ function ProjectTimelineNode({
 }) {
   const isLeft = index % 2 === 0;
   const techStack = useMemo(() => toStringArray(project.tech_stack), [project.tech_stack]);
-  const defaultCover = useConfigValue("defaultPostCover", siteConfig.defaultPostCover);
+  const defaultCover = useConfigValue("defaultPostCover");
   const cover =
     project.images?.[0] || project.cover_image || defaultCover;
   const [coverBroken, setCoverBroken] = useState(false);

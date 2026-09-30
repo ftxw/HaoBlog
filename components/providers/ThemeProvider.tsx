@@ -101,7 +101,7 @@ function getPrefersDarkServerSnapshot(): boolean {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const defaultMode = useConfigValue("themeMode", "dark");
+  const defaultMode = useConfigValue("themeMode");
 
   const manualTheme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getThemeServerSnapshot);
   const prefersDark = useSyncExternalStore(

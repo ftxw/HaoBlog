@@ -8,12 +8,18 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const STREAM_DEADLINE = 12_000;
 
+/** 302 的落地是可能过期的外链音频地址，两层缓存都显式 no-store（与 /api/img-proxy 同一写法）。 */
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, must-revalidate",
+  "Vercel-CDN-Cache-Control": "no-store",
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const urlId = searchParams.get("url_id");
 
   if (!urlId) {
-    return new Response("缺少 url_id 参数", { status: 400 });
+    return new Response("缺少 url_id 参数", { status: 400, headers: NO_STORE_HEADERS });
   }
 
   try {
@@ -27,12 +33,12 @@ export async function GET(req: NextRequest) {
     const src = (data.url || "").replace(/^http:\/\//, "https://");
 
     if (!src) {
-      return new Response("获取音乐链接失败", { status: 404 });
+      return new Response("获取音乐链接失败", { status: 404, headers: NO_STORE_HEADERS });
     }
 
-    return NextResponse.redirect(src, 302);
+    return NextResponse.redirect(src, { status: 302, headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error("Music stream error:", err);
-    return new Response("流媒体解析失败", { status: 500 });
+    return new Response("流媒体解析失败", { status: 500, headers: NO_STORE_HEADERS });
   }
 }

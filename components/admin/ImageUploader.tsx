@@ -104,7 +104,7 @@ export default function ImageUploader({
           <div
             key={url}
             className={cn(
-              "group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50",
+              "group relative overflow-hidden rounded-lg border border-admin-border bg-admin-surface-muted",
               height,
               mode === "single" ? (square ? "w-28" : "w-full") : "w-28"
             )}
@@ -123,7 +123,7 @@ export default function ImageUploader({
             <button
               type="button"
               onClick={() => removeImage(url)}
-              className="absolute right-1 top-1 rounded-full bg-slate-900/70 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
+              className="absolute right-1 top-1 rounded-full bg-admin-scrim p-1 text-admin-sidebar-ink opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>
@@ -136,7 +136,7 @@ export default function ImageUploader({
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
             className={cn(
-              "flex w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 transition-colors hover:border-indigo-400 hover:text-indigo-500 cursor-pointer",
+              "flex w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-admin-border-control text-admin-ink-5 transition-colors hover:border-admin-accent-ring hover:text-admin-accent cursor-pointer",
               height,
               mode === "single" && (square ? "w-28" : "w-full")
             )}
@@ -157,7 +157,7 @@ export default function ImageUploader({
           </button>
         )}
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-admin-danger">{error}</p>}
       <input
         ref={inputRef}
         type="file"

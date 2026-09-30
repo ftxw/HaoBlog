@@ -18,9 +18,11 @@ import {
   Select,
   Loading,
 } from "@/components/admin/ui";
+import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { ProjectItem } from "@/app/lib/queries/projects";
 import type { ProjectStatus } from "@/app/lib/mutations/projects";
+import { CONTENT_STATUSES } from "@/app/lib/content-status";
 
 export type { ProjectItem };
 
@@ -48,8 +50,6 @@ const emptyForm: FormState = {
   is_featured: false,
 };
 
-const PROJECT_STATUSES: ProjectStatus[] = ["published", "draft"];
-
 const PLACEHOLDER_NAME = "未命名项目";
 
 export default function ProjectEditor({ projectId }: { projectId?: string }) {
@@ -74,7 +74,7 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
       cover_image: data.cover_image || "",
       images: data.images || [],
       techStackText: (data.tech_stack || []).join(", "),
-      status: (PROJECT_STATUSES as string[]).includes(data.status)
+      status: (CONTENT_STATUSES as readonly string[]).includes(data.status)
         ? (data.status as ProjectStatus)
         : "published",
       status_label: data.status_label || "",
@@ -149,9 +149,9 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">编辑项目</h1>
+          <h1 className="text-xl font-bold text-admin-ink">编辑项目</h1>
           {data?.updated_at && (
-            <p className="mt-0.5 text-sm text-slate-500">
+            <p className="mt-0.5 text-sm text-admin-ink-4">
               最后更新于 {formatDate(data.updated_at)}
             </p>
           )}
@@ -169,7 +169,7 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-4 lg:col-span-3">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="项目名称" required>
               <Input
                 value={form.name}
@@ -202,11 +202,11 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
             </Field>
           </Card>
 
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">项目截图</h2>
-                <p className="text-xs text-slate-400">支持批量上传，上传顺序即展示顺序</p>
+                <h2 className="text-base font-semibold text-admin-ink">项目截图</h2>
+                <p className="text-xs text-admin-ink-5">支持批量上传，上传顺序即展示顺序</p>
               </div>
             </div>
             <ImageUploader
@@ -221,7 +221,7 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
         </div>
 
         <div className="space-y-4">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="封面图">
               <ImageUploader
                 mode="single"
@@ -234,7 +234,7 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
               />
             </Field>
           </Card>
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="状态" hint="仅「已发布」会在前台展示">
               <Select
                 value={form.status}
@@ -254,14 +254,14 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
               />
             </Field>
             <div className="flex items-end pb-1">
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-admin-ink-2">
                 <input
                   type="checkbox"
                   checked={form.is_featured}
                   onChange={(e) =>
                     setForm({ ...form, is_featured: e.target.checked })
                   }
-                  className="h-4 w-4 rounded border-slate-300 accent-indigo-600"
+                  className="h-4 w-4 rounded border-admin-border-control accent-admin-accent"
                 />
                 精选项目
               </label>

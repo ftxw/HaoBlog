@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Loader2 } from "lucide-react";
+import { AlertCircle, BookOpen, Loader2, RefreshCw } from "lucide-react";
 import PostCard from "@/components/posts/PostCard";
 import type { PostListItem } from "@/app/lib/queries/posts";
 import { getPosts } from "@/app/lib/api-client";
@@ -28,6 +28,9 @@ export default function PostsClient({
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
+  /** 请求失败要与「真的没有文章」区分开，不能把故障渲染成空列表。 */
+  const [error, setError] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [searchQuery, setSearchQuery] = useUrlParam("q", "");
   const pageSize = 12;
   // 首次挂载已有服务端注入的数据，跳过第一次自动请求
@@ -52,6 +55,7 @@ export default function PostsClient({
     })
       .then((data) => {
         if (!active) return;
+        setError(false);
         if (page === 1) {
           setPosts(data);
         } else {
@@ -61,8 +65,8 @@ export default function PostsClient({
       })
       .catch(() => {
         if (!active) return;
-        if (page === 1) setPosts([]);
-        setHasMore(false);
+        /* 保留已加载的列表，只标记失败：清空会被误读成「没有文章」。 */
+        setError(true);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -70,7 +74,7 @@ export default function PostsClient({
     return () => {
       active = false;
     };
-  }, [activeCategory, effectiveKeyword, page]);
+  }, [activeCategory, effectiveKeyword, page, retryTick]);
 
   const handleCategoryChange = (cat: string | null) => {
     setActiveCategory(cat);
@@ -124,6 +128,22 @@ export default function PostsClient({
         <div className="flex items-center justify-center py-32">
           <Loader2 className="w-8 h-8 text-accent animate-spin" />
         </div>
+      ) : error && posts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-32 text-ink-4">
+          <AlertCircle className="w-12 h-12 mb-4 text-tone-danger opacity-60" />
+          <p>文章加载失败，请检查网络后重试</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              setRetryTick((t) => t + 1);
+            }}
+            className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-pill bg-accent-soft px-4 py-1.5 text-sm font-bold text-accent transition-colors hover:bg-accent hover:text-accent-ink"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            重试
+          </button>
+        </div>
       ) : posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-ink-4">
           <BookOpen className="w-12 h-12 mb-4 opacity-40" />
@@ -134,16 +154,36 @@ export default function PostsClient({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-          {posts.map((post, index) => (
-            <Reveal key={post.id} delay={index * 0.08}>
-              <PostCard post={post} />
-            </Reveal>
-          ))}
-        </div>
+        <>
+          {error && (
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-card-sm bg-tone-danger-soft px-4 py-2.5 text-sm font-medium text-tone-danger md:mb-6">
+              <span className="flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                加载失败，以下为已加载的内容
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(false);
+                  setRetryTick((t) => t + 1);
+                }}
+                className="shrink-0 cursor-pointer font-bold underline underline-offset-2"
+              >
+                重试
+              </button>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+            {posts.map((post, index) => (
+              <Reveal key={post.id} delay={index * 0.08}>
+                <PostCard post={post} />
+              </Reveal>
+            ))}
+          </div>
+        </>
       )}
 
-      {hasMore && posts.length > 0 && !loading && (
+      {hasMore && posts.length > 0 && !loading && !error && (
         <div className="flex justify-center mt-10">
           <button
             type="button"

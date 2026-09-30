@@ -4,8 +4,19 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const LYRIC_DEADLINE = 12_000;
 
-/** 歌词代理的缓存策略由本路由独占声明（成功 1h、错误/空 no-store）。 */
-const ERROR_CACHE_HEADERS = { "Cache-Control": "no-store, must-revalidate" };
+/** 歌词代理的缓存策略由本路由独占声明（成功 1h、错误/空 no-store）。
+ *  缓存分两层：`Cache-Control` 面向浏览器/CDN，`Vercel-CDN-Cache-Control` 单独控 Vercel 边缘
+ *  —— 与 /api/img-proxy 采用同一套写法。 */
+const ERROR_CACHE_HEADERS = {
+  "Cache-Control": "no-store, must-revalidate",
+  "Vercel-CDN-Cache-Control": "no-store",
+};
+
+const SUCCESS_CACHE_HEADERS = {
+  "Content-Type": "text/plain; charset=utf-8",
+  "Cache-Control": "public, max-age=3600",
+  "Vercel-CDN-Cache-Control": "public, max-age=3600",
+};
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -35,10 +46,7 @@ export async function GET(req: NextRequest) {
 
     return new Response(lrc, {
       status: 200,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
+      headers: SUCCESS_CACHE_HEADERS,
     });
   } catch (err) {
     console.error("Lyric proxy error:", err);

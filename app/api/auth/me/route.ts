@@ -2,19 +2,19 @@ import { getCurrentUser } from "@/app/lib/auth";
 import { businessFail, errMsg, errorStatus, fail, ok } from "@/app/lib/http";
 import { readRefreshTokenFromCookieHeader } from "@/app/lib/session-cookie";
 
-function toMeData(
-  u: { id: string; email: string; nickname: string; avatar: string; is_admin: boolean },
-  bio = ""
-) {
-      return {
-        id: u.id,
-        nickname: u.nickname,
+function toMeData(u: {
+  id: string;
+  email: string;
+  nickname: string;
+  avatar: string;
+  is_admin: boolean;
+}) {
+  return {
+    id: u.id,
+    nickname: u.nickname,
     avatar: u.avatar,
     email: u.email,
-    bio,
     is_admin: u.is_admin,
-    roles: u.is_admin ? ["admin"] : ["user"],
-    permissions: u.is_admin ? ["*"] : [],
   };
 }
 

@@ -2,11 +2,12 @@
 
 import type { CSSProperties } from "react";
 import { useConfigJson } from "@/components/providers/SiteConfigProvider";
-import { siteConfig } from "@/siteConfig";
 import { glowOverrides, normalizeThemeColors } from "@/app/lib/glow-colors";
 
+const NO_COLORS: string[] = [];
+
 export default function BackgroundRenderer() {
-  const themeColors = useConfigJson<string[]>("themeColors", siteConfig.themeColors);
+  const themeColors = useConfigJson<string[]>("themeColors", NO_COLORS);
   const customColors = normalizeThemeColors(themeColors);
 
   return (

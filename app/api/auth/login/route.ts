@@ -24,11 +24,9 @@ export async function POST(request: Request) {
     const res = ok({
       id: user.id,
       avatar: user.avatar,
-      username: user.email,
       email: user.email,
       nickname: user.nickname,
-      roles: isAdmin ? ["admin"] : ["user"],
-      permissions: isAdmin ? ["*"] : [],
+      isAdmin,
     });
     return setSessionCookie(res, session);
   } catch (e) {

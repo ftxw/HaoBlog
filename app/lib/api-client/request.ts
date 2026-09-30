@@ -38,9 +38,12 @@ export interface CommentSessionUser {
   avatar: string;
 }
 
+/** 本地会话快照的键。只在「服务端暂时答不出来」时用于兜底展示，权威来源始终是 cookie 会话。 */
+const COMMENT_USER_KEY = "comment_user";
+
 export function saveCommentSession(user: CommentSessionUser) {
   try {
-    localStorage.setItem("anonymous_user", JSON.stringify(user));
+    localStorage.setItem(COMMENT_USER_KEY, JSON.stringify(user));
   } catch {
   }
 }
@@ -48,7 +51,7 @@ export function saveCommentSession(user: CommentSessionUser) {
 export function loadCommentUser(): CommentSessionUser | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem("anonymous_user");
+    const raw = localStorage.getItem(COMMENT_USER_KEY);
     if (!raw) return null;
     const u = JSON.parse(raw);
     if (u && typeof u.id === "string") return u as CommentSessionUser;
@@ -58,11 +61,16 @@ export function loadCommentUser(): CommentSessionUser | null {
   }
 }
 
-export function clearCommentSession() {
+/** 只清本地快照，不发起登出请求。 */
+export function dropCommentSession(): void {
   try {
-    localStorage.removeItem("anonymous_user");
+    localStorage.removeItem(COMMENT_USER_KEY);
   } catch {
   }
+}
+
+export function clearCommentSession() {
+  dropCommentSession();
   fetch("/api/auth/logout", {
     method: "POST",
     credentials: "same-origin",

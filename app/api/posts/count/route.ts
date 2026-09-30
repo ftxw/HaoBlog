@@ -5,6 +5,7 @@ import { fail, ok } from "@/app/lib/http";
 import { prisma } from "@/app/lib/prisma";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { isAdminRequest } from "@/app/lib/auth";
+import { parseContentStatus } from "@/app/lib/content-status";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -14,9 +15,8 @@ export async function GET(req: NextRequest) {
 
     // 安全：匿名不得通过 ?status=draft 探测草稿数量；管理员才允许任意 status。
     const isAdmin = await isAdminRequest(req);
-    const requested = isAdmin ? statusParam : "published";
-    const effectiveStatus =
-      requested === "published" || requested === "draft" ? requested : undefined;
+    /* 非法/缺失 status 一律退化为「不过滤」。 */
+    const effectiveStatus = parseContentStatus(isAdmin ? statusParam : "published");
     const bypassCache = isAdmin || Boolean(statusParam);
 
     const loader = async () => {

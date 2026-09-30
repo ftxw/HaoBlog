@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import Comments from "@/components/Comments";
+import Comments from "@/components/comments/Comments";
 import {
   getProjectComments,
   createProjectComment,

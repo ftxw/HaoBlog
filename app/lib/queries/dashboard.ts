@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { getContentCounts } from "@/app/lib/queries/counts";
 import { formatDateCN } from "@/app/lib/format";
+import { VISITOR_LOG_RETENTION_DAYS, retentionCutoff } from "@/app/lib/retention";
 
 export interface DashboardStats {
   counts: {
@@ -45,13 +46,12 @@ export interface DashboardStats {
 
 export interface LoginLogItem {
   id: string;
-  username: string;
   ip: string;
   address: string;
   system: string;
   browser: string;
   summary: string;
-  operatingTime: string;
+  operating_time: string;
 }
 
 export interface LoginLogPage {
@@ -168,6 +168,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     created_at: Date;
   }> = [];
   try {
+    // 必须带时间窗：否则 row_number() 会对整张 visitor_log 做窗口排序，
+    // 用不上 visitor_log_created_at_idx。窗口与保留期同源。
+    const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
     const rows = await prisma.$queryRaw<
       Array<{
         id: string;
@@ -182,6 +185,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         SELECT id, ip, address, browser, created_at,
                row_number() OVER (PARTITION BY ip ORDER BY created_at DESC) AS rn
         FROM visitor_log
+        WHERE created_at >= ${visitorSince}
       ) ranked
       WHERE rn = 1
       ORDER BY created_at DESC
@@ -284,36 +288,38 @@ export async function listLoginLogs(
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(50, Math.max(1, options.pageSize ?? 10));
 
+  // 失败的登录尝试没有归属用户，写库时 user_id 留空串。它们是同一账号登录历史的一部分
+  // （界面按 summary 里有没有「失败」来着色），不一起捞出来，那列红色徽标就永远不会出现。
+  const where = { OR: [{ user_id: userId }, { user_id: "" }] };
+
   const [rows, total] = await Promise.all([
     prisma.loginLog.findMany({
-      where: { user_id: userId },
-      orderBy: { operatingTime: "desc" },
+      where,
+      orderBy: { operating_time: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: {
         id: true,
-        username: true,
         ip: true,
         address: true,
         system: true,
         browser: true,
         summary: true,
-        operatingTime: true,
+        operating_time: true,
       },
     }),
-    prisma.loginLog.count({ where: { user_id: userId } }),
+    prisma.loginLog.count({ where }),
   ]);
 
   return {
     list: rows.map((log) => ({
       id: log.id,
-      username: log.username,
       ip: log.ip,
       address: log.address,
       system: log.system,
       browser: log.browser,
       summary: log.summary,
-      operatingTime: log.operatingTime.toISOString(),
+      operating_time: log.operating_time.toISOString(),
     })),
     total,
     pageSize,

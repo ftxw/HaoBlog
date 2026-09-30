@@ -180,7 +180,7 @@ export default function AlbumDetailView({
           role="dialog"
           aria-modal="true"
           aria-label="图片灯箱"
-          className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-4 sm:p-10 cursor-zoom-out animate-fade-in"
+          className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-4 sm:p-10 cursor-zoom-out enter-fade"
           onClick={() => setLbIndex(null)}
         >
           <button

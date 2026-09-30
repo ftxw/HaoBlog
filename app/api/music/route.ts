@@ -96,6 +96,7 @@ export async function GET(req: NextRequest) {
       // businessFail：未配置音乐 API 时抛的是 BusinessError（503 + 明确文案）。
       const res = businessFail(upstreamErr, "音乐数据源不可用");
       res.headers.set("Cache-Control", "no-store");
+      res.headers.set("Vercel-CDN-Cache-Control", "no-store");
       return res;
     }
   } catch (err) {

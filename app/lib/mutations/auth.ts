@@ -1,6 +1,7 @@
 
 import {
   supabaseLogin,
+  supabaseLogout,
   supabaseRegister,
   supabaseRefresh,
   supabaseUpdatePassword,
@@ -19,6 +20,7 @@ export interface AuthRequestContext {
 }
 
 // 登录锁定阈值。计数落在 Postgres（rate_limit 表）——进程内 Map 在 Vercel
+// 多实例下会被绕过，只能当回落。
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 // 邮箱维度之外再加一道 IP 维度（账号锁定 DoS 的兜底）。
@@ -72,7 +74,6 @@ export async function loginUser(
     await recordLoginLog({
       ...ctx,
       userId: "",
-      username: email,
       summary: "登录失败：邮箱或密码错误",
     });
     // 本次失败已在上面的 hitRateLimit 里记入计数；达到上限时按同一文案锁定。
@@ -87,7 +88,6 @@ export async function loginUser(
   await recordLoginLog({
     ...ctx,
     userId: user.id,
-    username: email,
     summary: "登录成功",
   });
 
@@ -97,7 +97,8 @@ export async function loginUser(
     isAdmin = Boolean(row?.is_admin);
   } catch (err) {
     console.error("[auth] ensureUserAndBootstrapAdmin 失败，本次按非管理员处理:", err);
-    // 库里一个管理员都没有时，本次登录本该补上「第一个管理员」——补不上就意味着
+    // 本次登录本该补上「第一个管理员」——补不上又库里一个管理员都没有，
+    // 就会把用户锁在后台之外，必须如实报错而不是默默放行。
     if (!(await hasAnyAdmin())) {
       throw new BusinessError("站点尚未完成初始化（管理员记录写入失败），请稍后重试", 503);
     }
@@ -189,7 +190,6 @@ export async function registerUser(
     ip: ctx.ip,
     userAgent: ctx.userAgent,
     userId: reg.user.id,
-    username: email,
     summary: "注册并登录",
   });
 
@@ -232,6 +232,17 @@ export async function refreshSession(refreshToken: string): Promise<SessionData>
   return session;
 }
 
-export function revokeSession(): void {
+/**
+ * 登出：先吊销上游会话，再清本地鉴权缓存。
+ * 上游失败也必须让本地登出成立，所以只留痕、不抛。
+ */
+export async function revokeSession(accessToken: string): Promise<void> {
+  if (accessToken) {
+    try {
+      await supabaseLogout(accessToken);
+    } catch (err) {
+      console.error("[auth] 吊销上游会话失败，本地仍按已登出处理:", err);
+    }
+  }
   invalidateAuthCache();
 }

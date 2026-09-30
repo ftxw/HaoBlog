@@ -5,15 +5,15 @@ import {
   parsePagination,
 } from "@/app/lib/http";
 import { listChatters, countChatters } from "@/app/lib/queries/chatters";
+import { parseContentStatus } from "@/app/lib/content-status";
 
 export async function GET(request: Request) {
   try {
     await requireAdmin(request);
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
-    const statusFilter =
-      status === "published" || status === "draft" ? status : undefined;
+    /* 非法/缺失 status 一律退化为「不过滤」。 */
+    const statusFilter = parseContentStatus(searchParams.get("status"));
     const keyword = searchParams.get("keyword")?.trim() || undefined;
     const { page, size } = parsePagination(searchParams);
 

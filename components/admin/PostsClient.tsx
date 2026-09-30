@@ -17,6 +17,7 @@ import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import type { PostListItem } from "@/app/lib/queries/posts";
 import type { CategoryItem } from "@/app/lib/queries/catalog";
 import {
+  AdminTabBar,
   Button,
   Card,
   EmptyState,
@@ -29,6 +30,11 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import {
+  FILTER_BAR,
+  TABLE_HEAD_CELL,
+  TABLE_SHELL,
+} from "@/components/admin/styles";
 import CategoriesPanel from "@/components/admin/CategoriesPanel";
 import TagsPanel from "@/components/admin/TagsPanel";
 import CommentsAdminPanel from "@/components/admin/CommentsAdminPanel";
@@ -142,36 +148,24 @@ export default function PostsClient({
     <>
       <PageHeader title="文章管理" description={headerDescription} />
 
-      <div className="mb-4 flex gap-1 rounded-lg bg-slate-200/60 p-1 text-sm">
-        {(
-          [
-            { key: "posts", label: `文章（${badges.data?.posts ?? 0}）` },
-            { key: "categories", label: `分类（${categoryOptions.length}）` },
-            { key: "tags", label: `标签（${badges.data?.tags ?? 0}）` },
-            { key: "comments", label: `评论（${badges.data?.comments ?? 0}）` },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              activeTab === tab.key
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-        {actionLabel && (
-          <Button size="sm" className="ml-auto" onClick={handleAction}>
-            <Plus className="h-3.5 w-3.5" />
-            {actionLabel}
-          </Button>
-        )}
-      </div>
+      <AdminTabBar
+        tabs={[
+          { key: "posts", label: `文章（${badges.data?.posts ?? 0}）` },
+          { key: "categories", label: `分类（${categoryOptions.length}）` },
+          { key: "tags", label: `标签（${badges.data?.tags ?? 0}）` },
+          { key: "comments", label: `评论（${badges.data?.comments ?? 0}）` },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+        action={
+          actionLabel && (
+            <Button size="sm" className="ml-auto" onClick={handleAction}>
+              <Plus className="h-3.5 w-3.5" />
+              {actionLabel}
+            </Button>
+          )
+        }
+      />
 
       {activeTab === "categories" && (
         <CategoriesPanel ref={categoriesRef} onChanged={refresh} />
@@ -183,7 +177,7 @@ export default function PostsClient({
 
       {activeTab === "posts" && (
         <>
-      <Card className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3">
+      <Card className={FILTER_BAR}>
         <Select
           value={status}
           onChange={(e) => {
@@ -238,8 +232,8 @@ export default function PostsClient({
         ) : (posts.data ?? []).length === 0 ? (
           <EmptyState text="暂无文章，点击右上角「新建文章」开始创作" />
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="grid grid-cols-[35%_8%_8%_8%_8%_15%_18%] border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+          <div className={TABLE_SHELL}>
+            <div className="grid grid-cols-[35%_8%_8%_8%_8%_15%_18%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
               {(
                 [
                   "标题",
@@ -253,7 +247,7 @@ export default function PostsClient({
               ).map((h) => (
                 <div
                   key={h}
-                  className="flex h-11 overflow-hidden items-center justify-center px-4"
+                  className={TABLE_HEAD_CELL}
                 >
                   {h}
                 </div>
@@ -262,18 +256,18 @@ export default function PostsClient({
             {(posts.data ?? []).map((post) => (
               <div
                 key={post.id}
-                className="grid grid-cols-[35%_8%_8%_8%_8%_15%_18%] border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70"
+                className="grid grid-cols-[35%_8%_8%_8%_8%_15%_18%] border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover"
               >
                 <div className="flex h-[60px] overflow-hidden items-center justify-start gap-2 px-4">
                   <div className="min-w-0 flex-1">
                     <Link prefetch={false}
                       href={`/admin/posts/${post.id}`}
-                      className="block truncate font-medium text-slate-900 hover:text-indigo-600"
+                      className="block truncate font-medium text-admin-ink hover:text-admin-accent"
                     >
                       {post.title}
                     </Link>
                     {post.tags.length > 0 && (
-                      <span className="block truncate text-xs text-slate-400">
+                      <span className="block truncate text-xs text-admin-ink-5">
                         {post.tags.join(" / ")}
                       </span>
                     )}
@@ -302,7 +296,7 @@ export default function PostsClient({
                 <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 tabular-nums">
                   {post.comments_count ?? 0}
                 </div>
-                <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-slate-500">
+                <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-admin-ink-4">
                   {formatDate(post.published_at || post.created_at)}
                 </div>
                 <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
@@ -313,8 +307,8 @@ export default function PostsClient({
                     title={post.is_pinned ? "取消置顶" : "置顶"}
                     className={cn(
                       post.is_pinned
-                        ? "text-amber-500 hover:bg-amber-50"
-                        : "text-slate-400 hover:bg-slate-100 hover:text-amber-500"
+                        ? "text-admin-warning hover:bg-admin-warning-soft"
+                        : "text-admin-ink-5 hover:bg-admin-neutral hover:text-admin-warning"
                     )}
                   >
                     {post.is_pinned ? "已置顶" : "置顶"}
@@ -329,7 +323,7 @@ export default function PostsClient({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
                     onClick={() => handleDelete(post)}
                   >
                     删除

@@ -7,7 +7,7 @@ import {
   type ReorderInput,
 } from "@/app/lib/reorder";
 import { applySortChanges } from "@/app/lib/mutations/sort-order";
-import { requireStringArray } from "@/app/lib/mutations/shared";
+import { requireStringArray, isRecordNotFound } from "@/app/lib/mutations/shared";
 import { toBookmarkSiteItem } from "@/app/lib/queries/bookmarks";
 import { BusinessError } from "@/app/lib/business-error";
 
@@ -76,14 +76,23 @@ export async function updateBookmarkCategory(
   if (input.description !== undefined) data.description = input.description;
   if (input.sort !== undefined) data.sort = input.sort;
 
-  const category = await prisma.bookmarkCategory.update({ where: { id }, data });
-
-  invalidateBookmarkCaches();
-  return category;
+  try {
+    const category = await prisma.bookmarkCategory.update({ where: { id }, data });
+    invalidateBookmarkCaches();
+    return category;
+  } catch (err) {
+    if (isRecordNotFound(err)) throw new BusinessError("分类不存在", 404);
+    throw err;
+  }
 }
 
 export async function deleteBookmarkCategory(id: string) {
-  await prisma.bookmarkCategory.delete({ where: { id } });
+  try {
+    await prisma.bookmarkCategory.delete({ where: { id } });
+  } catch (err) {
+    if (isRecordNotFound(err)) throw new BusinessError("分类不存在", 404);
+    throw err;
+  }
   invalidateBookmarkCaches();
 }
 
@@ -120,14 +129,14 @@ export async function createBookmarkSite(input: BookmarkSiteInput) {
       url,
       icon: String(input.icon || "").trim(),
       description: String(input.description || "").trim(),
-        platforms: requireStringArray(input.platforms, "platforms"),
-        sort,
-      },
-    });
+      platforms: requireStringArray(input.platforms, "platforms"),
+      sort,
+    },
+  });
 
-    invalidateBookmarkCaches();
-    return toBookmarkSiteItem(site);
-  }
+  invalidateBookmarkCaches();
+  return toBookmarkSiteItem(site);
+}
 
 export async function updateBookmarkSite(id: string, input: BookmarkSiteInput) {
   const data: Record<string, unknown> = {};
@@ -136,19 +145,28 @@ export async function updateBookmarkSite(id: string, input: BookmarkSiteInput) {
   if (input.url !== undefined) data.url = input.url;
   if (input.icon !== undefined) data.icon = input.icon;
   if (input.description !== undefined) data.description = input.description;
-    if (input.platforms !== undefined) {
-      data.platforms = requireStringArray(input.platforms, "platforms");
-    }
-    if (input.sort !== undefined) data.sort = input.sort;
+  if (input.platforms !== undefined) {
+    data.platforms = requireStringArray(input.platforms, "platforms");
+  }
+  if (input.sort !== undefined) data.sort = input.sort;
 
+  try {
     const site = await prisma.bookmarkSite.update({ where: { id }, data });
-
     invalidateBookmarkCaches();
     return toBookmarkSiteItem(site);
+  } catch (err) {
+    if (isRecordNotFound(err)) throw new BusinessError("站点不存在", 404);
+    throw err;
   }
+}
 
 export async function deleteBookmarkSite(id: string) {
-  await prisma.bookmarkSite.delete({ where: { id } });
+  try {
+    await prisma.bookmarkSite.delete({ where: { id } });
+  } catch (err) {
+    if (isRecordNotFound(err)) throw new BusinessError("站点不存在", 404);
+    throw err;
+  }
   invalidateBookmarkCaches();
 }
 

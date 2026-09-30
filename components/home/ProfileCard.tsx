@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
-import { siteConfig } from "@/siteConfig";
-import { useConfigValue } from "@/components/providers/SiteConfigProvider";
+import { useConfigJson, useConfigValue } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
+
+const NO_LOGOS: string[] = [];
 
 /** 首页个人信息卡。 */
 export default function ProfileCard({
@@ -16,18 +16,12 @@ export default function ProfileCard({
   chatterCount?: number;
   photoCount?: number;
 }) {
-  const avatarUrl = useConfigValue("avatarUrl", siteConfig.avatarUrl);
-  const authorName = useConfigValue("authorName", siteConfig.authorName);
-  const bio = useConfigValue("bio", siteConfig.bio);
-  const socialLogosRaw = useConfigValue("socialLogos", JSON.stringify(siteConfig.socialLogos || []));
-  const socialLogos = useMemo(() => {
-    try {
-      const parsed = JSON.parse(socialLogosRaw || "[]");
-      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-    } catch {
-      return [];
-    }
-  }, [socialLogosRaw]);
+  const avatarUrl = useConfigValue("avatarUrl");
+  const authorName = useConfigValue("authorName");
+  const bio = useConfigValue("bio");
+  const socialLogos = useConfigJson<string[]>("socialLogos", NO_LOGOS).filter(
+    (x) => typeof x === "string"
+  );
 
   return (
     <Link

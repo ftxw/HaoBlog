@@ -140,21 +140,21 @@ export default function ConfigGroupsEditor({
       case "switch":
         return (
           <div className="flex items-center gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-admin-ink-2">
               <input
                 type="radio"
                 checked={value === "true"}
                 onChange={() => setValues({ ...values, [def.key]: "true" })}
-                className="accent-indigo-600"
+                className="accent-admin-accent"
               />
               开启
             </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-admin-ink-2">
               <input
                 type="radio"
                 checked={value !== "true"}
                 onChange={() => setValues({ ...values, [def.key]: "false" })}
-                className="accent-indigo-600"
+                className="accent-admin-accent"
               />
               关闭
             </label>
@@ -165,7 +165,7 @@ export default function ConfigGroupsEditor({
           <select
             value={value}
             onChange={(e) => setValues({ ...values, [def.key]: e.target.value })}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400"
+            className="w-full rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm text-admin-ink-2 outline-none focus:border-admin-accent-ring"
           >
             {(def.options ?? []).map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -220,7 +220,7 @@ export default function ConfigGroupsEditor({
                 onClick={() =>
                   setVisibleKeys((v) => ({ ...v, [def.key]: !v[def.key] }))
                 }
-                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-xs text-slate-400 hover:text-slate-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-xs text-admin-ink-5 hover:text-admin-ink-3"
               >
                 {visibleKeys[def.key] ? "隐藏" : "显示"}
               </button>
@@ -264,8 +264,8 @@ export default function ConfigGroupsEditor({
                   className={cn(
                     "block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors cursor-pointer",
                     activeGroup === group.id
-                      ? "bg-indigo-50 font-medium text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
+                      : "text-admin-ink-3 hover:bg-admin-neutral"
                   )}
                 >
                   {group.label}
@@ -283,11 +283,11 @@ export default function ConfigGroupsEditor({
                   const group = groups.find((g) => g.id === activeGroup);
                   return (
                     <div className="mb-4">
-                      <h2 className="text-base font-semibold text-slate-900">
+                      <h2 className="text-base font-semibold text-admin-ink">
                         {group?.label ?? ""}
                       </h2>
                       {group?.description && (
-                        <p className="mt-0.5 text-sm text-slate-500">{group.description}</p>
+                        <p className="mt-0.5 text-sm text-admin-ink-4">{group.description}</p>
                       )}
                     </div>
                   );
@@ -304,9 +304,9 @@ export default function ConfigGroupsEditor({
                             <div className="grid grid-cols-3 gap-4 items-end">
                               {navRow.map((nd) => (
                                 <div key={nd.key} className="space-y-1.5 min-w-0">
-                                  <label className="block text-sm font-medium text-slate-700">
+                                  <label className="block text-sm font-medium text-admin-ink-2">
                                     {nd.label}
-                                    <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">
+                                    <span className="ml-1.5 font-mono text-xs font-normal text-admin-ink-5">
                                       {nd.key}
                                     </span>
                                   </label>
@@ -314,7 +314,7 @@ export default function ConfigGroupsEditor({
                                 </div>
                               ))}
                             </div>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-admin-ink-5">
                               {navRow.map((nd) => nd.description).join("；")}
                             </p>
                           </div>
@@ -323,28 +323,28 @@ export default function ConfigGroupsEditor({
                       if (NAV_ROW_KEYS.includes(def.key)) return null;
                       return (
                         <div key={def.key} className="space-y-1.5">
-                          <label className="block text-sm font-medium text-slate-700">
+                          <label className="block text-sm font-medium text-admin-ink-2">
                             {def.label}
-                            <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">
+                            <span className="ml-1.5 font-mono text-xs font-normal text-admin-ink-5">
                               {def.key}
                             </span>
                           </label>
                           {renderField(def)}
                           {def.description && (
-                            <p className="text-xs text-slate-400">{def.description}</p>
+                            <p className="text-xs text-admin-ink-5">{def.description}</p>
                           )}
                         </div>
                       );
                     });
                   })()}
                   {groupDefs.length === 0 && (
-                    <p className="py-8 text-center text-sm text-slate-400">
+                    <p className="py-8 text-center text-sm text-admin-ink-5">
                       该分组暂无配置项
                     </p>
                   )}
                 </div>
 
-                <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+                <div className="mt-6 flex justify-end border-t border-admin-border-soft pt-4">
                   <Button onClick={handleSave} loading={saving}>
                     <Save className="h-4 w-4" />
                     保存当前分组

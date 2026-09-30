@@ -31,6 +31,7 @@ import {
   Textarea,
   cn,
 } from "@/components/admin/ui";
+import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { CategoryItem } from "@/app/lib/queries/catalog";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
@@ -183,7 +184,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
+      <div className="flex items-center justify-center gap-2 py-24 text-admin-ink-5">
         <Loader2 className="h-5 w-5 animate-spin" />
         <span className="text-sm">加载文章中…</span>
       </div>
@@ -191,17 +192,17 @@ export default function PostEditor({ postId }: { postId?: string }) {
   }
 
   const toolbarBtn =
-    "rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 cursor-pointer disabled:opacity-50";
+    "rounded-md p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink cursor-pointer disabled:opacity-50";
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-admin-ink">
             {postId ? "编辑文章" : "新建文章"}
           </h1>
           {postId && (
-            <p className="mt-0.5 text-sm text-slate-500">
+            <p className="mt-0.5 text-sm text-admin-ink-4">
               {updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
             </p>
           )}
@@ -218,7 +219,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-4 lg:col-span-3">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="标题" required>
               <Input
                 value={title}
@@ -237,7 +238,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
           </Card>
 
           <Card>
-            <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+            <div className="flex items-center justify-between border-b border-admin-border-soft px-3 py-2">
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
@@ -318,14 +319,14 @@ export default function PostEditor({ postId }: { postId?: string }) {
                   }
                 />
               </div>
-              <div className="flex rounded-lg bg-slate-100 p-0.5 text-xs">
+              <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
                 <button
                   type="button"
                   className={cn(
                     "rounded-md px-2.5 py-1 cursor-pointer",
                     tab === "edit"
-                      ? "bg-white font-medium text-slate-900 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
+                      : "text-admin-ink-4"
                   )}
                   onClick={() => setTab("edit")}
                 >
@@ -336,8 +337,8 @@ export default function PostEditor({ postId }: { postId?: string }) {
                   className={cn(
                     "rounded-md px-2.5 py-1 cursor-pointer",
                     tab === "preview"
-                      ? "bg-white font-medium text-slate-900 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
+                      : "text-admin-ink-4"
                   )}
                   onClick={() => setTab("preview")}
                 >
@@ -352,7 +353,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="在此输入 Markdown 正文…"
-                className="min-h-[420px] w-full resize-y px-4 py-3 font-mono text-sm leading-relaxed text-slate-800 focus:outline-none"
+                className="min-h-[420px] w-full resize-y px-4 py-3 font-mono text-sm leading-relaxed text-admin-ink focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.ctrlKey && e.key.toLowerCase() === "b") {
                     e.preventDefault();
@@ -381,7 +382,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
                 />
               </div>
             )}
-            <div className="flex justify-between border-t border-slate-100 px-4 py-2 text-xs text-slate-400">
+            <div className="flex justify-between border-t border-admin-border-soft px-4 py-2 text-xs text-admin-ink-5">
               <span>Markdown 编辑 · 支持粘贴/上传插图</span>
               <span>{content.length} 字</span>
             </div>
@@ -389,7 +390,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
         </div>
 
         <div className="space-y-4">
-          <Card className="space-y-4 p-5">
+          <Card className={EDITOR_SECTION}>
             <Field label="发布状态" hint="决定点击右上角「发布」后是正式发布还是存为草稿">
               <Select
                 value={status}
@@ -423,7 +424,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
                   {parsedTags.map((t) => (
                     <span
                       key={t}
-                      className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600"
+                      className="rounded-full bg-admin-accent-soft px-2 py-0.5 text-xs text-admin-accent"
                     >
                       {t}
                     </span>
@@ -432,13 +433,13 @@ export default function PostEditor({ postId }: { postId?: string }) {
               )}
             </Field>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">置顶文章</span>
+              <span className="text-sm font-medium text-admin-ink-2">置顶文章</span>
               <Switch checked={isPinned} onChange={setIsPinned} />
             </div>
           </Card>
 
           <Card className="p-5">
-            <p className="mb-2 text-sm font-medium text-slate-700">封面图片</p>
+            <p className="mb-2 text-sm font-medium text-admin-ink-2">封面图片</p>
             <ImageUploader
               mode="single"
               value={cover}
@@ -447,7 +448,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
               height="h-40"
               category="posts"
             />
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-admin-ink-5">
               方向：{coverOrientation === "portrait" ? "竖版" : "横版"}（上传后自动识别）
             </p>
           </Card>

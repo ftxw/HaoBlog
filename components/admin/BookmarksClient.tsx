@@ -15,6 +15,7 @@ import {
   updateBookmarkSiteAction,
 } from "@/app/actions/bookmarks";
 import {
+  AdminTabBar,
   Button,
   Card,
   EmptyState,
@@ -28,6 +29,7 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import { TABLE_HEAD_CELL, TABLE_SHELL } from "@/components/admin/styles";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -56,8 +58,8 @@ function SortableCategoryRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "grid grid-cols-[8%_20%_34%_8%_15%_15%] cursor-grab border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70 active:cursor-grabbing",
-        isDragging && "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-indigo-400"
+        "grid grid-cols-[8%_20%_34%_8%_15%_15%] cursor-grab border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover active:cursor-grabbing",
+        isDragging && "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-admin-accent-ring"
       )}
       {...attributes}
       {...listeners}
@@ -66,19 +68,19 @@ function SortableCategoryRow({
         <span className="truncate">{cat.icon || "-"}</span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate font-medium text-slate-900">
+        <span className="truncate font-medium text-admin-ink">
           {cat.name}
         </span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate text-slate-500">
+        <span className="truncate text-admin-ink-4">
           {cat.description || "-"}
         </span>
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-slate-300">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-admin-ink-none">
         <GripVertical className="h-4 w-4" />
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-slate-500">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-admin-ink-4">
         {formatDate(cat.created_at)}
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
@@ -88,7 +90,7 @@ function SortableCategoryRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(cat)}
         >
           删除
@@ -116,8 +118,8 @@ function SortableSiteRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "grid grid-cols-[20%_24%_12%_16%_8%_20%] cursor-grab border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70 active:cursor-grabbing",
-        isDragging && "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-indigo-400"
+        "grid grid-cols-[20%_24%_12%_16%_8%_20%] cursor-grab border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover active:cursor-grabbing",
+        isDragging && "z-10 opacity-60 shadow-lg ring-2 ring-inset ring-admin-accent-ring"
       )}
       {...attributes}
       {...listeners}
@@ -127,7 +129,7 @@ function SortableSiteRow({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={site.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
         )}
-        <span className="truncate font-medium text-slate-900">
+        <span className="truncate font-medium text-admin-ink">
           {site.name}
         </span>
       </div>
@@ -136,7 +138,7 @@ function SortableSiteRow({
           href={site.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex max-w-full items-center gap-1 truncate text-indigo-600 hover:underline"
+          className="inline-flex max-w-full items-center gap-1 truncate text-admin-accent hover:underline"
         >
           <span className="truncate">{site.url}</span>
           <ExternalLink className="h-3 w-3 shrink-0" />
@@ -146,11 +148,11 @@ function SortableSiteRow({
         <span className="truncate">{categoryName}</span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate text-xs text-slate-500">
+        <span className="truncate text-xs text-admin-ink-4">
           {site.platforms?.length ? site.platforms.join(" / ") : "-"}
         </span>
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-slate-300">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-admin-ink-none">
         <GripVertical className="h-4 w-4" />
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
@@ -160,7 +162,7 @@ function SortableSiteRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(site)}
         >
           删除
@@ -373,35 +375,24 @@ export default function BookmarksClient({
     <>
       <PageHeader title="书签管理" description="管理导航书签的分类与站点" />
 
-      <div className="mb-4 flex gap-1 rounded-lg bg-slate-200/60 p-1 text-sm">
-        {(
-          [
-            ["sites", `站点（${sites.data?.length ?? 0}）`],
-            ["categories", `分类（${categories.data?.length ?? 0}）`],
-          ] as const
-        ).map(([key, label]) => (
-          <button type="button"
-            key={key}
-            onClick={() => setTab(key)}
-            className={cn(
-              "rounded-md px-3 py-1.5 cursor-pointer transition-colors",
-              tab === key
-                ? "bg-white font-medium text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            )}
+      <AdminTabBar
+        tabs={[
+          { key: "sites", label: `站点（${sites.data?.length ?? 0}）` },
+          { key: "categories", label: `分类（${categories.data?.length ?? 0}）` },
+        ]}
+        active={tab}
+        onChange={setTab}
+        action={
+          <Button
+            size="sm"
+            className="ml-auto"
+            onClick={() => (tab === "sites" ? openNewSite() : openNewCat())}
           >
-            {label}
-          </button>
-        ))}
-        <Button
-          size="sm"
-          className="ml-auto"
-          onClick={() => (tab === "sites" ? openNewSite() : openNewCat())}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {tab === "sites" ? "新建站点" : "新建分类"}
-        </Button>
-      </div>
+            <Plus className="h-3.5 w-3.5" />
+            {tab === "sites" ? "新建站点" : "新建分类"}
+          </Button>
+        }
+      />
 
       {tab === "categories" ? (
         <Card>
@@ -410,13 +401,13 @@ export default function BookmarksClient({
           ) : (categories.data ?? []).length === 0 ? (
             <EmptyState text="暂无书签分类" />
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-              <div className="grid grid-cols-[8%_20%_34%_8%_15%_15%] border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+            <div className={TABLE_SHELL}>
+              <div className="grid grid-cols-[8%_20%_34%_8%_15%_15%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
                 {["图标", "名称", "描述", "拖拽排序", "创建时间", "操作"].map(
                   (h) => (
                     <div
                       key={h}
-                      className="flex h-11 overflow-hidden items-center justify-center px-4"
+                      className={TABLE_HEAD_CELL}
                     >
                       {h}
                     </div>
@@ -469,12 +460,12 @@ export default function BookmarksClient({
           ) : (sites.data ?? []).length === 0 ? (
             <EmptyState text="暂无书签站点" />
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-              <div className="grid grid-cols-[20%_24%_12%_16%_8%_20%] border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+            <div className={TABLE_SHELL}>
+              <div className="grid grid-cols-[20%_24%_12%_16%_8%_20%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
                 {["名称", "URL", "分类", "平台", "拖拽排序", "操作"].map((h) => (
                   <div
                     key={h}
-                    className="flex h-11 overflow-hidden items-center justify-center px-4"
+                    className={TABLE_HEAD_CELL}
                   >
                     {h}
                   </div>
@@ -586,7 +577,7 @@ export default function BookmarksClient({
             <select
               value={siteForm.category_id}
               onChange={(e) => setSiteForm({ ...siteForm, category_id: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-admin-border-control bg-admin-surface px-3 py-2 text-sm focus:border-admin-accent-border focus:outline-none"
             >
               <option value="">请选择分类</option>
               {(categories.data ?? []).map((c) => (

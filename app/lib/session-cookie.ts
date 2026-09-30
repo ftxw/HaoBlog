@@ -23,31 +23,39 @@ export function serializeSession(data: SessionData): string {
   return encodeURIComponent(JSON.stringify(data));
 }
 
+/**
+ * 解析会话 cookie。
+ * ⚠️ 读到的值要再解一层编码：`serializeSession` 编过一次，Next 的 ResponseCookies
+ * 序列化时又 `encodeURIComponent` 了一次（`@edge-runtime/cookies` 的 toString），
+ * 而两处读取路径都只解了外层 —— 所以不解这层就永远 parse 不出 JSON。
+ */
 export function parseSessionValue(raw: string | undefined | null): SessionData | null {
   if (!raw) return null;
-  const candidates: string[] = [raw];
+
+  let json = raw;
   try {
-    candidates.push(decodeURIComponent(raw));
+    json = decodeURIComponent(raw);
   } catch {
+    /* 值里含裸 % 时解码会抛，此时按原样当成 JSON 试 */
   }
-  for (const candidate of candidates) {
-    try {
-      const parsed = JSON.parse(candidate);
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        typeof parsed.accessToken === "string" &&
-        typeof parsed.refreshToken === "string" &&
-        typeof parsed.expires === "number"
-      ) {
-        return {
-          accessToken: parsed.accessToken,
-          refreshToken: parsed.refreshToken,
-          expires: parsed.expires,
-        };
-      }
-    } catch {
+
+  try {
+    const parsed = JSON.parse(json);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      typeof parsed.accessToken === "string" &&
+      typeof parsed.refreshToken === "string" &&
+      typeof parsed.expires === "number"
+    ) {
+      return {
+        accessToken: parsed.accessToken,
+        refreshToken: parsed.refreshToken,
+        expires: parsed.expires,
+      };
     }
+  } catch {
+    /* 不是合法 JSON，按「没有会话」处理 */
   }
   return null;
 }

@@ -11,3 +11,11 @@ export class BusinessError extends Error {
     this.headers = headers;
   }
 }
+
+/** 令牌确实无效（区别于「上游不可用」）：固定 401，供调用方用类型判断而非比对文案。 */
+export class InvalidTokenError extends BusinessError {
+  constructor(message = "无效的令牌") {
+    super(message, 401);
+    this.name = "InvalidTokenError";
+  }
+}

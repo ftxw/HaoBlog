@@ -54,12 +54,12 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await errorText(res));
-      const data = unwrapApi<{ roles?: string[] }>(
+      const data = unwrapApi<{ isAdmin?: boolean }>(
         await res.json().catch(() => null),
         res.status
       );
       // 账号密码对、但不是管理员：必须在这里说清楚。
-      if (!Array.isArray(data.roles) || !data.roles.includes("admin")) {
+      if (!data.isAdmin) {
         return { error: "登录成功，但该账号不是管理员，无法进入后台。" };
       }
       enterAdmin();

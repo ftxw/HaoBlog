@@ -59,9 +59,9 @@ export default function DashboardClient({
     color: string;
   }> = counts
     ? [
-        { label: "文章", value: counts.posts, icon: FileText, color: "bg-indigo-50 text-indigo-600" },
+        { label: "文章", value: counts.posts, icon: FileText, color: "bg-admin-accent-soft text-admin-accent" },
         { label: "说说", value: counts.chatters, icon: MessageCircle, color: "bg-violet-50 text-violet-600" },
-        { label: "草稿", value: counts.drafts, icon: Edit3, color: "bg-slate-100 text-slate-600" },
+        { label: "草稿", value: counts.drafts, icon: Edit3, color: "bg-admin-neutral text-admin-ink-3" },
         { label: "照片", value: counts.photos, icon: ImageIcon, color: "bg-pink-50 text-pink-600" },
       ]
     : [];
@@ -83,7 +83,7 @@ export default function DashboardClient({
               loginLogs.reload();
               addToast("info", "数据已刷新");
             }}
-            className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50"
+            className="cursor-pointer rounded-lg border border-admin-border bg-admin-surface px-3 py-1.5 text-sm text-admin-ink-3 transition-colors hover:bg-admin-neutral"
           >
             刷新数据
           </button>
@@ -108,8 +108,8 @@ export default function DashboardClient({
                       <Icon className="h-4.5 w-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-xs text-slate-500">{card.label}</p>
-                      <p className="text-lg font-bold text-slate-900">{card.value}</p>
+                      <p className="truncate text-xs text-admin-ink-4">{card.label}</p>
+                      <p className="text-lg font-bold text-admin-ink">{card.value}</p>
                     </div>
                   </div>
                 </Card>
@@ -119,13 +119,13 @@ export default function DashboardClient({
 
           <div className="mt-5 grid gap-5 lg:grid-cols-3">
             <Card className="flex h-[300px] flex-col p-5 lg:col-span-2">
-              <h2 className="mb-3 text-sm font-semibold text-slate-900">
+              <h2 className="mb-3 text-sm font-semibold text-admin-ink">
                 最新内容
               </h2>
               {contentList.length === 0 ? (
-                <p className="py-6 text-center text-sm text-slate-400">暂无内容</p>
+                <p className="py-6 text-center text-sm text-admin-ink-5">暂无内容</p>
               ) : (
-                <ul className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
+                <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
                   {contentList.map((item) => (
                     <li
                       key={`${item.type}-${item.id}`}
@@ -134,16 +134,16 @@ export default function DashboardClient({
                       <span
                         className={`shrink-0 rounded px-1.5 py-0.5 text-[12px] font-medium ${
                           item.type === "post"
-                            ? "bg-indigo-50 text-indigo-600"
+                            ? "bg-admin-accent-soft text-admin-accent"
                             : "bg-violet-50 text-violet-600"
                         }`}
                       >
                         {item.type === "post" ? "文章" : "说说"}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
+                      <span className="min-w-0 flex-1 truncate text-sm text-admin-ink-2">
                         {item.title || "（无标题）"}
                       </span>
-                      <span className="shrink-0 text-xs text-slate-400">
+                      <span className="shrink-0 text-xs text-admin-ink-5">
                         {formatDate(item.time)}
                       </span>
                     </li>
@@ -153,27 +153,27 @@ export default function DashboardClient({
             </Card>
 
             <Card className="flex h-[300px] flex-col p-5">
-              <h2 className="mb-3 text-sm font-semibold text-slate-900">
+              <h2 className="mb-3 text-sm font-semibold text-admin-ink">
                 最新留言
               </h2>
               {commentList.length === 0 ? (
-                <p className="py-6 text-center text-sm text-slate-400">暂无留言</p>
+                <p className="py-6 text-center text-sm text-admin-ink-5">暂无留言</p>
               ) : (
-                <ul className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
+                <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
                   {commentList.map((item) => (
                     <li key={`${item.type}-${item.id}`} className="py-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate text-sm font-medium text-slate-700">
+                        <span className="min-w-0 truncate text-sm font-medium text-admin-ink-2">
                           {item.author}
                         </span>
-                        <span className="shrink-0 text-[12px] text-slate-400">
+                        <span className="shrink-0 text-[12px] text-admin-ink-5">
                           {formatDate(item.time)}
                         </span>
                       </div>
-                      <p className="mt-0.5 truncate text-xs text-slate-500">
+                      <p className="mt-0.5 truncate text-xs text-admin-ink-4">
                         {item.content}
                       </p>
-                      <p className="mt-0.5 truncate text-[12px] text-slate-400">
+                      <p className="mt-0.5 truncate text-[12px] text-admin-ink-5">
                         来自{item.type}：{item.target || "-"}
                       </p>
                     </li>
@@ -185,8 +185,8 @@ export default function DashboardClient({
 
           <div className="mt-5">
             <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">访客概览</h2>
-              <span className="text-xs text-slate-400">
+              <h2 className="text-sm font-semibold text-admin-ink">访客概览</h2>
+              <span className="text-xs text-admin-ink-5">
                 PV/UV 按天聚合，最近访客保留近 30 天明细
               </span>
             </div>
@@ -199,7 +199,7 @@ export default function DashboardClient({
                 { label: "本周 UV", value: stats.data?.traffic?.week.uv ?? 0, color: "bg-violet-50 text-violet-600" },
               ].map((c) => (
                 <Card key={c.label} className="p-4">
-                  <p className="text-xs text-slate-500">{c.label}</p>
+                  <p className="text-xs text-admin-ink-4">{c.label}</p>
                   <p className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-lg font-bold ${c.color}`}>
                     {c.value}
                   </p>
@@ -210,10 +210,10 @@ export default function DashboardClient({
             <div className="mt-3 grid gap-5 lg:grid-cols-3">
               <Card className="flex h-[300px] flex-col p-5 lg:col-span-2">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900">
+                  <h3 className="text-sm font-semibold text-admin-ink">
                     近 30 天 PV / UV 趋势
                   </h3>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-3 text-xs text-admin-ink-4">
                     <span className="flex items-center gap-1">
                       <i className="inline-block h-2 w-2 rounded-full bg-blue-500" /> PV
                     </span>
@@ -224,7 +224,7 @@ export default function DashboardClient({
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col">
                   {trendData.length === 0 ? (
-                    <p className="py-10 text-center text-sm text-slate-400">
+                    <p className="py-10 text-center text-sm text-admin-ink-5">
                       暂无数据（发布后可看到访问量）
                     </p>
                   ) : (
@@ -234,24 +234,24 @@ export default function DashboardClient({
               </Card>
 
               <Card className="flex h-[300px] flex-col p-5">
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                <h3 className="mb-3 text-sm font-semibold text-admin-ink">
                   最近访客
                 </h3>
                 {visitorList.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-slate-400">暂无访客</p>
+                  <p className="py-6 text-center text-sm text-admin-ink-5">暂无访客</p>
                 ) : (
-                  <ul className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
+                  <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
                     {visitorList.map((v) => (
                       <li key={v.id} className="flex items-center gap-3 py-2.5">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-mono text-xs text-slate-700">
+                          <p className="truncate font-mono text-xs text-admin-ink-2">
                             {v.ip || "-"}
                           </p>
-                          <p className="truncate text-[12px] text-slate-400">
+                          <p className="truncate text-[12px] text-admin-ink-5">
                             {v.address || "未知"} · {v.browser || "未知浏览器"}
                           </p>
                         </div>
-                        <span className="shrink-0 text-[12px] text-slate-400">
+                        <span className="shrink-0 text-[12px] text-admin-ink-5">
                           {formatDate(v.time)}
                         </span>
                       </li>
@@ -263,23 +263,23 @@ export default function DashboardClient({
           </div>
           <Card className="mt-5 flex h-[300px] flex-col p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-sm font-semibold text-admin-ink">
                 最近登录记录
               </h2>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-admin-ink-5">
                 共 {loginLogs.data?.data.total ?? 0} 条，显示最近 20 条
               </span>
             </div>
             {loginLogs.loading && !loginLogs.data ? (
-              <p className="py-6 text-center text-sm text-slate-400">
+              <p className="py-6 text-center text-sm text-admin-ink-5">
                 加载中...
               </p>
             ) : (loginLogs.data?.data.list.length ?? 0) === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">
+              <p className="py-6 text-center text-sm text-admin-ink-5">
                 暂无登录记录
               </p>
             ) : (
-              <ul className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
+              <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
                 {(loginLogs.data?.data.list ?? []).map((log) => {
                   /* 按「失败」判定，而不是「含『成功』」。 */
                   const success = !log.summary.includes("失败");
@@ -291,23 +291,23 @@ export default function DashboardClient({
                       <span
                         className={`shrink-0 rounded px-1.5 py-0.5 text-[12px] font-medium ${
                           success
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-red-50 text-red-600"
+                            ? "bg-admin-success-soft text-admin-success"
+                            : "bg-admin-danger-soft text-admin-danger"
                         }`}
                       >
                         {success ? "成功" : "失败"}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-slate-700">
+                        <p className="truncate text-sm text-admin-ink-2">
                           {log.summary}
                         </p>
-                        <p className="truncate text-[12px] text-slate-400">
+                        <p className="truncate text-[12px] text-admin-ink-5">
                           {log.ip || "-"} · {log.address || "未知位置"} ·{" "}
                           {log.browser || "未知浏览器"} · {log.system || "未知系统"}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[12px] text-slate-400">
-                        {formatDate(log.operatingTime)}
+                      <span className="shrink-0 text-[12px] text-admin-ink-5">
+                        {formatDate(log.operating_time)}
                       </span>
                     </li>
                   );
@@ -365,7 +365,7 @@ function LineChart({
               x2={W - PAD_X}
               y1={y(max * t)}
               y2={y(max * t)}
-              className="stroke-slate-100"
+              className="stroke-admin-border-soft"
               strokeDasharray="4 4"
             />
           ))}
@@ -379,7 +379,7 @@ function LineChart({
               x2={x(hovered)}
               y1={PAD_Y - 6}
               y2={H - PAD_Y}
-              className="stroke-slate-300"
+              className="stroke-admin-border-control"
               strokeDasharray="3 3"
             />
           )}
@@ -443,7 +443,7 @@ function LineChart({
               transform: "translate(-50%, -100%)",
             }}
           >
-            <div className="whitespace-nowrap rounded-lg bg-slate-900/90 px-2.5 py-1.5 text-[12px] leading-relaxed text-white shadow-lg backdrop-blur">
+            <div className="whitespace-nowrap rounded-lg bg-admin-scrim px-2.5 py-1.5 text-[12px] leading-relaxed text-admin-sidebar-ink shadow-lg backdrop-blur">
               <p className="font-semibold">{active.date}</p>
               <p className="mt-0.5">
                 <span className="text-blue-400">PV</span>{" "}
@@ -457,7 +457,7 @@ function LineChart({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-admin-ink-5">
         <span>{data[0]?.date ?? ""}</span>
         <span>{data[n - 1]?.date ?? ""}</span>
       </div>

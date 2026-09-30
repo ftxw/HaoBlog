@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { formatYearCN } from "../format";
 import { escapeLike } from "./like-escape";
+import { parseContentStatus } from "@/app/lib/content-status";
 
 export interface ChatterItem {
   id: string;
@@ -54,11 +55,10 @@ export interface ListChattersOptions {
 }
 
 function chatterWhere(options: ListChattersOptions): Prisma.ChatterWhereInput {
+  const status = parseContentStatus(options.status);
   const keyword = options.keyword?.trim();
   return {
-    ...(options.status
-      ? { status: options.status as Prisma.ChatterWhereInput["status"] }
-      : {}),
+    ...(status ? { status } : {}),
     // 必须带 mode: "insensitive"（生成 ILIKE）。
     ...(keyword
       ? { content: { contains: escapeLike(keyword), mode: "insensitive" } }

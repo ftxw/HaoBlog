@@ -22,6 +22,7 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import { TABLE_HEAD_CELL, TABLE_SHELL } from "@/components/admin/styles";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -55,17 +56,17 @@ function SortableCategoryRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] cursor-grab border-b border-slate-100 text-slate-700 last:border-0 hover:bg-slate-50/70 active:cursor-grabbing",
+        "grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] cursor-grab border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover active:cursor-grabbing",
         isDragging && "z-10 opacity-60 shadow-lg"
       )}
       {...attributes}
       {...listeners}
     >
-      <div className="flex h-[60px] overflow-hidden items-center justify-center text-slate-300">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center text-admin-ink-none">
         <GripVertical className="h-4 w-4" />
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate font-medium text-slate-900">
+        <span className="truncate font-medium text-admin-ink">
           {cat.name}
         </span>
       </div>
@@ -73,14 +74,14 @@ function SortableCategoryRow({
         <span className="truncate font-mono text-xs">{cat.slug}</span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4">
-        <span className="truncate text-slate-500">
+        <span className="truncate text-admin-ink-4">
           {cat.description || "-"}
         </span>
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 tabular-nums">
         {cat.post_count}
       </div>
-      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-slate-500">
+      <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-admin-ink-4">
         {formatDate(cat.created_at)}
       </div>
       <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
@@ -90,7 +91,7 @@ function SortableCategoryRow({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
           onClick={() => onDelete(cat)}
         >
           删除
@@ -228,14 +229,14 @@ const CategoriesPanel = forwardRef<
         ) : (data ?? []).length === 0 ? (
           <EmptyState text="暂无分类" />
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-500">
+          <div className={TABLE_SHELL}>
+            <div className="grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
               <div className="h-11" />
               {["名称", "slug", "描述", "文章数", "创建时间", "操作"].map(
                 (h) => (
                   <div
                     key={h}
-                    className="flex h-11 overflow-hidden items-center justify-center px-4"
+                    className={TABLE_HEAD_CELL}
                   >
                     {h}
                   </div>

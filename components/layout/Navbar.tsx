@@ -6,17 +6,11 @@ import { usePathname } from "next/navigation";
 import { Sun, Moon } from "lucide-react";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { siteConfig } from "@/siteConfig";
 import { NAV_LINKS } from "@/app/lib/nav-links";
 
-function normalizePathname(pathname: string): string {
-  return pathname === "/index" ? "/" : pathname;
-}
-
 function isActive(href: string, pathname: string): boolean {
-  const current = normalizePathname(pathname);
-  if (href === "/") return current === "/" || current === "";
-  return current === href || current.startsWith(href + "/");
+  if (href === "/") return pathname === "/" || pathname === "";
+  return pathname === href || pathname.startsWith(href + "/");
 }
 
 const brandClass =
@@ -26,9 +20,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { toggleTheme } = useTheme();
-  const navTitle = useConfigValue("navTitle", siteConfig.navTitle);
-  const navSuffix = useConfigValue("navSuffix", siteConfig.navSuffix);
-  const navAfter = useConfigValue("navAfter", siteConfig.navAfter);
+  const navTitle = useConfigValue("navTitle");
+  const navSuffix = useConfigValue("navSuffix");
+  const navAfter = useConfigValue("navAfter");
+  const authorName = useConfigValue("authorName");
 
   const [showNav, setShowNav] = useState(true);
   const lastScrollYRef = useRef(0);
@@ -77,9 +72,9 @@ export default function Navbar() {
         aria-hidden="true"
       />
       <span>
-        {navTitle || siteConfig.authorName}
-        <span className="mx-1">{navSuffix || "の"}</span>
-        {navAfter || "宝藏之地"}
+        {navTitle || authorName}
+        <span className="mx-1">{navSuffix}</span>
+        {navAfter}
       </span>
     </>
   );

@@ -58,10 +58,9 @@ const prisma = new PrismaClient();
 /** 主逻辑：返回退出码，不要在里面调 process.exit()。 */
 async function main() {
   if (arg === "--list") {
-    // user 表在结构精简后只剩 id / username / is_admin / created_at
     const admins = await prisma.user.findMany({
       where: { is_admin: true },
-      select: { username: true, created_at: true },
+      select: { email: true, created_at: true },
       orderBy: { created_at: "asc" },
     });
     if (admins.length === 0) {
@@ -70,9 +69,9 @@ async function main() {
         "执行 node scripts/set-admin.mjs <你的邮箱> 直接授予（user 表没记录会自动补建）。"
       );
     } else {
-      console.log(`当前管理员 ${admins.length} 个（username 即登录邮箱）：`);
+      console.log(`当前管理员 ${admins.length} 个：`);
       for (const a of admins) {
-        console.log(`  · ${a.username}   （记录建于 ${a.created_at.toISOString()}）`);
+        console.log(`  · ${a.email}   （记录建于 ${a.created_at.toISOString()}）`);
       }
     }
     return 0;
@@ -80,12 +79,11 @@ async function main() {
 
   const email = arg.trim().toLowerCase();
 
-  // auth.ts 落库时用 username = email（email 列已删，username 是唯一标识）
-  const row = await prisma.user.findUnique({ where: { username: email } });
+  const row = await prisma.user.findUnique({ where: { email } });
 
   if (!row) {
-    // 账号在 Supabase Auth 里存在、本站 user 表却没有记录 —— 这正是
-    await prisma.user.create({ data: { username: email, is_admin: true } });
+    // 账号在 Supabase Auth 里存在、本站 user 表却没有记录 —— 这正是「登录成功但不是管理员」的成因，补建即可。
+    await prisma.user.create({ data: { email, is_admin: true } });
     console.log(`user 表里原本没有 ${email}，已补建记录并设为管理员。`);
     console.log("若登录时仍提示「不是管理员」，说明该邮箱在 Supabase Auth 里并不存在，请先注册。");
     return 0;
@@ -97,7 +95,7 @@ async function main() {
   }
 
   await prisma.user.update({
-    where: { username: email },
+    where: { email },
     data: { is_admin: true },
   });
   console.log(`已把 ${email} 设为管理员。`);

@@ -10,7 +10,7 @@ export default function AdminAlbumEditPage({
 }) {
   const { id } = use(params);
   if (!id) {
-    return <p className="py-24 text-center text-sm text-slate-400">无效的相册 ID</p>;
+    return <p className="py-24 text-center text-sm text-admin-ink-5">无效的相册 ID</p>;
   }
   return <AlbumEditor albumId={id} />;
 }

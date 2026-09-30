@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, useCall
 import { usePathname } from "next/navigation";
 import { configureCdnDomain } from "@/app/lib/image-thumb";
 import { unwrapApi } from "@/app/lib/api-types";
+import { defaultConfigValue } from "@/app/lib/site-config-defs";
 
 const POLL_INTERVAL = 60_000;
 
@@ -148,15 +149,17 @@ export function useSiteConfig() {
   return useContext(SiteConfigContext);
 }
 
-export function useConfigValue(key: string, defaultValue = ""): string {
+export function useConfigValue(key: string): string {
   const { config } = useContext(SiteConfigContext);
   const value = config[key];
-  // 与服务端 getDbConfigValue 同语义：键不存在与值为空串都算「未配置」。
-  return value === undefined || value === "" ? defaultValue : value;
+  // 默认值与后台界面同源（site-config-defs）；只有键不存在才回落。
+  // 空串视为后台「显式清空」，与服务端 pickConfigValue 同语义。
+  return value === undefined ? defaultConfigValue(key) : value;
 }
 
+/** 取 JSON 配置（type=json / multiImage）。fallback 必须是稳定引用，否则下游 effect 依赖会抖动。 */
 export function useConfigJson<T>(key: string, fallback: T): T {
-  const raw = useConfigValue(key, "");
+  const raw = useConfigValue(key);
   return useMemo(() => {
     if (!raw) return fallback;
     try {
