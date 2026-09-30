@@ -30,7 +30,9 @@ async function AdminGate({ children }: { children: React.ReactNode }) {
     redirect("/admin/login");
   }
 
-  const authorName = await getDbConfigValue("authorName", siteConfig.authorName);
+  // 显式串联回落：配置里被清空时仍要有作者名可显示。
+  const authorName =
+    (await getDbConfigValue("authorName")) || siteConfig.authorName;
 
   return <AdminShell authorName={authorName}>{children}</AdminShell>;
 }

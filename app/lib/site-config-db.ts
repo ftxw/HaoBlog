@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { purgeTag } from "./revalidate";
 import { prisma } from "./prisma";
+import { defaultConfigValue } from "./site-config-defs";
 
 const SITE_CONFIG_TAG = "site-config";
 
@@ -33,11 +34,15 @@ export async function getDbSiteConfig(): Promise<Record<string, string>> {
   }
 }
 
-export async function getDbConfigValue(key: string, defaultValue = ""): Promise<string> {
+export async function getDbConfigValue(key: string, defaultValue?: string): Promise<string> {
   const config = await getDbSiteConfig();
-  // 不能用 config[key] ?? defaultValue：种子会把「未配置」的键写成空串。
   const value = config[key];
-  return value === undefined || value === "" ? defaultValue : value;
+  // 键存在就按字面返回，哪怕是空串 —— 空串是后台「显式清空」的语义
+  // （例如 geoApiUrl 留空即表示关闭归属地查询），不能被默认值悄悄顶回来。
+  if (value !== undefined) return value;
+  // 键不存在 = 这个库没跑过 syncSiteConfig：优先用调用方给的默认值，
+  // 其次回落到 siteConfigDefs 里声明的默认值（与后台界面显示的那个一致）。
+  return defaultValue ?? defaultConfigValue(key);
 }
 
 /* ── 敏感键过滤（单一出口）──────────────────────────────────────────── */

@@ -1,22 +1,42 @@
-
+/**
+ * UA 解析：纯字符串匹配，无依赖。
+ *
+ * 两条硬约束，改动时务必保留：
+ * 1. **移动端判定必须排在桌面端之前**。iPhone/iPad 的 UA 含「like Mac OS X」，
+ *    Android 的 UA 含「Linux」，顺序颠倒会被认成 macOS / Linux。
+ * 2. **内核套壳浏览器必须排在 Chrome 之前**。国产浏览器都是 Chromium 内核，
+ *    UA 里同时带 `Chrome/`，不先匹配自家标识就一律显示成 Chrome。
+ */
 export function parseBrowser(ua: string): string {
   if (!ua) return "未知浏览器";
-  if (ua.includes("Edg/")) return "Edge";
-  if (ua.includes("Chrome/")) return "Chrome";
-  if (ua.includes("Firefox/")) return "Firefox";
-  if (ua.includes("Safari/") && !ua.includes("Chrome")) return "Safari";
-  if (ua.includes("Opera") || ua.includes("OPR/")) return "Opera";
+  if (ua.includes("EdgiOS/") || ua.includes("EdgA/") || ua.includes("Edg/")) return "Edge";
+  if (ua.includes("OPR/") || ua.includes("Opera")) return "Opera";
+  // 微信 / QQ 内置浏览器：UA 里带 MicroMessenger / 独立的 QQ 标识
+  if (ua.includes("MicroMessenger")) return "微信内置浏览器";
+  if (ua.includes("QQBrowser")) return "QQ 浏览器";
+  if (ua.includes("Quark")) return "夸克浏览器";
+  if (ua.includes("UCBrowser") || ua.includes("UBrowser")) return "UC 浏览器";
+  if (ua.includes("QIHU") || ua.includes("360SE") || ua.includes("360EE")) return "360 浏览器";
+  if (ua.includes("MetaSr") || ua.includes("SogouMobileBrowser")) return "搜狗浏览器";
+  if (ua.includes("Maxthon")) return "傲游浏览器";
+  if (ua.includes("Firefox/") || ua.includes("FxiOS/")) return "Firefox";
+  if (ua.includes("CriOS/") || ua.includes("Chrome/")) return "Chrome";
+  if (ua.includes("Safari/")) return "Safari";
   return "未知浏览器";
 }
 
 export function parseOS(ua: string): string {
   if (!ua) return "未知系统";
+  // 移动端 / 衍生系统排在前面（见文件头约束 1）
+  if (ua.includes("iPhone") || ua.includes("iPad") || ua.includes("iPod")) return "iOS";
+  if (ua.includes("HarmonyOS") || ua.includes("OpenHarmony")) return "HarmonyOS";
+  if (ua.includes("Android")) return "Android";
   if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
   if (ua.includes("Windows NT 6.3")) return "Windows 8.1";
   if (ua.includes("Windows NT 6.1")) return "Windows 7";
+  if (ua.includes("Windows")) return "Windows";
   if (ua.includes("Mac OS X")) return "macOS";
+  if (ua.includes("CrOS")) return "ChromeOS";
   if (ua.includes("Linux")) return "Linux";
-  if (ua.includes("Android")) return "Android";
-  if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
   return "未知系统";
 }
