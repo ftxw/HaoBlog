@@ -1,0 +1,22 @@
+# 浏览器支持范围（构建目标）
+#
+# 为什么需要显式声明：没有它时 Next 会用自己的隐式默认值，产出偏保守 ——
+# 实测 polyfills chunk 达 112KB(解压) / 39.8KB(gzip)，同时其它 chunk 里
+# 也带着不必要的降级代码。
+#
+# 关于 polyfills chunk 的一个事实（别误读）：它带 `noModule` 属性，
+# 支持 ES modules 的浏览器**不会下载它**。所以收紧目标主要收益在于
+# ① 让该 chunk 对老浏览器也变小；② 让 SWC 少做降级、其它 chunk 更短。
+# 对现代浏览器的收益有限，属于「把隐式默认变成显式约定」这一档。
+#
+# 目标取 2020 年后的浏览器：覆盖微信内置浏览器（Android 端 X5 内核、
+# iOS 端 WKWebView 跟随 Safari 版本）等实际访问场景，同时排除 IE11 时代的降级代码。
+> 0.5%
+last 2 versions
+chrome >= 87
+edge >= 88
+firefox >= 78
+safari >= 14
+ios_saf >= 14
+not dead
+not op_mini all

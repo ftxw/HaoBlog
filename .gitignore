@@ -1,0 +1,105 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# 根目录 API 调试快照（抓包留存，非源码；已在 2026-09-17 清理存量）
+/.*.json
+/commit.txt
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# 本项目用 pnpm（远端只有 pnpm-lock.yaml）。本地误跑 npm install 会留下
+# package-lock.json —— 两个 lockfile 并存会让 Vercel 的包管理器探测产生歧义，不入库。
+/package-lock.json
+
+# blog posts (content is managed separately)
+/content/posts/
+
+# admin build output (rebuilt on deploy)
+/public/admin
+
+# outdated admin build artifacts (current build goes to /public/admin)
+/admin/build/static/
+/admin/build/index.html
+/admin/build/favicon.ico
+/admin/build/icon.png
+/admin/build/logo.svg
+/admin/build/version.json
+
+# local uploads to public (production uses external image hosts)
+/public/uploads
+
+# local placeholder images used during early development
+# /public/images
+
+# OS / editor temp
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# dev logs
+next-dev*.log
+*.log
+
+# local database & dev files (do not commit)
+*.db
+dev-test.db
+
+# local deploy staging folder (contains a .env copy; cleaned by user manually)
+.deploy-tmp/
+
+# IDE agent workspace data
+.codebuddy/
+
+# build leftovers
+_tmp_*
+
+# local edgeone link state & AI workspace memory (never commit)
+.edgeone/
+.workbuddy/
+
+# 本地临时构建产物
+/tmp/
+/dev/
+
+# 本地工作产出（审计报告、迁移对比稿等，与项目源码无关，不进仓库）
+# 环境变量的完整说明统一写在 .env.example 里（那个文件是入库的），
+# 因此这里不再需要为任何 docs 文件做单文件放行。
+/docs/

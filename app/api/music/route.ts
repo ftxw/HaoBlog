@@ -1,0 +1,110 @@
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+import { NextRequest } from "next/server";
+import { businessFail, fail, ok } from "@/app/lib/http";
+import { createMeting, type NormalizedTrack } from "@/app/lib/meting";
+import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
+import { withTimeout } from "@/app/lib/timeout";
+
+const MUSIC_DEADLINE = 10_000;
+
+interface SongData {
+  id: string;
+  title: string;
+  artist: string;
+  cover: string;
+  src: string;
+  lrcUrl: string;
+  type: "netease";
+  url_id?: string;
+  lyric_id?: string;
+  duration?: number;
+}
+
+async function getNeteaseSongs(playlistId: string | null, songIds: string | null): Promise<SongData[]> {
+  const meting = await createMeting();
+
+  let tracks: NormalizedTrack[] = [];
+
+  if (playlistId) {
+    const raw = await meting.playlist(playlistId);
+    const parsed = JSON.parse(raw);
+    tracks = Array.isArray(parsed) ? parsed : [];
+  } else if (songIds) {
+    const ids = songIds.split(",").map((s) => s.trim()).filter(Boolean);
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const raw = await meting.song(id);
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          return [];
+        }
+      })
+    );
+    tracks = results.flat();
+  }
+
+  const songs: SongData[] = tracks.map((track) => {
+    const urlId = String(track.url_id || track.id || "");
+    return {
+      id: urlId,
+      title: track.name || "未知歌曲",
+      artist: Array.isArray(track.artist) ? track.artist.join(", ") : String(track.artist || "未知歌手"),
+      cover: (track.picUrl || "").replace(/^http:\/\//, "https://"),
+      src: urlId ? `/api/music/stream?url_id=${encodeURIComponent(urlId)}` : "",
+      lrcUrl: track.lyric_id ? `/api/music/lyrics?lyric_id=${encodeURIComponent(track.lyric_id)}` : "",
+      type: "netease" as const,
+      url_id: urlId,
+      lyric_id: track.lyric_id ? String(track.lyric_id) : "",
+      duration: track.duration ?? undefined,
+    };
+  });
+
+  return songs.filter((s) => s.url_id);
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const playlistId = searchParams.get("id");
+    const songIds = searchParams.get("ids");
+
+    if (!playlistId && !songIds) {
+      return ok([]);
+    }
+
+    try {
+      return await cachedPublicGet(
+        CACHE_NAMESPACE.music,
+        req,
+        () =>
+          withTimeout(
+            getNeteaseSongs(playlistId, songIds),
+            MUSIC_DEADLINE,
+            "music playlist"
+          ),
+        /*
+         * 歌单只由 `id` / `ids` 决定，缓存键就只认这两个参数。
+         * 前端会带 `_t=<时间戳>` 之类的 cache buster 打这个接口 —— 用了白名单之后
+         * 它们天然不参与键，不必再像之前那样先手工剥掉 `_t` 再构造 Request。
+         */
+        { keyParams: ["id", "ids"] }
+      );
+    } catch (upstreamErr) {
+      console.error("Music playlist upstream error:", upstreamErr);
+      // businessFail：未配置音乐 API 时抛的是 BusinessError（503 + 明确文案），
+      // 不该被压成笼统的「数据源不可用」——那会让后台不知道该去填哪个配置。
+      const res = businessFail(upstreamErr, "音乐数据源不可用");
+      res.headers.set("Cache-Control", "no-store");
+      return res;
+    }
+  } catch (err) {
+    console.error("Music API error:", err);
+    return fail("获取音乐数据失败", 500);
+  }
+}

@@ -1,0 +1,21 @@
+-- 删除 user.is_admin 上的无用索引。
+--
+-- ═══════════════════════════════════════════════════════════════════
+-- 为什么删
+-- ═══════════════════════════════════════════════════════════════════
+-- schema 里这条索引此前的注释写的是：
+--   「requireAdmin 每次鉴权都要按 is_admin 过滤；原先无任何索引 → 全表扫」
+-- 但这句话与代码不符 —— 鉴权热路径**从不按 is_admin 过滤**，而是按 username 定位：
+--   app/lib/auth.ts::withAdminFlag → prisma.user.findUnique({ where: { username } })
+-- 它走的是 username 上的唯一索引（user_username_key）。
+--
+-- 全项目对 is_admin 的谓词只有两处，且都是「库里有管理员吗」的存在性判断：
+--   · app/lib/auth.ts::ensureUserAndBootstrapAdmin → user.count({ where: { is_admin: true } })
+--   · app/lib/auth.ts::hasAnyAdmin              → user.count({ where: { is_admin: true } })
+-- 这两处发生在**注册/登录引导**这种低频路径上，而 user 表只有 1~2 行 ——
+-- 规划器在任何情况下都会选顺序扫描，索引永远用不上。
+--
+-- 结论：这是一个纯写放大（每次注册/改权限都要维护一条没人读的索引）。
+-- 删掉它；真需要「快速找管理员」时，user 表的规模也永远不需要索引。
+
+DROP INDEX IF EXISTS "user_is_admin_idx";

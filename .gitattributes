@@ -1,0 +1,9 @@
+# Prisma 的 migration.sql 会用 sha256 参与 _prisma_migrations.checksum 的计算，
+# 必须保证跨平台**字节一致**。
+#
+# 本机 core.autocrlf=true：Windows 检出时会把 LF 转成 CRLF，文件 sha256 随之改变，
+# 于是本地算出的 checksum 与 Linux（Vercel / CI）上记录的漂移，
+# `prisma migrate status` 会报「迁移文件自应用后已被修改」。
+# 强制 LF，保证任何平台检出/提交的都是同一串字节。
+prisma/migrations/**/migration.sql text eol=lf
+prisma/migrations/migration_lock.toml text eol=lf
