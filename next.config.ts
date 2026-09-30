@@ -41,7 +41,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
 const CACHE_IMAGE = "public, max-age=86400, stale-while-revalidate=3600";
 
 const nextConfig: NextConfig = {
@@ -89,11 +88,9 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
       },
-      // 3. 带内容 hash 的静态资源：长缓存
-      {
-        source: "/:path(.*\\.(?:js|css|woff|woff2|ttf|svg|ico))",
-        headers: [{ key: "Cache-Control", value: CACHE_IMMUTABLE }],
-      },
+      // 3. 不自声明 js/css/字体/icon 的长缓存：`/_next/static/*` 已由 Next 自带
+      //    `public,max-age=31536000,immutable`（线上实测 js 与 css 均是）。按扩展名通配反而会把
+      //    **不存在的文件**也标成 immutable —— 线上实测 /favicon.ico 的 404 被边缘缓存了一整年。
       // 4. public 下的图片资源：1 天 + stale-while-revalidate
       {
         source: "/images/:path*",
