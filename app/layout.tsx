@@ -21,18 +21,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = new URL(await resolveSiteBaseUrl());
   const title = pickConfigValue(dbConfig, "title");
   const description = pickConfigValue(dbConfig, "bio");
-  const cover =
-    pickConfigValue(dbConfig, "avatarUrl") || pickConfigValue(dbConfig, "defaultPostCover");
-  // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
-  const ogImage = absoluteUrlOf(
-    proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
-    base.toString()
-  );
+  const avatar = pickConfigValue(dbConfig, "avatarUrl");
+  const cover = avatar || pickConfigValue(dbConfig, "defaultPostCover");
+  // 社交平台抓取、浏览器取 favicon 都不一定带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
+  const proxied = (url: string) =>
+    absoluteUrlOf(proxyUrlOf(url, normalizeCdnDomain(dbConfig.imageCdnDomain)), base.toString());
+  const ogImage = proxied(cover);
+  const icon = proxied(avatar);
 
   return {
     metadataBase: base,
     title,
     description,
+    // 站点图标即后台设置的作者头像，不写死；后台清空头像则交给浏览器默认图标。
+    icons: icon ? { icon, apple: icon } : undefined,
     alternates: {
       types: {
         "application/rss+xml": "/feed",
