@@ -13,6 +13,24 @@ export interface RenderPostOptions {
   cdnDomain?: string;
 }
 
+/** 正则元字符转义（供拼接图床域名用）。 */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * 正文图片可能有两种形态：站内代理路径（未配图床域名时上传的旧图），
+ * 或图床域名直链（配了 imageCdnDomain 之后上传的图），两种都要改写成缩略图。
+ */
+function buildImgSrcPattern(domain: string): RegExp {
+  const alternatives = ["/api/img-proxy/imgs/[^\"']+"];
+  if (domain) alternatives.push(`${escapeRegExp(domain)}/[^\"']+`);
+  return new RegExp(
+    `(<img\\b[^>]*?src=["'])((?:${alternatives.join("|")}))(["'])`,
+    "gi"
+  );
+}
+
 export async function renderPostContent(
   content: string,
   options: RenderPostOptions = {}
@@ -24,7 +42,7 @@ export async function renderPostContent(
 
   let contentHtml = processed.toString();
   contentHtml = contentHtml.replace(
-    /(<img\b[^>]*?src=["'])(\/api\/img-proxy\/imgs\/[^"']+)(["'])/gi,
+    buildImgSrcPattern(domain),
     (_m, pre: string, src: string, post: string) => {
       const thumb = thumbUrlOf(src, domain);
       const original = resolveImageUrl(src, domain);
@@ -46,8 +64,8 @@ export async function renderPostContent(
   };
 }
 
-// v6：assignHeadingIds 修掉了"标题自带 id 时其后锚点整体错位"的缺陷（v5 及更早
-const RENDER_CACHE_VERSION = "v6-toc-anchor";
+// v7：图片重写同时覆盖「图床域名直链」，此前配了 imageCdnDomain 的图会漏掉缩略图。
+const RENDER_CACHE_VERSION = "v7-img-direct-link";
 
 const RENDER_CACHE_TTL_SEC = 3600;
 

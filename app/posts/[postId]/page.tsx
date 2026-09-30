@@ -22,7 +22,14 @@ import PostContent from "@/components/posts/PostContent";
 import PostContentWithHighlight from "@/components/posts/PostContentWithHighlight";
 import ViewCounter from "@/components/posts/ViewCounter";
 import PostComments from "@/components/posts/PostCommentsLazy";
-import { thumbUrlOf } from "@/app/lib/image-thumb";
+import {
+  absoluteUrlOf,
+  normalizeCdnDomain,
+  proxyUrlOf,
+  thumbUrlOf,
+} from "@/app/lib/image-thumb";
+import { getDbSiteConfig } from "@/app/lib/site-config-db";
+import { resolveSiteBaseUrl } from "@/app/lib/site-url";
 import { formatDateCN } from "@/app/lib/format";
 
 export async function generateStaticParams() {
@@ -48,9 +55,40 @@ function imageUnoptimized(url: string): boolean {
 export async function generateMetadata({ params }: { params: Promise<{ postId: string }> }): Promise<Metadata> {
   const { postId } = await params;
   const post = await getPostDetail(postId);
+  if (!post) return { title: "文章" };
+
+  const dbConfig = await getDbSiteConfig();
+  const base = await resolveSiteBaseUrl();
+  const title = post.title || "文章";
+  const description = post.description || undefined;
+  const cover = post.cover || dbConfig.defaultPostCover || siteConfig.defaultPostCover;
+  // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
+  const image = absoluteUrlOf(
+    proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
+    base
+  );
+
   return {
-    title: post?.title || "文章",
-    description: post?.description || undefined,
+    title,
+    description,
+    alternates: { canonical: `/posts/${postId}` },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `/posts/${postId}`,
+      images: [image],
+      publishedTime: post.published_at
+        ? new Date(post.published_at).toISOString()
+        : undefined,
+      tags: (post.tags ?? []).map((t) => t.tag.name),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 

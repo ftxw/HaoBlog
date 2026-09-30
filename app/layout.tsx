@@ -9,7 +9,12 @@ import SiteFrame from "@/components/layout/SiteFrame";
 import RevealObserver from "@/components/layout/RevealObserver";
 import { getDbSiteConfig, getPublicSiteConfig } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
-import { configureCdnDomain } from "@/app/lib/image-thumb";
+import {
+  absoluteUrlOf,
+  configureCdnDomain,
+  normalizeCdnDomain,
+  proxyUrlOf,
+} from "@/app/lib/image-thumb";
 import { siteConfig } from "@/siteConfig";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,8 +22,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const base = new URL(await resolveSiteBaseUrl());
   const title = dbConfig.title || siteConfig.title;
   const description = dbConfig.bio || siteConfig.bio;
-  const ogImage =
+  const cover =
     dbConfig.avatarUrl || dbConfig.defaultPostCover || siteConfig.avatarUrl || siteConfig.defaultPostCover;
+  // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
+  const ogImage = absoluteUrlOf(
+    proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
+    base.toString()
+  );
 
   return {
     metadataBase: base,

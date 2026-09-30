@@ -9,12 +9,18 @@ import { renderMarkdownToHtml } from "@/app/lib/markdown-core";
 import { prisma } from "@/app/lib/prisma";
 import { getDbSiteConfig } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
+import {
+  absoluteUrlOf,
+  normalizeCdnDomain,
+  proxyUrlOf,
+} from "@/app/lib/image-thumb";
 
 export async function GET() {
   try {
     const dbConfig = await getDbSiteConfig();
     const title = dbConfig.title || siteConfig.title;
     const url = await resolveSiteBaseUrl();
+    const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
     const bio = dbConfig.bio || siteConfig.bio;
     const authorName = dbConfig.authorName || siteConfig.authorName;
     const authorEmail = (dbConfig.authorEmail || "").trim();
@@ -37,7 +43,7 @@ export async function GET() {
 
     const items = (
       await Promise.all(
-        posts.map((post) => generateItem(post, url, feedAuthor))
+        posts.map((post) => generateItem(post, url, feedAuthor, cdnDomain))
       )
     ).join("\n");
 
@@ -70,7 +76,12 @@ type FeedPost = Prisma.PostGetPayload<{
   include: { category: true; tags: { include: { tag: true } } };
 }>;
 
-async function generateItem(post: FeedPost, siteUrl: string, feedAuthor: string): Promise<string> {
+async function generateItem(
+  post: FeedPost,
+  siteUrl: string,
+  feedAuthor: string,
+  cdnDomain: string
+): Promise<string> {
   const postUrl = `${siteUrl}/posts/${post.id}`;
   const pubDate = post.published_at
     ? new Date(post.published_at).toUTCString()
@@ -84,7 +95,8 @@ async function generateItem(post: FeedPost, siteUrl: string, feedAuthor: string)
   let contentHtml = "";
   if (post.content) {
     try {
-      contentHtml = await renderMarkdownToHtml(post.content);
+      const rendered = await renderMarkdownToHtml(post.content);
+      contentHtml = absolutizeFeedImages(rendered, siteUrl, cdnDomain);
     } catch {
       contentHtml = escapeXml(post.content);
     }
@@ -99,6 +111,20 @@ async function generateItem(post: FeedPost, siteUrl: string, feedAuthor: string)
       <pubDate>${pubDate}</pubDate>
       <author>${escapeXml(feedAuthor)}</author>${categories ? `\n${categories}` : ""}
     </item>`;
+}
+
+/**
+ * RSS 正文里的图片由阅读器独立加载：它不带 Referer，也无法把相对路径补全成绝对地址。
+ * 所以这里统一改写成「本站绝对地址 + 站内代理」：相对路径得到补全，图床防盗链也不会误伤。
+ */
+function absolutizeFeedImages(html: string, siteUrl: string, cdnDomain: string): string {
+  return html.replace(
+    /(<img\b[^>]*?src=["'])([^"']+)(["'])/gi,
+    (whole: string, pre: string, src: string, post: string) => {
+      const absolute = absoluteUrlOf(proxyUrlOf(src, cdnDomain), siteUrl);
+      return absolute === src ? whole : `${pre}${absolute}${post}`;
+    }
+  );
 }
 
 /** 安全地放进 CDATA 段。 */

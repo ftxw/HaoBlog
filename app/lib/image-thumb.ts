@@ -43,6 +43,32 @@ export function resolveImageUrl(url: string, cdnDomainArg?: string): string {
   return url;
 }
 
+/**
+ * `resolveImageUrl` 的逆运算：把「本站图床直链」换回站内代理路径。
+ *
+ * 用于 RSS、og:image 这类**由站外程序（爬虫 / 阅读器）发起、不带 Referer** 的取图场景：
+ * 图床若开了 Referer 防盗链，直链会 403，而走本站域名则不受影响。
+ */
+export function proxyUrlOf(url: string, cdnDomainArg?: string): string {
+  const domain = cdnDomainArg ?? cdnDomain;
+  if (!url || !domain) return url;
+  if (url.startsWith(`${domain}/`)) {
+    return `${PROXY_URL_PREFIX}${url.slice(domain.length + 1)}`;
+  }
+  return url;
+}
+
+/** 把可能是相对路径的图片地址补成绝对地址（已是绝对地址则原样返回）。 */
+export function absoluteUrlOf(url: string, base: string): string {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  try {
+    return new URL(url, base).toString();
+  } catch {
+    return url;
+  }
+}
+
 export function thumbUrlOf(url: string, cdnDomainArg?: string): string {
   const domain = cdnDomainArg ?? cdnDomain;
   if (!url) return url;
