@@ -23,14 +23,12 @@ export async function GET(request: NextRequest) {
       return fail("获取链接失败", 500);
     }
   }
-  // 不带 keyParams：走到这里说明 `?all=1` **不存在**（存在的那条已经被上面的
-  // 管理员分支拦下并绕过缓存），因此返回值与 query 完全无关，键只用路径名。
+  // 不带 keyParams：走到这里说明 ?all=1 不存在，返回值与 query 无关，键只用路径名。
   return await cachedPublicGet(CACHE_NAMESPACE.businessLinks, request, async () => {
     const links = await prisma.businessLink.findMany({
       where: { status: "active" },
       orderBy: [{ sort: "asc" }, { id: "asc" }],
-      // 安全阀（审计 P4）。注意上面 requireAdmin 分支**故意不加** take ——
-      // 后台管理需要看到全部记录，包括被隐藏后重排的。
+      // 安全阀：上限 500 条。上面的管理员分支故意不加 take（后台需看到全部记录）。
       take: 500,
     });
     return links;

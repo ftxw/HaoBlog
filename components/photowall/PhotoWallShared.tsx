@@ -89,9 +89,7 @@ export function PhotoCard({
             }
           : undefined
       }
-      /* 图片加载完成才挂入场类：动画的 fill-mode: both 在 delay 期间保持 from 态
-         （opacity: 0），因此错峰延迟不会造成「先闪一下再入场」。未加载时用
-         opacity-0 兜住初始不可见。 */
+      /* 图片加载完成才挂入场类：动画的 fill-mode: both 在 delay 期间保持 from 态 */
       style={
         loaded ? { animationDelay: `${(index % 12) * 80}ms` } : undefined
       }

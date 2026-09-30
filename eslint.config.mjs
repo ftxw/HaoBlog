@@ -7,11 +7,9 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      // 全库大量历史 `any`（API 数据转换等），属存量风格而非缺陷；
-      // 保持警告可见，便于逐步收敛，避免因单条规则阻断后续规则覆盖。
+      // API 数据转换处大量 any，降为警告便于逐步收敛。
       "@typescript-eslint/no-explicit-any": "warn",
-      // React 19 建议「effect 内避免同步 setState」，但后台表单从请求结果初始化 state
-      // 是既有通用模式，降为警告而非错误。
+      // 后台表单从请求结果初始化 state 会命中这条，降为警告。
       "react-hooks/set-state-in-effect": "warn",
       // 未使用变量：允许用 `_` 前缀显式标记「就是不用」。
       // 主要服务「解构丢弃」这一写法，例如 SafeImage 里把 next/image 专有属性摘掉：

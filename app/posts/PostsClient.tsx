@@ -12,15 +12,7 @@ import SegmentedFilter from "@/components/ui/SegmentedFilter";
 import Reveal from "@/components/ui/Reveal";
 import { useUrlParam } from "@/app/lib/hooks/use-url-param";
 
-/**
- * 文章列表（客户端交互部分）。
- * 首屏数据由服务端 RSC/ISR 注入（initial*），挂载时**不再重复请求**；
- * 仅当切换分类 / 搜索 / 加载更多时才调用分页接口。
- *
- * 搜索走**服务端**（`/api/posts?keyword=`），不在本地过滤已加载页：
- * 本地过滤只能命中「当前已翻到的那几页」，用户搜到的东西取决于他滚了多远，
- * 这既不完整也无法按相关性排序。搜索与分类筛选共用同一条数据流。
- */
+/** 文章列表（客户端交互部分）。 */
 export default function PostsClient({
   initialCategories,
   initialPosts,
@@ -49,7 +41,6 @@ export default function PostsClient({
       return;
     }
     // 请求竞态保护：搜索/切分类会连续发请求，后发的可能先返回。
-    // 用 active 标记丢弃过期响应，避免旧结果覆盖新结果。
     let active = true;
     setLoading(true);
     getPosts({

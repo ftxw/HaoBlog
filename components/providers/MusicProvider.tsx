@@ -138,11 +138,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // 云音乐配置直接复用 SiteConfigProvider 的上下文：
-  // layout 里已经服务端注入了 initialConfig，MusicProvider 再自己 fetch 一次
-  // /api/site-config 就是纯浪费（serverless 下每次页面加载多一次函数调用）。
-  // SiteConfigProvider 内部用 shallowEqual 保证内容不变时 config 引用稳定，
-  // 所以下面这两个值只在配置真的变了时才变，不会导致无限重取。
+  // 云音乐配置直接复用 SiteConfigProvider 的上下文。
   const { config } = useSiteConfig();
   const cloudMusicPlaylistId =
     config.cloudMusicPlaylistId || siteConfig.cloudMusicPlaylistId;

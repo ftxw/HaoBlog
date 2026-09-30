@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     return ok(data);
   } catch (err: unknown) {
     // 统一映射：未登录/令牌无效 401、无权限 403、其余（如数据库故障）500。
-    // 不能一律回 401 —— 那会让前端把 DB 故障误判成「掉登录态」并触发刷新/登出。
     return businessFail(err, "获取日志失败");
   }
 }

@@ -28,15 +28,7 @@ function loginLogCutoff(): Date {
 
 const CLEAN_INTERVAL = 5 * 60 * 1000; // 5 分钟最多执行一次清理
 
-/**
- * ⚠️ 初始值取 `Date.now()` 而不是 0。
- *
- * 这个变量是**每实例**的（Vercel 上每个函数实例各有一份，冷启动即重置）。
- * 若初值为 0，则每个新实例的**第一次**上报都会立刻触发这三条全表 DELETE ——
- * 流量上来后实例频繁冷启动，等于把一次「低频清理」放大成持续的清理风暴。
- * 从当前时间起算后，每个实例启动后先等满一个周期，风暴消失；
- * 代价仅是一个新实例在头 5 分钟内不清理，而清理本身只是回收过期行。
- */
+/** 初始值取 Date.now() 而不是 0。 */
 let lastCleanAt = Date.now();
 
 async function cleanIfDue(): Promise<void> {
@@ -54,8 +46,7 @@ async function cleanIfDue(): Promise<void> {
   }
 }
 
-// PV 反刷：按 IP 的短窗上限。一次正常浏览只上报一次（StatsTracker 只在整页加载时触发），
-// 阈值放到 20/分钟足够宽松，但足以把「脚本无限刷 PV」从每秒上千次压到每分钟 20 次。
+// PV 反刷：按 IP 的短窗上限。一次正常浏览只上报一次（StatsTracker 只在整页加载时触发）。
 const PV_LIMIT = 20;
 const PV_WINDOW_MS = 60_000;
 
@@ -83,7 +74,6 @@ export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
 
   // PV 反刷：限流本身失败不阻断浏览（回落放行），超限只丢本次上报、不报错
-  // （避免前端重试放大，也不影响正常浏览计数）。
   let pvAllowed = true;
   try {
     pvAllowed = (await hitRateLimit(`pv:${ip}`, PV_LIMIT, PV_WINDOW_MS)).allowed;
@@ -113,17 +103,7 @@ export async function POST(request: NextRequest) {
   try {
     await cleanIfDue();
 
-    /*
-     * 每次上报要落库的三件事：PV+1、UV 去重、访客明细。
-     *
-     * ⚠️ 这里刻意**先写 UV 去重表**（它决定 UV 要不要 +1），再和 PV 一起放在同一条
-     * `daily_stat` upsert 里，最后并发写访客明细。顺序是被数据依赖绑死的：
-     * 必须先知道 `daily_uv` 这次是否真的插入了新行，才能决定 uv 加不加。
-     *
-     * 顺序即「createMany UV → upsert PV+UV → create visitor」= 两个串行步，
-     * 且第三步与前两步并发。不要写成「先 upsert PV、再 createMany UV、若新增再 upsert UV」——
-     * 那是三到四个串行往返，单次上报会多花约 60~120ms。
-     */
+    /* 每次上报要落库的三件事：PV+1、UV 去重、访客明细。 */
     const uvCreated = await prisma.dailyUv.createMany({
       data: [{ date, ip }],
       skipDuplicates: true, // 并发安全：重复时静默跳过，count=0

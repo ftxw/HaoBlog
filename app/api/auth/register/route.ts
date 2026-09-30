@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { session, user, needsConfirm } = await registerUser(
+    const { session, user, needsConfirm, isAdmin, adminBootstrapFailed } = await registerUser(
       {
         email: body?.email,
         password: body?.password,
@@ -29,8 +29,11 @@ export async function POST(request: Request) {
       return ok({ needsConfirm: true });
     }
 
+    // isAdmin 由服务端从 user 表读回，前端据此决定进不进后台（不再另打一次 /api/auth/me）。
     const res = ok({
       needsConfirm: false,
+      isAdmin,
+      adminBootstrapFailed,
       id: user.id,
       avatar: user.avatar,
       email: user.email,

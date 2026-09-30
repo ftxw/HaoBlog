@@ -25,9 +25,7 @@ async function fetchInitialData() {
   try {
     const [categories, posts, total] = await Promise.all([
       listCategories(),
-      // 刻意不复用 queries 层的 listPosts()：它还会带上本页不需要的 comments_count，
-      // 且不返回 total（本页 initialHasMore 需要），复用会变成 3 次查询 vs 现在 2 次。
-      // 这里复用共享的 POST_BASE_SELECT / toPostItem，字段与排序语义与 listPosts() 一致。
+      // 刻意不复用 queries 层的 listPosts()：它还会带上本页不需要的 comments_count。
       prisma.post.findMany({
         where: { status: "published" },
         orderBy: [{ is_pinned: "desc" }, { created_at: "desc" }],

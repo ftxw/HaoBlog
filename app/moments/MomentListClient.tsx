@@ -26,10 +26,7 @@ const MOOD_META: Record<string, { emoji: string; label: string }> = {
   thinking: { emoji: "🤔", label: "思考" },
 };
 
-/**
- * 展示形态由 `@/app/lib/moment-item` 定义：首屏在服务端映射、续拉在客户端映射，
- * 两处必须是同一份实现。
- */
+/** 展示形态由 @/app/lib/moment-item 定义：首屏在服务端映射、续拉在客户端映射。 */
 export type Moment = MomentItem;
 
 function momentYear(moment: Moment): string {
@@ -108,14 +105,14 @@ export default function MomentListClient({
   total: number;
   /** 每页条数，与页面首屏取数用的一致 */
   pageSize: number;
-  /** 筛选项由服务端按**全量**算好传入 —— 从已下发的这一页里派生会漏掉老数据 */
+  /** 筛选项由服务端按全量算好传入 —— 从已下发的这一页里派生会漏掉老数据 */
   yearOptions: string[];
   moodOptions: string[];
 }) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialMoments.length < total);
-  // 已从服务端**收到**的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
+  // 已从服务端收到的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
   const receivedRef = useRef(initialMoments.length);
   const pageRef = useRef(1);
   const inFlightRef = useRef(false);
@@ -235,7 +232,6 @@ export default function MomentListClient({
 
   useEffect(() => {
     // 挂载后测量下拉菜单（w-max）实际宽度，作为按钮 minWidth，避免按钮被菜单撑开时抖动。
-    // 用 rAF 把 setState 移出 effect 同步体：测量本身要等布局完成，延后一帧无感知。
     const raf = requestAnimationFrame(() => {
       const next: Record<string, number> = {};
       for (const key of Object.keys(dropdownMenuRefs.current)) {
@@ -294,10 +290,7 @@ export default function MomentListClient({
     return result;
   }, [moments, searchQuery, sortOrder, activeYear, activeImg, activeMood]);
 
-  // 筛选/搜索都是在客户端对**已下发的数组**做的：只有把剩下的页也取回来，
-  // 「没找到相关的说说」才是一个可信的结论。所以一旦有筛选条件就不再等滚动，
-  // 连续取满为止（`moments.length` 入依赖，每取回一页就继续下一批；
-  // inFlightRef 保证不会并发重复请求，出错时长度不变、循环自然停下）。
+  // 筛选/搜索都是在客户端对已下发的数组做的：只有把剩下的页也取回来。
   const filtering =
     searchQuery.trim() !== "" ||
     activeYear !== "all" ||
@@ -307,10 +300,7 @@ export default function MomentListClient({
     if (filtering && hasMore) void loadMore();
   }, [filtering, hasMore, moments.length, loadMore]);
 
-  // 双列瀑布流的列分配：**一次遍历**分好左右两列。
-  // 不要对 processedMoments 做两遍全量 map（各跑一遍再各自丢弃一半），
-  // 500 条即 1000 次渲染调用 + 500 个 null 子节点。
-  // `index` 保留它在原始序列里的下标 —— `Reveal` 的入场延迟按它错峰。
+  // 双列瀑布流的列分配：一次遍历分好左右两列。
   const [leftColumn, rightColumn] = useMemo(() => {
     const left: { moment: Moment; index: number }[] = [];
     const right: { moment: Moment; index: number }[] = [];
@@ -645,8 +635,7 @@ export default function MomentListClient({
               )}
             </div>
           </div>
-          {/* 筛选/搜索是**在客户端对已下发数组**做的，命中少时列表会比视口短 ——
-              哨兵会持续可见并继续取下一页，直到取满 total 为止。 */}
+          {/* 筛选/搜索在客户端对已下发数组做，命中少时列表比视口短 → 哨兵持续可见，继续取下一页。 */}
           {hasMore && (
             <div
               ref={sentinelRef}

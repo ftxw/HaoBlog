@@ -1,41 +1,18 @@
 @import "tailwindcss";
 
-/* 曾经这里有一行 `@plugin "@tailwindcss/typography"`（2026-09-28 移除）。
-   移除理由：全站正文排版早已从插件的 `.prose` 换成自有的 `.post-body`
-   （见 app/lib/post-body-style.ts），而**插件一旦加载就会无条件输出 `prose` 的
-   整套基础规则** —— 实测 91 条规则、16434 字节，占主 CSS chunk 的 13.7%，
-   且 `--tw-prose-*` 变量与 strong/h4/figcaption 等规则本项目从未覆盖过，
-   属于纯死重量。移除后 `.prose` / `not-prose` 相关规则不再产出。
-   若将来真要恢复 `.prose`，把这一行加回来即可（devDependency 需一并装回）。 */
-
 /* Tailwind CSS 4 class-based dark mode */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* 防止滚动条出现/消失导致页面抖动 — 始终显示滚动条 */
 html {
   overflow-y: scroll;
-  /* 灯箱/弹窗打开时会写内联 `documentElement.style.overflow = "hidden"`（母版同款做法），
-     内联优先级高于这里的 overflow-y:scroll → 滚动条被撤掉 → 内容整体横向位移
-     （实测：右侧贴边元素 +15px、居中的 .container-page +7.5px）。
-     补上 `scrollbar-gutter: stable` 后，即使进入 overflow:hidden，槽位仍被保留，
-     实测位移全部为 0，且常规状态下布局与不加时完全一致（不会多占一条槽）。
-     无头 Edge 实测（1280×800、经典滚动条 15px）；量测脚本属临时产物，已随临时目录清理移除。 */
+  /* 灯箱/弹窗打开时会写内联 documentElement.style.overflow = "hidden"。 */
   scrollbar-gutter: stable;
   /* 禁用滚动锚定：防止资源加载导致布局变化时浏览器自动调整滚动位置（表现为刷新后页面自动下滑） */
   overflow-anchor: none;
 }
 
-/* 文字选中：母版未做全局禁用（正文可自由选择/复制），故这里不再 body{user-select:none}。 */
-
-/* 页面主容器：所有前台页面的统一宽度与横向内边距
-   对齐母版 Container.astro 的 `mx-auto w-full px-5 sm:px-8` + `max-w-6xl`：
-   基准 1.25rem、sm 起 2rem。
-   ⚠️ 纵向内距一律**不在这里给**：母版 Container.astro 同样只管横向，
-   纵向由各页自己传（母版各页为 `pb-6 pt-6 md:pt-12`，音乐页 `pb-10`，文章详情 `pb-20`）。
-   原因：本类在**顶层**（不在 @layer 内），而未分层的规则会盖掉 @layer utilities 里的工具类，
-   若这里写了 padding-bottom，页面上的 `pb-6` / `pb-10` / `pb-20` 全部失效
-   （历史问题：曾在 @media(min-width:768px) 里写 padding-bottom:3rem，
-   导致全站每页底部比母版多 24px，且各页传的 pb-* 都无效）。 */
+/* 页面主容器：所有前台页面的统一宽度与横向内边距。 */
 .container-page {
   width: 100%;
   max-width: 72rem;
@@ -53,42 +30,13 @@ html {
 
 /* backdrop-filter 由 Tailwind 类自行处理，不全局覆盖 */
 
-/* ========== 毛玻璃卡片 ==========
-   旧的 .glass-card（16px 圆角 + 内联 rgba 版本）已删除：
-   玻璃卡一律使用下方 token 体系的 .glass / .glass-strong 工具类
-   （rounded-card = 1.5rem，颜色全部来自 --app-* 语义 token）。 */
+/* 毛玻璃卡一律走下方 token 体系的 .glass / .glass-strong 工具类 */
 
-/* ========== 滚动条：改用浏览器原生 ==========
-   母版 global.css 未做全局滚动条自定义（仅音乐/后台局部 .no-scrollbar），
-   故移除这里的自定义滚动条，改为原生滚动条（随 color-scheme 自动适配深浅主题）。 */
+/* ========== 滚动条：用浏览器原生 ========== */
 
-/* ========== 背景：已改用 .app-glow 三色光晕 ==========
-   原先这里有两块，现已删除：
-     · `@keyframes gradient-flow` + `.gradient-background` —— 全屏线性渐变 + 流动动画
-     · `.dark body` 的 135deg 深色线性渐变
-   原因：BackgroundRenderer 现在渲染 `app-glow`（三层 radial 光晕，自带
-   `background-color: var(--app-canvas)`）。那层底色是不透明的，会把 body 上的
-   渐变完全遮住，留着纯属死代码；删掉后深色主题也不会再出现"渐变 + 光晕"两层背景
-   互相打架。
-   后台「站点配置 → 主题颜色」的语义随之改变：不再生成整体渐变，而是覆盖这三层光晕的
-   色相（留空则用内置的靛 / 粉 / 青）。 */
+/* ========== 背景：.app-glow 三色光晕 ========== */
 
-/* ========== 音乐页（云端乐律）==========
-   原先这里还有三条规则，均已删除：
-     · `@keyframes music-spin` + `.music-rotating-disc` —— 唱片旋转已改用
-       `@utility spin-slow`（见下方「唱片封面慢速旋转」）；
-     · `.music-lyric-mask` —— 歌词滚动区已改用隐藏滚动条的通用类；
-     · `.music-no-scrollbar`（2026-09-30）—— 与末尾 `.no-scrollbar` 的
-       两条声明逐字重复，已合并成一处；`app/music/MusicClient.tsx` 的两处
-       调用点同步改名为 `.no-scrollbar`。 */
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   设计 token 层（Phase 1 移植自 haoblog-astro/src/styles/global.css）
-   ─ 仅做"加法"：现有本地规则一律保留，本段为其逐字移植。
-   ─ 提供 --app-* 语义 token 与 bg-surface / text-ink-2 / border-hairline /
-     bg-accent / text-tone-danger 等工具类，供 Phase 2 把组件迁移到 token 上。
-   ─ Phase 1 不改组件、不改观感（除 layout.tsx 删除一个无人引用的本地字体）。
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* 设计 token 层 */
 
 /* ─────────────── 主题无关 token（尺寸 / 字体 / 圆角）─────────────── */
 @theme {
@@ -104,50 +52,24 @@ html {
   --radius-pill: 9999px;
 }
 
-/* ─────────────── 浅色（默认）────────────────────────────────────
-   由深色母版派生：保留"三色光晕"识别特征，大幅降低透明度；
-   玻璃卡改为高透白玻璃；强调色下移到 cyan-600 以保证浅底对比度。
-   ─────────────────────────────────────────────────────────────── */
-/* `.theme-light`：把这套浅色 token 再挂到一个可复用的类上，
-   供「局部强制浅色」使用（后台，见下方 html:has 那段）。
-   ⚠️ 第三个选择器 `html:has(.theme-light)` 不是可选项，少了它就有三处「文档级」漏光：
-     1) `body` 在 `.theme-light` 子树**之外**，取的是 html 的 token ——
-        @layer base 里 `body { background-color: var(--app-canvas); color: var(--app-ink) }`，
-        前台切深色时 body 就变成 `#070a17` 底 + `#f4f6fb` 字；overscroll 露出深色底，
-        而后台里所有**没写色类的容器**继承到的正是这个近白 ink（后台是浅底，字会发白）。
-     2) toast 层：ToastProvider 渲染在 AdminShell 之外（根 layout 里与 children 同级），
-        它的 `bg-surface-solid` / `text-ink` 全部跟着 html 走 —— 深色前台时后台弹一个深色 toast。
-     3) 任何将来挂在后台之外的浮层同理。
-   把 html 自己也拉进浅色作用域，等于「文档级 + 子树级」两级一起钉死，后台整棵树都拿不到深色值。
-   特异性：`html:has(.theme-light)` = (0,1,1) > `.dark` 的 (0,1,0)，
-   所以下方深色块即使源码顺序在后也压不过它 —— 这正是我们想要的。 */
+/* ─────────────── 浅色（默认）──────────────────────────────────── */
+/* .theme-light：把这套浅色 token 再挂到一个可复用的类上。 */
 :root,
 .theme-light,
 html:has(.theme-light) {
   color-scheme: light;
 
-  /* 用户指定：浅色画布改用蓝白 #f7f9fe（原中性暖白 #fafafa 偏灰，蓝白与玻璃光晕更协调） */
+  /* 浅色画布：蓝白，与玻璃光晕更协调 */
   --app-canvas: #f7f9fe;
 
-  /* 玻璃感三件套之一：surface 下调（0.55/0.72 → 0.45/0.62），
-     让画布光晕能透过卡片产生色彩流动。
-     对比度账（最坏 = 卡面叠在 glow-1 最亮处）：
-     ink #0f172a ≈ 15.1:1（AA/AAA 均过）；ink-4 #64748b ≈ 4.0:1（原 4.6:1，
-     仅底部 meta 小字在光晕极亮角受影响，见任务报告）。 */
-  /* 再透一档（0.45/0.62/0.42 → 0.34/0.5/0.32）：让底部光晕更明显地透过卡片。
-     深色文字对比度不受影响（底色变暗只会让 ink 对比度更高），
-     仅 ink-4 小字在光晕极亮处需留意，已远优于 AA 下限。 */
+  /* 玻璃卡 surface：压到能让画布光晕透过来 */
   --app-surface: rgb(255 255 255 / 0.26);
   --app-surface-strong: rgb(255 255 255 / 0.38);
   --app-surface-muted: rgb(255 255 255 / 0.24);
-  /* 不透明 surface：给「必须保证文字可读性」的浮层用 ——
-     toast / 登录弹窗 / emoji 面板都悬浮在任意页面内容之上，
-     半透明的 surface 会把背后的照片、正文透上来把文字弄脏。
-     玻璃感在这类组件上由「圆角 + 发丝边 + 语义色边框 + 阴影」承担，不靠透底。 */
+  /* 不透明 surface：给 toast / 弹窗这类必须保证文字可读性的浮层用 */
   --app-surface-solid: #ffffff;
 
-  /* 四边等色发丝线。透明度对齐旧项目（light: border-white/40）——
-     1px 线的亮度差必须压在 ~+25 以内，否则底边会被读成一条"亮带"。 */
+  /* 四边等色发丝线：1px 的亮度差要压在 ~+25 以内，否则底边会被读成「亮带」 */
   --app-hairline: rgb(255 255 255 / 0.4);
   --app-hairline-soft: rgb(15 23 42 / 0.08);
   /* 导航条底边专用：暗线（浅色下底色本就接近白，需要暗线才读作分隔） */
@@ -166,10 +88,7 @@ html:has(.theme-light) {
   --app-accent-soft: rgb(8 145 178 / 0.12);
   --app-accent-hairline: rgb(8 145 178 / 0.32);
 
-  /* 正文里的浅色底块：h1 的底色块与引用卡共用。
-     白色 + 与 --app-accent-soft 同档的透明度（浅色 12%）。
-     ⚠️ 浅色主题下白色 12% 压在近白画布上对比很弱，底块几乎是隐形的 ——
-     这是刻意按需求（「底色改成白色、透明度不变」）定的，不是漏写。 */
+  /* 正文里的浅色底块：h1 的底色块与引用卡共用。 */
   --app-content-block: rgb(255 255 255 / 0.12);
 
   /* 媒体条专用深色"舞台"：歌词栏 / 播放器时钟等，两套主题下保持一致 */
@@ -186,15 +105,8 @@ html:has(.theme-light) {
   --app-tones-neutral: #475569;
   --app-tones-neutral-soft: rgb(71 85 105 / 0.1);
 
-  /* 三色光晕（同源特征，透明度已下调）
-     浅色改版（0.16/0.13/0.15 → 0.20/0.16/0.18）：旧值叠在近白画布上几乎不可感知，
-     卡片 blur 后"无物可糊"，浅色玻璃感为零。改用低饱和青 #0891b2 / 靛 #6366f1
-     （= 浅色 --app-accent / --app-accent-2 同色系），去掉与浅色主题不搭的粉；
-     明度账：glow-1 最亮 tint ≈ (197,227,237)，L≈0.80，仍贴近画布 #f4f7fc
-     （L≈0.94），不会变成深色块；透过 0.45 白卡后仍有 b−r≈22 的可感知青调。 */
-  /* 提亮：用户反馈背景光晕太淡，要求达到"透过导航条玻璃"时的浓郁度
-     （导航条的 saturate(160%) 会放大色彩，故背景需相应提高 α 才能对齐观感）。
-     0.20/0.16/0.18 → 0.34/0.28/0.30 */
+  /* 三色光晕（同源特征，透明度已下调） */
+  /* 提亮：用户反馈背景光晕太淡，要求达到"透过导航条玻璃"时的浓郁度 */
   /* 用户指定：浅色主题与深色共用同一组光晕（靛/粉/青），不再用浅色青系 */
   --app-glow-1: rgb(99 102 241 / 0.7);
   --app-glow-2: rgb(236 72 153 / 0.6);
@@ -203,24 +115,12 @@ html:has(.theme-light) {
   --app-glow-3: rgb(34 211 238 / 0.52);
 }
 
-/* ── 局部强制浅色（后台）────────────────────────────────────────────
-   后台整体是固定浅色界面（全部 slate/indigo 硬编码色，没有任何 dark: 变体），
-   若滚动条跟着前台深色主题一起变黑，就成了「整屏浅色 + 一根黑滚动条」的割裂
-   （2026-09-19 用户要求：后台滚动条不受前台深浅影响）。
-   做法：把 `.theme-light` 挂在后台的根元素上 ——
-     · 子树内所有语义 token 取浅色值（自定义属性就近继承，天然覆盖 html.dark）；
-     · 子树内的原生 UI（滚动条 / 表单控件 / 下拉菜单）也恒为 light。
-   ⚠️ 下面 `html:has(...)` 这条必须单独写：**文档级**滚动条取的是根元素的
-   used color-scheme，只写在子树上的 color-scheme 管不到它，而后台是文档滚动。
-   ⚠️ 必须带 `!important`：主题脚本（layout.tsx 的首帧内联脚本、ThemeProvider 的
-   effect）把 `documentElement.style.colorScheme` 写成了**内联样式**，
-   内联样式优先级高于任何普通样式表规则 —— 不带 !important 时这条规则等于没写。
-   （`:has` 的特异性 (0,1,1) 本身已高于 `.dark` 的 (0,1,0)，!important 只为了压内联。） */
+/* ── 局部强制浅色（后台）──────────────────────────────────────────── */
 html:has(.theme-light) {
   color-scheme: light !important;
 }
 
-/* ─────────────── 深色（母版）───────────────────────────────────── */
+/* ─────────────── 深色 ───────────────────────────────────── */
 .dark {
   color-scheme: dark;
 
@@ -229,12 +129,10 @@ html:has(.theme-light) {
   --app-surface: rgb(255 255 255 / 0.08);
   --app-surface-strong: rgb(255 255 255 / 0.05);
   --app-surface-muted: rgb(255 255 255 / 0.04);
-  /* 不透明 surface：浮层专用（见 :root 处的说明）。
-     取比画布 #070a17 抬一档的靛黑，读作「浮在页面上方」而不是同一层。 */
+  /* 不透明 surface：浮层专用，比画布抬一档 */
   --app-surface-solid: #151a2c;
 
-  /* 透明度对齐旧项目（dark: border-white/10）与歌词栏（--app-stage-hairline = white/12）。
-     实测阈值：1px 线的亮度差 ~+27 以内读作"边框"，+40 会被读成"亮带"。 */
+  /* 透明度与歌词栏一致（--app-stage-hairline = white/12） */
   --app-hairline: rgb(255 255 255 / 0.12);
   --app-hairline-soft: rgb(255 255 255 / 0.1);
   /* 导航条底边专用：暗线（见 .glass-bar 处的亮度账） */
@@ -254,8 +152,7 @@ html:has(.theme-light) {
   --app-accent-soft: rgb(34 211 238 / 0.14);
   --app-accent-hairline: rgb(34 211 238 / 0.4);
 
-  /* 正文浅色底块（h1 底色块 / 引用卡）：白色 + 与 --app-accent-soft 同档的透明度。
-     深色下白色 14% 叠在深画布上读作一块浅灰，与参考站的 #f9f9f8 观感一致。 */
+  /* 正文底块（h1 底色块 / 引用卡） */
   --app-content-block: rgb(255 255 255 / 0.14);
 
   --app-tones-success: #6ee7b7;
@@ -267,7 +164,7 @@ html:has(.theme-light) {
   --app-tones-neutral: rgb(255 255 255 / 0.7);
   --app-tones-neutral-soft: rgb(255 255 255 / 0.1);
 
-  /* 同浅色：提亮到"透过导航条玻璃"的浓郁度（0.35/0.28/0.22 → 0.5/0.42/0.36） */
+  /* 三团光晕：提亮到「透过导航条玻璃」仍可辨的浓郁度 */
   --app-glow-1: rgb(99 102 241 / 0.7);
   --app-glow-2: rgb(236 72 153 / 0.6);
   /* 右上光晕 = 粉 */
@@ -275,10 +172,7 @@ html:has(.theme-light) {
   --app-glow-3: rgb(34 211 238 / 0.52);
 }
 
-/* ─────────────── 把语义 token 暴露给 Tailwind 工具类 ───────────────
-   用 `inline` 让工具类输出 var(--app-*) 引用而非构建期解析值，
-   这样两套主题共用同一批工具类，切换 .dark 即时生效。
-   ──────────────────────────────────────────────────────────────── */
+/* ─────────────── 把语义 token 暴露给 Tailwind 工具类 ─────────────── */
 @theme inline {
   --color-canvas: var(--app-canvas);
 
@@ -372,29 +266,15 @@ html:has(.theme-light) {
     radial-gradient(60rem 40rem at 10% -10%, var(--app-glow-1), transparent 60%),
     radial-gradient(50rem 35rem at 100% 0%, var(--app-glow-2), transparent 55%),
     radial-gradient(45rem 40rem at 50% 120%, var(--app-glow-3), transparent 60%);
-  /* 去掉 background-attachment: fixed —— 本元素已经是 fixed inset-0，背景本就不随滚动
-     移动，这个属性纯属冗余；而它正是导航条"两层模糊、一层被边界裁剪、静止时出现、
-     鼠标一动就消失"的成因：固定背景在 Chrome 里走独立的缓存光栅路径，会被
-     backdrop-filter 采样成带裁剪边界的快照。位置/观感完全不变，只去掉伪影来源。 */
+  /* 不写 background-attachment: fixed —— 本元素已是 fixed inset-0，该属性冗余且会让
+     backdrop-filter 采到带裁剪边界的快照（导航条模糊忽明忽暗的成因）。 */
   background-repeat: no-repeat;
 }
 
-/* 玻璃拟态：主卡
-   四边等色发丝线：`--app-hairline` 是"半透明白"，作为一圈等高线时，
-   顶边读作玻璃高光（光照在上，符合直觉），但底边会在卡片下缘留下一条
-   高对比横带（浅色 +26、深色 +62 luminance，对比对象是下方被 --app-shadow
-   压暗的画布），容易被误读为渲染故障。
-   真正的修法是把发丝线透明度压回旧项目水平（dark 12% / light 40%），
-   让 1px 边线的亮度差落在 +27 以内 —— 低于它读作"边框"，高于它读作"亮带"。 */
+/* 玻璃拟态：主卡 */
 @utility glass {
   background: var(--app-surface);
-  /* 卡片不再自带 backdrop-filter（全站只保留导航条一层模糊）。
-     原因：导航条有 backdrop-filter，会采样到下方卡片各自"已模糊、且被裁剪在卡片
-     矩形内"的那一层 —— 于是导航条上出现"两层模糊，其中一层带边界裁剪"的光条，
-     且只在导航条下方有内容（卡片）时才出现。
-     卡片的视觉代价几乎为零：卡片背后是平滑的光晕径向渐变，模糊一条平滑渐变
-     在观感上无法分辨；真正需要模糊的是导航条（其背后有卡片、文字、封面图，
-     模糊是导航文字可读性的保障）。玻璃感仍由半透明底 + 发丝边 + 内高光 + 阴影提供。 */
+  /* 卡片不再自带 backdrop-filter（全站只保留导航条一层模糊）。 */
   border: 1px solid var(--app-hairline);
   box-shadow: var(--app-shadow), var(--app-inset);
 }
@@ -418,17 +298,12 @@ html:has(.theme-light) {
   text-shadow: 0 0 18px var(--app-accent-soft);
 }
 
-/* 歌词条文字外发光（旧项目为内联 rgba 投影，这里走 token） */
+/* 歌词条文字外发光 */
 @utility text-glow-strong {
   text-shadow: 0 0 10px var(--app-accent-hairline);
 }
 
-/* 图片上方压字用的可读性遮罩，避免在标记里写内联渐变。
-   三停渐变（to top）：底部 0.7 黑 → 40% 处残留 0.28 → 75% 收到透明。
-   旧版只有 0.6→0 单段，中上部完全裸露，照片与玻璃卡气质脱节；
-   新曲线让照片自底部向上"沉"进卡片，同时把文字区的黑度提高：
-   白字（--app-stage-ink = white/0.92）压在最亮纯白照片上的最坏对比度
-   7.5:1（旧版 5.2:1），两张轮播与相册卡共用本类 → 观感完全一致。 */
+/* 图片上方压字用的可读性遮罩，避免在标记里写内联渐变。 */
 @utility scrim-bottom {
   background-image: linear-gradient(
     to top,
@@ -475,8 +350,7 @@ html:has(.theme-light) {
   }
 }
 
-/* Toast 进出场（替代 framer-motion 的 initial/animate/exit）。
-   时长必须与 components/providers/ToastProvider.tsx 的 EXIT_MS = 200 保持一致。 */
+/* Toast 进出场关键帧。 */
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -499,11 +373,7 @@ html:has(.theme-light) {
   }
 }
 
-/* `enter-*` 类共用的入场关键帧（见下方对应工具类）。
-   位移统一用 rem，跟随根字号缩放。
-   ⚠️ 2026-09-30 删掉了 `@keyframes enter-rise`（20px 位移那组）：全站 0 引用 ——
-   markup 里只用到位移更大的 `enter-rise-lg`，而 `.enter-rise` 工具类
-   也从未被任何组件使用。 */
+/* enter-* 类共用的入场关键帧（见下方对应工具类）。 */
 @keyframes enter-drop {
   from {
     opacity: 0;
@@ -547,14 +417,7 @@ html:has(.theme-light) {
   }
 }
 
-/* 退场关键帧：配合 app/lib/hooks/use-exit-animation.ts 使用。
-   该 hook 在 open 变 false 后先挂 data-exiting 播完退场、再卸载，
-   因此这些 keyframes 挂在 [data-exiting="true"] 上（见下方工具类）。
-   时长必须与调用方传给 hook 的 exitMs 一致。
-   ⚠️ 2026-09-28 删掉了 `exit-pop`（240ms，scale .95 + 下移 10px）与
-   `exit-fade-up`（200ms，上移 20px + 淡出）两组关键帧及其工具类：
-   全站 0 引用（`.exit-pop` 只出现在 hook 的 JSDoc 示例里）。
-   现存三组：exit-fade-scale（弹窗卡）、exit-fade（遮罩/根层）、exit-overlay。 */
+/* 退场关键帧：配合 app/lib/hooks/use-exit-animation.ts 使用。 */
 @keyframes exit-fade-scale {
   from {
     opacity: 1;
@@ -575,10 +438,7 @@ html:has(.theme-light) {
   }
 }
 
-/* ═══════════════ 复合组件样式 ═══════════════
-   放 components 层：这些类由多个属性组合而成、且需要覆盖同名的工具类，
-   放在这一层可以稳定压过 utilities 层里同权重的工具类，不依赖生成顺序。
-   ═══════════════════════════════════════════ */
+/* ═══════════════ 复合组件样式 ═══════════════ */
 @layer components {
   /* 导航条目 */
   .nav-item {
@@ -589,28 +449,15 @@ html:has(.theme-light) {
       border-color 200ms ease;
   }
 
-  /* 顶部导航条：圆角为 0；底边与 .glass 同样不画发丝线
-     （浅色主题下这条线本来就几乎不可见 = "无分隔线"已是既定观感，
-     深色主题下它却是一条 +41 luminance 的亮带，属于同一处缺陷）。
-     保留 1px 边框本身以免高度发生 1px 变化。 */
+  /* 顶部导航条：圆角为 0；底边与 .glass 同样不画发丝线 */
   .glass-bar {
-    /* 不用 surface-strong：浅色下它是白 62%，会自己把导航条提亮，
-       导致"导航条比背景亮"。改用更透的 surface，让背景光晕原样透过。 */
+    /* 不用 surface-strong：浅色下它是白 62%，会自己把导航条提亮。 */
     background: var(--app-surface);
-    /* blur 16 → 24：实测（无头探针，合成 2px 白线置于真实内容层）残余
-       blur8=25.9 / 12=18.5 / 16=18.2 / 20=18.1 / 24=18.3 / 32=18.3 —— 16 起进入平台，
-       取指令区间(24~32)内达到平台的最小值 24。
-       注意：内容列边缘的"阶跃"无法靠模糊消除（卡面 vs 间隙的亮度差，模糊只加宽过渡带），
-       根治靠的是把 backdrop-filter 修好（此前压缩后只剩 -webkit-，Chrome 不认 → 零模糊）。 */
-    /* saturate 160% → 110%：原来的 160% 会把背景色彩人为加浓，
-       使导航条比背景更艳更亮；降到 110% 后导航条颜色≈背景色，只多一层模糊。 */
+    /* blur 16 → 24：实测（无头探针，合成 2px 白线置于真实内容层）残余 */
+    /* saturate 160% → 110%：原来的 160% 会把背景色彩人为加浓。 */
     /* 用户指定值：blur(4px) saturate(150%) */
     backdrop-filter: blur(4px) saturate(150%);
-    /* 底边改用暗线：导航条背后是页面顶部的光晕最亮处，底色被提亮到 lum≈25，
-       若沿用 --app-hairline(white/12%) 叠加后 lum≈67，与两侧邻居差 +38
-       —— 与卡片底部光条(+40.78)完全同源，会被读成一条亮带。
-       改成暗线后读作"分隔阴影"，亮带消失（探针实测 BAND_AMP 由 38 → 负值）。
-       卡片是四面等色、底边用暗线会显得缺边，导航条只有底边一条，用暗线才自然。 */
+    /* 底边改用暗线：导航条背后是页面顶部的光晕最亮处，底色被提亮到 lum≈25。 */
     border-bottom: 1px solid var(--app-bar-hairline);
   }
 
@@ -625,17 +472,12 @@ html:has(.theme-light) {
     transform: translateY(-100%);
   }
 
-  /* 文章页目录卡：吸附位置随导航栏显隐在 24px ↔ 96px 之间过渡。
-     与导航栏用同一条时间曲线，二者看起来是一起动的（对齐母版 posts/[id].astro:358-361）。
-     JS 只负责改 style.top，位移由这里的 transition 完成。 */
+  /* 文章页目录卡：吸附位置随导航栏显隐在 24px ↔ 96px 之间过渡。 */
   [data-toc-sticky] {
     transition: top 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  /* ─────────── 文章页目录圆点（对齐母版 posts/[id].astro:337-356）───────────
-     默认：1px 描边 + 45% 透明度的空心点
-     当前章节（li.toc-active）：填充 accent + 外发光
-     原来这里是内联的动态 class，与母版不一致，改成和母版完全相同的类名与取值。 */
+  /* ─────────── 文章页目录圆点 ─────────── */
   .toc-dot {
     flex-shrink: 0;
     width: 6px;
@@ -657,12 +499,7 @@ html:has(.theme-light) {
     opacity: 1;
   }
 
-  /* 当前章节的**文字**同样点亮 —— 这是本地有意增强，母版只点亮圆点、文字恒为继承色。
-     用户 2026-09-18 指定：激活项「加粗 + 加大 + 强调色」。
-     ⚠️ line-height 必须显式钉成绝对值：text-sm 的 line-height 是**无单位**的
-     calc(1.25 / 0.875) ≈ 1.4286，会按各元素自己的 font-size 重新计算。若只放大 font-size，
-     激活项行高会从 20px 变成 22.86px，滚动切换章节时后面的条目就会上下跳动。
-     钉成 1.25rem（= 14px × 1.4286，与未激活项的实际行高严格相等）后，放大字号才不改变行高。 */
+  /* 当前章节的文字同样点亮 —— 激活项「加粗 + 加大 + 强调色」。 */
   li.toc-active a {
     color: var(--app-accent);
     font-weight: 700;
@@ -707,9 +544,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 滚动入场动画（替代旧项目的 framer-motion whileInView）───────────
-     元素加 data-reveal；IntersectionObserver 进入视口后置 data-revealed="true"。
-     位移方向/延迟由内联 style 提供：--reveal-y / --reveal-delay。 */
+  /* ─────────── 滚动入场 ─────────── */
   [data-reveal] {
     opacity: 0;
     transform: translateY(var(--reveal-y, 2.5rem));
@@ -722,11 +557,7 @@ html:has(.theme-light) {
 
   [data-reveal][data-revealed="true"] {
     opacity: 1;
-    /* 动画结束后彻底"归位"：transform: none（而非 translateY(0)）+
-       撤销 will-change，让元素退出自己的合成层。
-       留在 translateY(0) + will-change 会让整个栅格行被永久提升为合成层，
-       而层内又嵌着带 backdrop-filter 的 .glass —— 1px 发丝边这类高对比细节
-       会在层重新栅格化时抖动。 */
+    /* 归位要用 transform: none 而非 translateY(0)，并撤销 will-change 退出合成层。 */
     transform: none;
     will-change: auto;
   }
@@ -740,7 +571,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 轮播交叉淡入（替代 framer-motion 的 AnimatePresence）─────────── */
+  /* ─────────── 轮播交叉淡入 ─────────── */
   .carousel-slide {
     opacity: 0;
     transition: opacity 700ms ease-in-out;
@@ -756,10 +587,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── Toast 进出场（替代 framer-motion 的 AnimatePresence）───────────
-     入场：挂载即播 toast-in；出场：ToastProvider 先置 data-exiting="true"
-     播 toast-out，200ms 后再真正卸载（时长与 ToastProvider 的 EXIT_MS 对应）。
-     animation-fill-mode: both 保证入场前停在 from 帧、出场后停在 to 帧。 */
+  /* ─────────── Toast 进出场 ─────────── */
   .toast-item {
     animation: toast-in 200ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
@@ -779,19 +607,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 折叠展开（替代 framer-motion 的 height: 0 ↔ auto）───────────
-     用 grid-template-rows 的 0fr ↔ 1fr 做高度动画：不需要预先知道内容高度，
-     也不必像 max-height 那样猜一个上限（那会让缓动速度随内容高度失真）。
-
-     ⚠️ 内层必须 overflow: hidden + min-height: 0。0fr 只是把行高算成 0，
-     没有这两条时内容仍会把行撑开，表现为「收不起来」。
-
-     visibility 与 transition 的组合是刻意的：
-       · 展开 —— visibility 立即转 visible（delay 0），内容立刻可被聚焦；
-       · 收起 —— visibility 延迟到动画结束才转 hidden，否则内容会即时消失、
-                 只剩一个空容器在收缩；同时 hidden 能让收起的子树退出 tab 序列，
-                 避免用户 Tab 到看不见的按钮上。
-     元素常驻 DOM（不做条件渲染），因此展开与收起两个方向都有动画。 */
+  /* ─────────── 折叠展开 ─────────── */
   .collapse-panel {
     display: grid;
     grid-template-rows: 0fr;
@@ -826,13 +642,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 挂载即播放的入场（替代 framer-motion 的 initial → animate）───────────
-     与 [data-reveal] 的分工：那个由 IntersectionObserver 在滚动进视口时置 data-revealed，
-     适合长列表；这一组用于「元素本身已是条件渲染、出现即应当入场」的场景。
-
-     这些类**不在自身设 opacity: 0**，只在 keyframes 的 from 里设 —— 因此
-     prefers-reduced-motion 下 animation: none 就等价于「直接呈现在终态」，
-     不需要额外的兜底声明（toast 那种把初始态写在类上的写法才需要）。 */
+  /* ─────────── 挂载即播放的入场 ─────────── */
   .enter-drop {
     animation: enter-drop 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
@@ -845,14 +655,12 @@ html:has(.theme-light) {
     animation: enter-pop 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
 
-  /* 照片墙卡片：480ms + 40px 位移；逐个错峰由内联 animationDelay 提供
-     （delay 期间 animation-fill-mode: both 保持 from 态，故不会先闪一下再入场）。 */
+  /* 照片墙卡片：480ms + 40px 位移；逐个错峰由内联 animationDelay 提供 */
   .enter-rise-lg {
     animation: enter-rise-lg 500ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
 
-  /* 退场工具类：由 useExitAnimation 置 data-exiting="true" 时触发。
-     时长见各自名称后缀（200ms / 200ms），调用方传的 exitMs 需一致。 */
+  /* 退场工具类：由 useExitAnimation 置 data-exiting="true" 时触发。 */
   .exit-fade-scale[data-exiting="true"] {
     animation: exit-fade-scale 200ms cubic-bezier(0.4, 0, 1, 1) both;
   }
@@ -861,8 +669,7 @@ html:has(.theme-light) {
     animation: exit-fade 200ms ease-in both;
   }
 
-  /* 弹窗根层退场：只淡出、不动位移（替代 ProjectDetailModal 根层的 motion exit）。
-     300ms 与弹窗卡自身的 exit-fade-scale 同长，二者一起结束。 */
+  /* 弹窗根层退场：只淡出、不动位移（替代 ProjectDetailModal 根层的 motion exit）。 */
   .exit-overlay[data-exiting="true"] {
     animation: exit-fade 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
   }
@@ -884,12 +691,7 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 播放器横向展开（替代 framer-motion 的 layout + width 动画）───────────
-     父容器宽度 56 ↔ 296 由 Tailwind 的 transition-[width] 承担（见 FloatingPlayer）。
-     这里只管内容的淡入淡出：
-       · 展开 —— 延迟 120ms 才淡入，等容器宽度先到位，避免内容"瞬移"；
-       · 收起 —— 立即淡出（无延迟），随后容器才收缩。
-     visibility 参与过渡且带延迟，收起期间内容仍可见地淡出，结束后退出 tab 序列。 */
+  /* ─────────── 播放器横向展开 ─────────── */
   .player-expand {
     opacity: 0;
     transform: translateX(-6px);
@@ -961,7 +763,7 @@ html:has(.theme-light) {
     animation: app-wave 1s ease-in-out infinite;
   }
 
-  /* 搜索命中高亮（旧项目为黄色 mark，这里走 warn tone token） */
+  /* 搜索命中高亮 */
   .search-mark {
     background: var(--app-tones-warn-soft);
     color: var(--app-tones-warn);
@@ -1036,14 +838,7 @@ html:has(.theme-light) {
   }
 }
 
-/* ========== 从 4 处 <style jsx global> 统一迁移而来 ==========
-   原先这些规则写在 app/music/MusicClient.tsx、app/photowall/PhotoWallClient.tsx、
-   app/projects/ProjectsListClient.tsx、components/photowall/AlbumDetailView.tsx 的
-   <style jsx global> 里，其中 .no-scrollbar / @keyframes fadeIn / .animate-fade-in
-   在 PhotoWallClient 与 AlbumDetailView 中逐字重复。
-   风险：.disc-sheen 与 .eq-bar 只存在于这些块里，一旦 styled-jsx 未生效，
-   音乐页会出现「唱片无高光 + 歌单播放条高度为 0（不可见）」且无任何报错。
-   迁移到全局样式后不再依赖 styled-jsx 运行时，行为确定。 */
+/* ========== 全局样式区 ========== */
 
 /* 隐藏滚动条（照片墙横向滚动区 / 后台局部滚动区） */
 .no-scrollbar::-webkit-scrollbar {
@@ -1079,7 +874,7 @@ html:has(.theme-light) {
   );
 }
 
-/* 歌单音量条：三根竖条错相跳动（对齐母版 eq-bounce） */
+/* 歌单音量条：三根竖条错相跳动 */
 .eq-bar {
   height: 30%;
   animation: eq-bounce 1s ease-in-out infinite;
@@ -1094,9 +889,7 @@ html:has(.theme-light) {
   }
 }
 
-/* 弹窗卡底色：对齐母版 [data-modal-card]
-   （50% surface-strong + 50% canvas 混合 + 单层 blur；
-   弹窗是独立浮层不在玻璃卡内部，不构成嵌套模糊） */
+/* 弹窗卡底色 */
 .project-modal-card {
   background: color-mix(in srgb, var(--app-surface-strong) 50%, var(--app-canvas) 50%);
   backdrop-filter: blur(10px);
@@ -1109,10 +902,6 @@ html:has(.theme-light) {
     height: 60%;
   }
 
-  /* `.animate-fade-in` 此前是全站唯一漏掉 reduced-motion 抑制的入场动画
-     （`.enter-*` / `.exit-*` 那一组在 @layer components 里统一处理过）。
-     它把初始态写在 keyframes 的 from 里、而不是写在类上，所以
-     `animation: none` 就等价于「直接呈现在终态」，不需要额外兜底声明。 */
   .animate-fade-in {
     animation: none;
   }

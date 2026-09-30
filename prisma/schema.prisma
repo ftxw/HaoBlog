@@ -1,15 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  /// 目标运行时的 Query Engine 变体。
-  ///
-  /// `native`：本机开发用（Windows / macOS / Linux 各自的本地产物）。
-  /// `rhel-openssl-3.0.x`：Vercel 的 Serverless 运行时。
-  ///
-  /// ⚠️ 曾经写的是 `rhel-openssl-1.1.x` —— 那是 Amazon Linux 2 / OpenSSL 1.1 时代的
-  /// 产物。Vercel 的构建镜像早已切到 **Amazon Linux 2023（OpenSSL 3.0）**，
-  /// 继续用 1.1.x 会让引擎文件名对不上，部署时报
-  /// 「Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x"」。
-  /// `prisma generate` 时若缺少对应产物，构建日志里会出现 "binaryTargets not found" 警告。
+  // 目标运行时的 Query Engine 变体。
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -39,12 +30,7 @@ enum AlbumLayout {
   timeline
 }
 
-/// 应用侧账号表：本表**只**承载「本站的身份标识 + 权限」。
-///
-/// 密码、昵称、头像都不在这里 —— 那些由 Supabase Auth 保管（见 app/lib/auth.ts），
-/// 本表只按邮箱落一条记录、记一个 `is_admin`。
-/// 此前这张表还有 hashed_password / nickname / avatar / email / bio / updated_at 六列，
-/// 全部是「写一次就再没人读」：它们会让人误以为本表是账号主体，实际上真值在 Supabase。
+// 应用侧账号表：本表只承载「本站的身份标识 + 权限」。
 model User {
   id         String   @id @default(ulid())
   /// Supabase Auth 的邮箱，同时用作本站账号的唯一标识（所有查询都按它定位）
@@ -103,26 +89,9 @@ model Post {
   @@index([status, published_at])
   @@index([category_id])
   @@index([status, is_pinned, created_at])
-  /// 后台文章列表**不带 status 过滤**，直接 orderBy [is_pinned, created_at]；
-  /// 上面那条以 status 打头，无法支撑无过滤时的排序（会退化成全表排序）。
+  // 后台文章列表不带 status 过滤，直接 orderBy [is_pinned, created_at]。
   @@index([is_pinned, created_at])
-  /// ── 关键词搜索用的 pg_trgm GIN 索引 ────────────────────────────────
-  ///
-  /// ⚠️ 这三条**必须**在 datamodel 里声明，否则会被 `prisma migrate dev` 删掉。
-  ///
-  /// 它们由迁移 `20260929162204_add_trgm_search_indexes` 以手写 SQL 建出来
-  /// （`USING gin ("title" gin_trgm_ops)`）。而 Prisma 的 differ 是拿
-  /// 「迁移目录建出的影子库」对比「datamodel」—— 只存在于前者、不在后者的索引
-  /// 会被判定为「多余的索引」并生成 `DROP INDEX`。一旦被删，
-  /// `app/lib/queries/posts.ts` 的关键词查询（`contains` + `mode:"insensitive"`
-  /// 会编译成 `ILIKE '%k%'`，前导通配符）就退化为 `post` 全表扫描。
-  /// `ops: raw("gin_trgm_ops")` + `type: Gin` 是 Prisma 表达这类索引的正确写法。
-  ///
-  /// ⚠️ 这里**显式写 `map:`** 钉住索引名，不让 Prisma 按命名约定推导。
-  /// 推导名一旦与迁移里的手写名不同，`migrate dev` 就会认为「旧索引多余 + 新索引缺失」，
-  /// 生成一对 `DROP` / `CREATE` —— 虽然最终结构等价，但会在生产上做一次无谓的
-  /// 大表索引重建（GIN 建索引要全表扫 + 排序，代价不小）。
-  /// 写死名字后，datamodel 与迁移目录产出**逐字节一致**的索引定义，diff 为空。
+  // ── 关键词搜索用的 pg_trgm GIN 索引 ────────────────────────────────
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_title_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_description_trgm_idx")
   @@index([content(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_content_trgm_idx")
@@ -137,8 +106,7 @@ model PostTag {
   tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
   @@id([post_id, tag_id])
-  /// 主键索引是 (post_id, tag_id)，**按 tag_id 单独过滤用不上它**
-  /// （前台按标签筛文章走的就是 tags.some({ tag_id })，见 app/lib/queries/posts.ts）。
+  // 主键索引是 (post_id, tag_id)，按 tag_id 单独过滤用不上它
   @@index([tag_id])
   @@map("post_tag")
 }
@@ -161,10 +129,7 @@ model Comment {
 
   @@index([post_id, status, created_at])
   @@index([status, created_at])
-  /// 评论树按 parent_id 递归取子节点。
-  /// 后台「评论管理」是不带 status 过滤的 `parent_id IS NULL ORDER BY created_at DESC`
-  /// 分页列表，所以这里用 (parent_id, created_at) 复合索引：
-  /// 既覆盖单独按 parent_id 的查询（前缀），也直接支撑该列表的排序。
+  // 评论树按 parent_id 递归取子节点。
   @@index([parent_id, created_at])
   @@map("comment")
 }
@@ -172,12 +137,10 @@ model Comment {
 model Chatter {
   id         String        @id @default(ulid())
   content    String        @db.Text
-  /// 配图 URL 列表。用原生数组列（PG text[]）而不是 JSON 字符串 ——
-  /// 类型安全，且省掉「读出后手工 JSON.parse」这一层。
+  // 配图 URL 列表。用原生数组列（PG text[]）而不是 JSON 字符串 ——
   images     String[]      @default([])
   location   String        @default("") @db.VarChar(1024)
-  /// 心情文案。**非空**：没填就是空串 —— 可空 + 默认 "" 会同时存在 null 与 "" 两种「没填」，
-  /// 前端判断多一处分支、又没有实际收益。
+  // 心情文案。非空：没填就是空串 —— 可空 + 默认 "" 会同时存在 null 与 "" 两种「没填」。
   mood       String        @default("")
   likes      Int           @default(0)
   status     ContentStatus @default(draft)
@@ -186,10 +149,7 @@ model Chatter {
 
   comments ChatterComment[]
 
-  /// ⚠️ 后台说说搜索**没有** trgm 索引，这是刻意的：chatter 是个人站量级的表
-  /// （几十到几千行），而搜索只发生在管理员后台。GIN 索引每次写入都要维护，
-  /// 为一个人用的后台搜索给全站写入路径加开销不划算 —— 顺序扫描在这个规模下更快。
-  /// 真到了需要索引的量级再加 `@@index([content(ops: raw("gin_trgm_ops"))], type: Gin)`。
+  // 后台说说搜索没有 trgm 索引，这是刻意的：chatter 是个人站量级的表
   @@index([status, created_at])
   /// 后台说说列表不带 status 过滤，直接 orderBy created_at desc
   @@index([created_at])
@@ -234,7 +194,7 @@ model Album {
 
   photos Photo[]
 
-  /// 相册列表按 sort 排序，原先无索引 → 全表扫 + 排序
+  /// 相册列表按 sort 排序
   @@index([sort])
   @@map("album")
 }
@@ -246,10 +206,7 @@ model Photo {
   caption    String   @default("") @db.VarChar(1024)
   /// 拍摄日期（用于时间轴视图分组），默认取创建时间
   taken_at   DateTime @default(now()) @db.Timestamptz(3)
-  /// 原图宽（像素），用于 <img width/height> 预占位消除瀑布流 CLS。
-  /// **可空是必要的**：尺寸来自上传接口的响应（components/admin/AlbumEditor.tsx 的
-  /// uploadImage 返回 width/height），而 image-size 解析不出尺寸时（异常格式、
-  /// 非位图等）该字段就是 undefined。缺值时前端按 800×600 兜底预占位。
+  // 原图宽（像素），用于 <img width/height> 预占位消除瀑布流 CLS。
   w          Int?
   /// 原图高（像素），同上
   h          Int?
@@ -325,7 +282,7 @@ model BookmarkCategory {
 
   sites BookmarkSite[]
 
-  /// 分类列表 orderBy sort asc，原先无索引 → 全表扫 + 排序
+  /// 分类列表 orderBy sort asc
   @@index([sort])
   @@map("bookmark_category")
 }
@@ -345,21 +302,14 @@ model BookmarkSite {
 
   category BookmarkCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
-  /// 站点列表的两种查法：
-  ///   · 带分类（前台分组视图 / 后台选中某分类）：where category_id = ? order by sort
-  ///     → 用这条复合索引一次搞定过滤 + 排序（原先只有单列 category_id，
-  ///       sort 还得再排一次）；
-  ///   · 不带分类：走下面的 [sort]。
+  // 站点列表的两种查法。
   @@index([category_id, sort])
   /// 不带分类时的 orderBy sort
   @@index([sort])
   @@map("bookmark_site")
 }
 
-/// 站点配置：纯键值表。
-/// 主键直接用 key —— `id` 只是无意义的代理键，而**所有**读写都按 key 定位
-/// （`findMany({ where: { key } })` / `upsert({ where: { key } })`）。去掉它省一列
-/// 外加一个唯一索引，也让「按 defs 全量重建、清理未知键」这类操作更直接。
+// 站点配置：纯键值表。
 model SiteConfig {
   key         String   @id
   value       String   @default("") @db.Text
@@ -369,8 +319,7 @@ model SiteConfig {
   @@map("site_config")
 }
 
-/// 图床上传记录：保存 S3 兼容存储的对象 key，
-/// 删除照片/文章时按 key 调 DeleteObject 同步清理文件。
+// 图床上传记录：保存 S3 兼容存储的对象 key。
 model ImageUpload {
   id         String   @id @default(ulid())
   /// 图床图片访问 URL（唯一，/api/img-proxy/imgs/{key}）
@@ -394,9 +343,7 @@ model LoginLog {
   operatingTime DateTime @default(now()) @map("operating_time") @db.Timestamptz(3)
 
   @@index([user_id, operatingTime])
-  /// 说明：保留期清理的谓词只有 operating_time，用不上上面那条复合索引（以 user_id 打头）。
-  /// 这里**刻意不加**单独索引 —— login_log 只在登录时写一行、保留 180 天，
-  /// 且每 5 分钟才清一次；这个规模下顺序扫描比多维护一个索引更划算。
+  // 说明：保留期清理的谓词只有 operating_time，用不上上面那条复合索引（以 user_id 打头）。
   @@map("login_log")
 }
 
@@ -431,14 +378,12 @@ model VisitorLog {
   created_at DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([created_at])
-  /// 仪表盘「最近访客」按 IP 取每个访客最新一条：
-  ///   row_number() OVER (PARTITION BY ip ORDER BY created_at DESC)
-  /// 有这条索引时窗口聚合可以直接吃索引顺序，不必对全表排序。
+  // 仪表盘「最近访客」按 IP 取每个访客最新一条。
   @@index([ip, created_at])
   @@map("visitor_log")
 }
 
-/// 业务链接：前台悬浮面板展示的网址集合（替代原工具箱）
+/// 业务链接：前台悬浮面板展示的网址集合
 model BusinessLink {
   id          String     @id @default(ulid())
   name        String
@@ -450,23 +395,14 @@ model BusinessLink {
   created_at  DateTime   @default(now()) @db.Timestamptz(3)
   updated_at  DateTime   @default(now()) @updatedAt @db.Timestamptz(3)
 
-  /// 前台只列 status=active 且按 sort 排序 → 复合索引替代原来的单列 [status]
+  /// 前台只列 status=active 且按 sort 排序
   @@index([status, sort])
   /// 后台列表不带 status 过滤的 orderBy sort
   @@index([sort])
   @@map("business_link")
 }
 
-/// 登录态点赞记录：每账号每内容（post/chatter/project）一次，跨设备同步。
-///
-/// **为什么没有外键**（这是一个刻意的多态设计，不是遗漏）：
-/// `target_id` 指向三张不同表（post / chatter / project）之一，PostgreSQL 的外键
-/// 只能指向单一张表，多态引用在关系模型里无法用 FK 表达。因此约束靠两处保证：
-///   1. `target_type` 的取值在应用层白名单里校验（app/api/like/route.ts 的 TARGETS，
-///      非法值直接返回 400）；写之前还会先确认目标行存在（targetExists）。
-///   2. 目标被删除时，其点赞记录由该内容的删除路径一并清理。
-/// 若要更强的库级约束，只能拆成三张表（post_like / chatter_like / project_like），
-/// 但那样「查某用户赞过什么」要三次查询 —— 当前数据量下不划算，故保持多态。
+// 登录态点赞记录：每账号每内容（post/chatter/project）一次，跨设备同步。
 model ContentLike {
   id          String   @id @default(ulid())
   /// Supabase Auth 用户 UUID
@@ -483,19 +419,7 @@ model ContentLike {
   @@map("content_like")
 }
 
-/// 限流计数器 —— 见 `app/lib/rate-limit.ts`。
-///
-/// 为什么必须落到数据库而不是进程内 Map：限流需要**可变且跨实例共享**的计数器。
-/// 读缓存（unstable_cache / Data Cache）是只读穿透语义，没有原子自增，
-/// 解决不了这个问题；而 Vercel 上同时存活的实例数不可预测，
-/// 进程内计数的实际配额 = 设定值 × 实例数。
-///
-/// 为什么不是 Redis：本项目已有 Postgres，用它可以零新增服务、零新增凭据；
-/// 代价只是每个被限流的写请求多一次 upsert（而那些接口本来就要写库）。
-///
-/// **固定窗口**语义：`window_start` 记录当前窗口的起点，跨窗口时计数归 1。
-/// 表按 key 唯一 —— 行数上界是「有行为的不同 IP 数」，并由 rate-limit.ts 里的
-/// 低频清理回收过期行，不会无限增长。
+// 限流计数器 —— 见 app/lib/rate-limit.ts。
 model RateLimit {
   /// 限流维度，如 `comment-create:burst:1.2.3.4`
   key          String   @id @db.VarChar(255)

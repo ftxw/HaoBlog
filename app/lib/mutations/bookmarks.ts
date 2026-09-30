@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 import { invalidateBookmarkCaches } from "@/app/lib/api-cache";
 import {
@@ -153,14 +152,7 @@ export async function deleteBookmarkSite(id: string) {
   invalidateBookmarkCaches();
 }
 
-/*
- * ⚠️ 站点序号是**跨分类的全局序列**，不是每个分类各编一套：
- * 读侧 `listBookmarkSites` 就是 `orderBy: { sort: "asc" }` 读全表（/api/bookmarks/sites
- * 不带 category_id 时），后台列表与前台书签页都按这一条序列渲染。所以拖一个站点会改到
- * 它跨越区间内**其它分类**的站点序号 —— 这是既有设计，不是遗漏。
- * 若将来要改成「按分类各自编号」，读侧的排序、后台列表的渲染顺序、这里的取数顺序
- * 三者必须一起动，只改一处就会出现「看着排好了、刷新又乱」。
- */
+/* 站点序号是跨分类的全局序列，不是每个分类各编一套。 */
 export async function reorderBookmarkSites(input: BookmarkReorderInput) {
   const list = await prisma.bookmarkSite.findMany({
     orderBy: [...SORT_ROW_ORDER_BY],

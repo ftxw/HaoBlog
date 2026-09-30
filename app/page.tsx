@@ -43,9 +43,7 @@ async function fetchHomeData() {
           photos: { take: 1, orderBy: { sort: "asc" }, select: { url: true } },
         },
       }),
-      // 刻意不复用 queries 层的 getContentCounts()：它为后台仪表盘一次跑 7 项 count，
-      // 首页只需其中 3 项（已发布文章/说说、照片数），复用会多出 4 次查询且失去这里的
-      // $transaction 原子性，属性能倒退。键名与语义与 getContentCounts() 一致。
+      // 刻意不复用 queries 层的 getContentCounts()：它为后台仪表盘一次跑 7 项 count。
       prisma.$transaction([
         prisma.post.count({ where: { status: "published" } }),
         prisma.chatter.count({ where: { status: "published" } }),

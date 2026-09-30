@@ -365,13 +365,13 @@ export default function ProjectsListClient({
   total: number;
   /** 每页条数，与页面首屏取数用的一致 */
   pageSize: number;
-  /** 标签栏选项与计数，由服务端按**全量**算好传入 —— 从已下发的这一页里汇总会漏标签 */
+  /** 标签栏选项与计数，由服务端按全量算好传入 —— 从已下发的这一页里汇总会漏标签 */
   tagList: { name: string; count: number }[];
 }) {
   const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialProjects.length < total);
-  // 已从服务端**收到**的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
+  // 已从服务端收到的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
   const receivedRef = useRef(initialProjects.length);
   const pageRef = useRef(1);
   const inFlightRef = useRef(false);
@@ -417,9 +417,7 @@ export default function ProjectsListClient({
     );
   }, [projects, selectedTag, tagList]);
 
-  // 标签筛选是在客户端对**已下发的数组**做的：只有把剩下的页也取回来，
-  // 「该分类下暂无项目」才是一个可信的结论。所以选中标签后就不再等滚动，
-  // 连续取满为止（projects.length 入依赖，每取回一页就继续下一批）。
+  // 标签筛选是在客户端对已下发的数组做的：只有把剩下的页也取回来。
   useEffect(() => {
     if (selectedTag !== "All" && hasMore) void loadMore();
   }, [selectedTag, hasMore, projects.length, loadMore]);
@@ -503,8 +501,7 @@ export default function ProjectsListClient({
               </div>
             </div>
 
-            {/* 标签筛选是**在客户端对已下发数组**做的，命中少时列表会比视口短 ——
-                哨兵会持续可见并继续取下一页，直到取满 total 为止。 */}
+            {/* 标签筛选在客户端对已下发数组做，「该分类下暂无项目」须取满全部页才成立。 */}
             {hasMore && (
               <div
                 ref={sentinelRef}

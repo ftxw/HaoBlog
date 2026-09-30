@@ -1,21 +1,7 @@
 import { getDbSiteConfig } from "./site-config-db";
 
-/**
- * 站点对外基址的唯一解析处（不带尾斜杠）。
- *
- * 优先级：
- *   1. 后台「站点信息 → 网站地址」（`site_config.url`）—— 规范来源
- *   2. Vercel 自动注入的 `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL`
- *      （平台注入、零配置，不是需要自己维护的环境变量）
- *   3. 本地开发 `http://localhost:3000`
- */
-/**
- * 只警告一次。
- *
- * 本函数在 RSS、sitemap、layout 三处都会被调用（每处可能每请求一次），
- * 未配站点地址时不去重就会把同一句话刷满日志 —— 而它要传达的信息一次就够。
- * 模块级标记即可：进程内重复警告没有额外价值。
- */
+/** 站点对外基址的唯一解析处（不带尾斜杠）。 */
+/** 只警告一次。 */
 let warnedMissingSiteUrl = false;
 
 export async function resolveSiteBaseUrl(): Promise<string> {

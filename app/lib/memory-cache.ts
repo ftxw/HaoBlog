@@ -1,29 +1,5 @@
 
-/**
- * 进程内 TTL 缓存 —— 只用于**单实例、可容忍不一致**的读穿透场景。
- *
- * 目前唯一调用方是 `app/lib/auth.ts`：缓存「Supabase access token → CurrentUser」
- * 的解析结果，避免同一用户在同一函数实例上连续请求时反复打 GoTrue。
- *
- * ## 结构
- *
- * 全部 namespace 共用**同一个 Map**（用 `namespace::key` 做前缀区分），
- * 但容量上限**按 namespace 分别计算**：淘汰时只删同前缀的 key，
- * 所以某个 namespace 再热也不会把别的挤出去。
- *
- * ## 淘汰策略：TTL + LRU
- *
- * `get` 命中会把条目搬到 Map 末尾（Map 保序 → 末尾即"最近使用"），`set` 同理；
- * 因此当某个 namespace 达到 `MAX_KEYS_PER_NAMESPACE` 时，被淘汰的是
- * **最久未被使用**的那条，而不是"最久以前写入"的那条。
- *
- * 这个区别对本项目是有实际意义的：auth 缓存的 key 是 token 的 sha256，
- * 一个**活跃**用户每次请求都会刷新它的访问时间，而只来过一次的用户不会 ——
- * 纯 FIFO 会优先保住后者、把前者挤掉，对"最需要缓存的那批 key"最不友好。
- * 被挤掉的代价有痕迹：下一个请求又要走一次 Supabase 上游校验。
- *
- * 淘汰时优先挑**已过期**的条目（等于白捡一个位置），没有过期的才按 LRU 动刀。
- */
+/** 进程内 TTL 缓存 —— 只用于单实例、可容忍不一致的读穿透场景。 */
 
 type CacheEntry = { data: unknown; expiresAt: number };
 

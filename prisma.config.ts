@@ -1,23 +1,29 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-// 数据库连接策略（Supabase / 其它 Postgres 统一适用）：
-// - 应用运行时（Prisma Client）：只依赖 DATABASE_URL = Transaction pooler（6543），
-//   见 app/lib/prisma.ts，连接直接使用该串，不做任何降级。
-// - Prisma CLI 的 DDL（migrate / seed）：必须在直连/会话池(5432)上执行，
-//   事务池(6543) 不支持 DDL。这里优先取 DIRECT_URL（可选），否则自动把
-//   DATABASE_URL 的 6543 降级为 5432。
-//   因此线上环境只需配置 DATABASE_URL 一个变量；DIRECT_URL 仅在需要独立直连串
-//   （如 Supabase Direct connection）时按需追加。
-// - 本文件只负责把「DDL 用的连接串」交给 Prisma CLI。构建期是否真的会连库，
-//   取决于 package.json#build —— 当前是
-//   `prisma generate && node scripts/auto-migrate.mjs && next build`，
-//   即**构建会连库并应用迁移**（空库建全部表；跳过条件见 scripts/auto-migrate.mjs）。
+// 与 Next.js 一致：.env.local 覆盖 .env。
+// 必须显式加载 —— 存在 prisma.config.ts 时，Prisma CLI 不再自动读 .env。
+loadEnv({ path: [".env.local", ".env"], quiet: true });
+
+/**
+ * Prisma CLI 执行 migrate / seed 用的连接串：优先 DIRECT_URL，否则把
+ * DATABASE_URL 的事务池端口 6543 降级为会话池 5432（事务池不支持 DDL）。
+ */
 function cliDdlUrl(): string {
   const direct = (process.env.DIRECT_URL || "").trim();
   if (direct) return direct;
   const url = (process.env.DATABASE_URL || "").trim();
   return url.includes(":6543/") ? url.replace(":6543/", ":5432/") : url;
+}
+
+const ddlUrl = cliDdlUrl();
+
+// ⚠️ 必须回写进环境变量：migrate deploy 实际连的是 schema 里的 env("DATABASE_URL")，
+// 不是下面的 datasource.url。不改就会拿事务池 6543 跑 DDL，迁移必失败。
+// 只影响本 CLI 进程，不写文件；一并钉住 DIRECT_URL 避免子进程走回 6543。
+if (ddlUrl) {
+  process.env.DATABASE_URL = ddlUrl;
+  process.env.DIRECT_URL = ddlUrl;
 }
 
 export default defineConfig({
@@ -26,8 +32,8 @@ export default defineConfig({
   migrations: {
     seed: "tsx prisma/seed.ts",
   },
-  // 提供 datasource URL（config 文件存在时 Prisma 不再自动加载 .env）
+  // 部分 CLI 路径（migrate diff / db push）会读这里。
   datasource: {
-    url: cliDdlUrl(),
+    url: ddlUrl,
   },
 });

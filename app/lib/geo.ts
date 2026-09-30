@@ -27,24 +27,7 @@ const geoCache = new Map<string, { value: GeoInfo; t: number }>();
 const inflight = new Map<string, Promise<GeoInfo>>();
 let activeLookups = 0;
 
-/**
- * 归属地缓存上界。
- *
- * ⚠️ 这个 Map 的键是**访客 IP**，因此必须设容量上界：`peekGeo` 只在被再次读到并且
- * 已过期时才删，一次性访问的 IP 永远不会被访问第二次 —— 没有上界就是缓慢但确定的内存增长，
- * 实例越长寿、被打得越多，占用越大。
- *
- * 淘汰分两级：先清所有已过期条目；若仍然超限（说明窗口内活跃 IP 数本身很大），
- * 再按**最久未被读**的顺序成批淘汰到上界的 90%。
- *
- * ⚠️ 超限时**不要整体 `clear()`**。"缓存是纯加速层，清空的代价只是多几次在线查询"这个
- * 理由漏算了两点：
- *   ① `resolveGeo` 有 `MAX_CONCURRENT_LOOKUPS = 3` 的闸门 —— 清空后的第一个请求
- *      就会把 3 个并发位占满，其余请求直接拿到空归属地。清空不是"多几次查询"，
- *      而是"清空后的这一小段时间里归属地集体缺失"；
- *   ② 高流量下这会**周期性**发生（每填满一次就清一次），形成规律性的能力尖峰。
- * 成批淘汰则保留热点 IP 的命中，代价摊平到每次只扔一批最旧的。
- */
+/** 归属地缓存上界。 */
 const GEO_CACHE_MAX = 5000;
 
 /** 超限时一次淘汰到上界的这个比例，避免"写一条就淘汰一条"的抖动 */
@@ -59,9 +42,7 @@ function evictGeoCacheIfNeeded(): void {
   }
   if (geoCache.size < GEO_CACHE_MAX) return;
 
-  // 按插入顺序淘汰最旧的一批；`peekGeo` 命中会把条目搬到末尾（LRU），
-  // 所以这里淘汰的实际上是"最久没被读过"的，而不是"最早写入的"。
-  // 注意：Map 的迭代器允许在迭代中删除**当前**键，故这样写是安全的。
+  // 按插入顺序淘汰最旧的一批；peekGeo 命中会把条目搬到末尾（LRU）。
   let toRemove = geoCache.size - GEO_CACHE_EVICT_TO;
   for (const key of geoCache.keys()) {
     if (toRemove-- <= 0) break;
@@ -84,13 +65,11 @@ export function peekGeo(ip: string): GeoInfo | null {
   if (!hit) return null;
   const ttl = isEmptyGeo(hit.value) ? FAIL_TTL : CACHE_TTL;
   if (Date.now() - hit.t >= ttl) {
-    // 过期就地删除：否则条目会一直占着容量，
-    // 只能等 `evictGeoCacheIfNeeded` 的批量清理才可能被扫到。
+    // 过期就地删除：否则条目会一直占着容量。
     geoCache.delete(ip);
     return null;
   }
-  // LRU：命中后搬到末尾（先删再插，顺序即"最近被读"的次序），
-  // 这样超限淘汰时被扔掉的是最久没被读过的，而不是最早写入的。
+  // LRU：命中后搬到末尾（先删再插，顺序即"最近被读"的次序）。
   geoCache.delete(ip);
   geoCache.set(ip, hit);
   return hit.value;
@@ -121,13 +100,7 @@ function text(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-/**
- * 归属地查询接口**唯一**来自后台「站点配置 → 访客统计」，代码里不写死地址。
- * 地址留空 = 不查询归属地（`resolveGeo` 直接返回空，界面只显示 IP）。
- *
- * 响应格式沿用 ip258 的契约：`{ code: 200, data: { country, prov, city, isp } }`。
- * 换服务商时若字段名不同，改这里的映射即可。
- */
+/** 归属地查询接口唯一来自后台「站点配置 → 访客统计」，代码里不写死地址。 */
 async function parseGeo(ip: string): Promise<GeoInfo | null> {
   const base = (await getDbConfigValue("geoApiUrl")).trim();
   if (!base) return null;

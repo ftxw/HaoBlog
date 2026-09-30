@@ -2,15 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
-/**
- * 错峰延迟的上界。
- *
- * `delay` 的用法是「元素在列表里的序号 × 每项间隔」，序号会随列表长度增长 ——
- * 500 条的列表里第 499 项就是 39.9s，而 `[data-reveal]` 初始是 `opacity: 0`，
- * 于是那一条在滚进视口后要**等将近 40 秒才显现**。
- * 0.96s（≈12 项 × 0.08s，与照片墙的 `(index % 12) * 0.08` 同量级）已经足够
- * 表达「一批一批错峰出现」，再久就只是在藏内容。
- */
+/** 错峰延迟的上界。 */
 const MAX_REVEAL_DELAY = 0.96;
 
 export default function Reveal({

@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 
 export interface BookmarkCategoryItem {
@@ -74,10 +73,7 @@ export function toBookmarkSiteItem(row: BookmarkSiteRowShape): BookmarkSiteItem 
   };
 }
 
-/**
- * 站点量级的安全阀：个人站点远低于此，纯粹防「某天批量导入把整表拉进内存」。
- * 与旧接口 `take: 2000` 保持一致。
- */
+/** 站点量级的安全阀：个人站点远低于此，纯粹防「某天批量导入把整表拉进内存」。 */
 const SITE_TAKE = 2000;
 
 export async function listBookmarkCategories(): Promise<BookmarkCategoryItem[]> {

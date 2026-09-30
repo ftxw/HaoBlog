@@ -10,14 +10,7 @@ export async function getCommentUser(
   const token = getRequestToken(request);
   if (!token) return null;
 
-  /*
-   * 走统一鉴权入口，不裸调 `verifyAccessToken`：
-   *   · 复用 auth.ts 的 60s 内存缓存 + singleFlight（评论提交是低频但可连点的动作）；
-   *   · 上游不可用时 `checkAuthorizedAccessToken` 会抛 `UpstreamAuthError`，
-   *     各评论路由的 catch 用 `businessFail` 映射成 **503**。
-   *     这一点很重要 —— 若把上游故障吞成 `null`，「Supabase 抖了一下」就变成
-   *     「未登录 401」，前端会据此清会话、把用户登出。
-   */
+  /* 走统一鉴权入口，不裸调 verifyAccessToken。 */
   const user = await checkAuthorizedAccessToken(token);
   if (!user) return null;
 

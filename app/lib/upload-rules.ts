@@ -1,10 +1,4 @@
-
-/**
- * 允许的图片类型。
- *
- * 安全（审计 P1）：**不含 image/svg+xml** —— SVG 可内嵌脚本，
- * 经同源 /api/img-proxy 提供即等于站点内执行（存储型 XSS）。
- */
+/** 允许的图片类型。 */
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",

@@ -91,10 +91,7 @@ export function SiteConfigProvider({
   }, [pathname, fetchConfig]);
 
   useEffect(() => {
-    // 挂载时**不再请求** /api/site-config：
-    // layout.tsx 已在 SSR 把最新配置注入 initialConfig（带 30s 内存缓存 + singleFlight），
-    // 客户端再拉一次等于每次整页访问多打一次 serverless 函数。
-    // 配置保持最新由下面三件事保证：切回前台 / 窗口获焦 / 60s 可见轮询兜底。
+    // 挂载时不再请求 /api/site-config。
 
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -137,8 +134,7 @@ export function SiteConfigProvider({
     };
   }, [fetchConfig]);
 
-  // 图床直链域名同步到 image-thumb 模块（渲染期执行，先于所有子组件；
-  // 站点配置全站一致，单实例模块变量安全）。配置改变即生效。
+  // 图床直链域名同步到 image-thumb 模块（渲染期执行，先于所有子组件。
   configureCdnDomain(config.imageCdnDomain || "");
 
   return (
@@ -156,7 +152,6 @@ export function useConfigValue(key: string, defaultValue = ""): string {
   const { config } = useContext(SiteConfigContext);
   const value = config[key];
   // 与服务端 getDbConfigValue 同语义：键不存在与值为空串都算「未配置」。
-  // 用 `??` 会让空串「通过」，调用方拿不到默认值，于是各处又写一层 `|| 兜底`。
   return value === undefined || value === "" ? defaultValue : value;
 }
 

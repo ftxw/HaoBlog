@@ -6,14 +6,7 @@ import { siteConfig } from "@/siteConfig";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
 
-/**
- * 首页个人信息卡。
- *
- * ⚠️ 计数**完全由服务端渲染**（app/page.tsx 里的 getContentCounts 结果作为 props 传入），
- * 不要在这里加任何轮询：三个数字都是服务端刚算好的，而内容量变化必然伴随写路径的
- * `revalidatePath("/")`，首页会重新生成 —— 轮询永远只会拿到与已渲染值相同的数字，
- * 代价却是每个访客每分钟一次函数调用 + 三次数据库 count。
- */
+/** 首页个人信息卡。 */
 export default function ProfileCard({
   postCount = 0,
   chatterCount = 0,
@@ -50,9 +43,7 @@ export default function ProfileCard({
                 alt="avatar"
                 fill
                 sizes="(min-width: 768px) 96px, (min-width: 640px) 80px, 64px"
-                /* 首屏 hero 卡里的头像：Next 实测把它报成 LCP 元素（25s virtual-time 复跑仍如此），
-                   加 priority → loading=eager + fetchpriority=high + 预加载。
-                   代价可控：修掉 sizes 后这个变体只有 96~192px，几 KB。 */
+                /* 首屏 hero 卡里的头像：Next 实测把它报成 LCP 元素（25s virtual-time 复跑仍如此）。 */
                 priority
                 className="object-cover bg-surface-strong"
               />

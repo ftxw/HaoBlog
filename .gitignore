@@ -30,7 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# 根目录 API 调试快照（抓包留存，非源码；已在 2026-09-17 清理存量）
+# 根目录 API 调试快照
 /.*.json
 /commit.txt
 
@@ -42,12 +42,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# 本项目用 pnpm（远端只有 pnpm-lock.yaml）。本地误跑 npm install 会留下
-# package-lock.json —— 两个 lockfile 并存会让 Vercel 的包管理器探测产生歧义，不入库。
+# 本项目用 pnpm，package-lock.json 不入库（与 pnpm-lock.yaml 并存会让 Vercel 探测歧义）
 /package-lock.json
 
-# 本地直传到 public 的图片（生产走外部图床，见后台「站点配置 → 图床」）。
-# public/images/ 下的默认封面是源码资产，正常入库。
+# 本地直传到 public 的图片（生产走外部图床）
+# public/images/ 下的默认封面是源码资产，正常入库
 /public/uploads
 
 # OS / editor temp
@@ -82,7 +81,3 @@ _tmp_*
 # 本地临时构建产物
 /tmp/
 /dev/
-
-# 本地工作产出（审计报告、迁移对比稿等），与站点源码无关，不入库。
-# 环境变量的完整说明见 .env.example（该文件入库）。
-/docs/

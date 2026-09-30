@@ -55,15 +55,7 @@ interface MeData {
   permissions?: string[];
 }
 
-/**
- * 会话探测的结果。
- *
- * ⚠️ 必须把「服务端暂时答不出来」单列一档。只有 `CommentSessionUser | null` 两态的话，
- * **任何**失败都会退化成 `null` = 未登录，前端随即 `setUser(null)` 并清掉本地快照 ——
- * 表现为「Supabase 抖一下就全站登出」。服务端侧已改为上游故障回 **503**（而不是 401，
- * 见 app/api/auth/me/route.ts 与 supabase.ts 的 UpstreamAuthError 注释），
- * 客户端这一档就是与它配套的另一半。
- */
+/** 会话探测的结果。 */
 type SessionProbe =
   | { kind: "user"; user: CommentSessionUser }
   | { kind: "anonymous" }
@@ -91,7 +83,7 @@ async function probeSession(): Promise<SessionProbe> {
       } | null;
       return { k: "unauthorized", canRefresh: Boolean(body?.data?.canRefresh) };
     }
-    // 5xx = 服务端故障（含鉴权上游不可用）。**不能**据此判断会话失效。
+    // 5xx = 服务端故障（含鉴权上游不可用）。不能据此判断会话失效。
     if (res.status >= 500) return { k: "transient" };
 
     const data = res.ok
@@ -142,8 +134,7 @@ export default function CommentAuthProvider({
       .then((r) => {
         if (!active) return;
         if (r.kind === "transient") {
-          // 服务端暂时答不出来 → **保留现状**：继续用 loadCommentUser() 那个本地快照，
-          // 既不清 localStorage 也不 setUser(null)。等下次登录/刷新再校验。
+          // 服务端暂时答不出来 → 保留现状：继续用 loadCommentUser() 那个本地快照。
           return;
         }
         if (r.kind === "user") {
@@ -166,17 +157,10 @@ export default function CommentAuthProvider({
 
   const applySession = useCallback(async () => {
     const r = await probeSession();
-    // transient / anonymous 都不动现状：前者是服务端故障（保持本地快照），
-    // 后者说明令牌没生效 —— 登录/注册的调用方本来就会拿到失败提示。
+    // transient / anonymous 都不动现状：前者是服务端故障（保持本地快照）。
     if (r.kind !== "user") return;
     saveCommentSession(r.user);
-    /*
-     * 登录/注册成功后清一次点赞状态缓存。
-     *
-     * 缓存 key 已含 userId（见 app/lib/like-state-cache.ts），所以不清也不会串号；
-     * 这里清是为了**释放上一个账号留下的条目** —— 模块级 Map 在标签页存续期间
-     * 不会自动回收，而这些条目在换账号后再也不会被命中。
-     */
+    /* 登录/注册成功后清一次点赞状态缓存。 */
     resetLikeStateCache();
     setUser(r.user);
   }, []);
@@ -218,7 +202,6 @@ export default function CommentAuthProvider({
   const logout = useCallback(() => {
     clearCommentSession();
     // 登出后必须丢掉本标签页缓存的点赞状态，否则当前页面会残留上一个账号的
-    // 「已点赞」高亮（key 隔离已能防串号，但登出后这些条目已无用处，留着纯占内存）。
     resetLikeStateCache();
     setUser(null);
   }, []);

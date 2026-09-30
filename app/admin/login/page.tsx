@@ -54,6 +54,14 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await errorText(res));
+      const data = unwrapApi<{ roles?: string[] }>(
+        await res.json().catch(() => null),
+        res.status
+      );
+      // 账号密码对、但不是管理员：必须在这里说清楚。
+      if (!Array.isArray(data.roles) || !data.roles.includes("admin")) {
+        return { error: "登录成功，但该账号不是管理员，无法进入后台。" };
+      }
       enterAdmin();
       return;
     }
@@ -64,10 +72,11 @@ export default function AdminLoginPage() {
       body: JSON.stringify({ email, password, nickname }),
     });
     if (!res.ok) throw new Error(await errorText(res));
-    const data = unwrapApi<{ needsConfirm: boolean }>(
-      await res.json().catch(() => null),
-      res.status
-    );
+    const data = unwrapApi<{
+      needsConfirm: boolean;
+      isAdmin?: boolean;
+      adminBootstrapFailed?: boolean;
+    }>(await res.json().catch(() => null), res.status);
 
     if (data.needsConfirm) {
       return {
@@ -76,15 +85,17 @@ export default function AdminLoginPage() {
       };
     }
 
-    const meRes = await fetch("/api/auth/me");
-    const me = meRes.ok
-      ? unwrapApi<{ roles?: string[] }>(await meRes.json().catch(() => null), meRes.status)
-      : null;
-    const roles = me?.roles;
-    const isAdmin = Array.isArray(roles) && roles.includes("admin");
-    if (!isAdmin) {
+    // 两种「没拿到管理员」的原因完全不同，不能合并成一句话。
+    if (data.adminBootstrapFailed) {
       return {
-        error: "注册成功，但该账号不是管理员（已有管理员存在），无法进入后台",
+        error:
+          "账号已创建，但本站用户表写入失败，管理员权限未能生效。请用该账号在下方登录重试（登录时会重新初始化）；若反复失败请查看服务端日志。",
+        switchTo: "login",
+      };
+    }
+    if (!data.isAdmin) {
+      return {
+        error: "注册成功。本站已有管理员，该账号没有后台权限，请改用管理员账号登录。",
         switchTo: "login",
       };
     }

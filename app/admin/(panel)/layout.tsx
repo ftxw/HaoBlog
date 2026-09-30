@@ -22,19 +22,7 @@ function AuthFallback() {
   );
 }
 
-/**
- * 鉴权门：读 session-token cookie 并校验 Supabase token 与 user 表 is_admin，
- * 未登录或非管理员时跳转登录页。
- *
- * ⚠️ 为什么鉴权要包在 <Suspense> 里（cacheComponents 硬性要求，不是风格选择）：
- *   读 cookie 属于**未缓存的请求数据**。cacheComponents + PPR 下，构建期要为每个
- *   路由预渲染静态壳 —— 若鉴权裸露在布局顶层，预渲染时拿不到 cookie，直接以
- *   「Uncached data was accessed outside of <Suspense>」失败（实测 /admin/* 全挂）。
- *   包进 Suspense 后：静态壳渲染 AuthFallback，鉴权在请求时流式完成。
- *
- *   安全性不受影响：{children} 在鉴权**之后**才渲染，未登录者只会看到骨架屏，
- *   拿不到任何后台数据；redirect 在流式阶段同样生效（RSC 会下发跳转指令）。
- */
+/** 鉴权门：读 session-token cookie 并校验 Supabase token 与 user 表 is_admin。 */
 async function AdminGate({ children }: { children: React.ReactNode }) {
   const admin = await getServerAdmin();
 

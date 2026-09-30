@@ -1,9 +1,4 @@
-/**
- * 全站 HTTP API 的响应信封类型与客户端解包工具。
- *
- * ⚠️ 本模块**不得引用任何服务端模块**（next/server、prisma…）—— 它要被客户端组件 import，
- * 一旦带上服务端依赖就会被打进客户端 bundle。服务端的构造原语（ok / fail）在 `app/lib/http.ts`。
- */
+/** 全站 HTTP API 的响应信封类型与客户端解包工具。 */
 export type ApiOk<T> = { code: 0; message: string; data: T };
 export type ApiErr<D = null> = { code: 1; message: string; data: D };
 export type ApiResponse<T, E = null> = ApiOk<T> | ApiErr<E>;

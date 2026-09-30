@@ -51,8 +51,7 @@ export default function ProjectsClient({
     size: number;
   }>(listUrl, initialList);
 
-  // 评论徽标数：服务端已给初值，useApi 在带 initial 时首帧不发请求，
-  // 只在 reload() 时重取（与 MomentsClient 同一套用法）。
+  // 评论徽标数：服务端已给初值，useApi 在带 initial 时首帧不发请求。
   const commentsCount = useApi<{ items: unknown[]; total: number }>(
     "/api/projects/comments/admin?page=1&size=1",
     { items: [], total: initialCommentsTotal }

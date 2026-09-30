@@ -43,7 +43,7 @@ export interface Album {
   cover: string;
   date: string;
   layout: "grid" | "timeline";
-  /** 卡片堆叠与封面比例用的**预览**照片；全量在打开相册时单独取（见 getAlbum） */
+  /** 卡片堆叠与封面比例用的预览照片；全量在打开相册时单独取（见 getAlbum） */
   photos: AlbumPhoto[];
   /** 相册真实照片总数（`photos` 只是它的前几张） */
   photoCount: number;
@@ -180,14 +180,12 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
   const [focusUrl, setFocusUrl] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useUrlParam("q", "");
-  // 过渡期间锁定的「上一次提交查询」。activeQuery 由它 + searchQuery 派生，
-  // 从而无需在 effect 里同步 setActiveQuery（规避 react-hooks/set-state-in-effect）。
+  // 过渡期间锁定的「上一次提交查询」。activeQuery 由它 + searchQuery 派生。
   const [committedQuery, setCommittedQuery] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const listScrollRef = useRef(0);
 
-  // 非过渡态：searchQuery 变化即时反映（如浏览器前进/后退改 URL）；
-  // 过渡态：锁定旧值，待 250ms 防抖计时结束后再提交，避免输入时结果闪烁。
+  // 非过渡态：searchQuery 变化即时反映（如浏览器前进/后退改 URL）。
   const activeQuery = isTransitioning ? committedQuery : searchQuery.toLowerCase();
 
   const handleSearchChange = (value: string) => {
@@ -203,11 +201,7 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
     // searchQuery 入依赖：每次输入都重置 250ms 防抖计时。
   }, [searchQuery, isTransitioning]);
 
-  // 照片描述搜索必须走服务端：首页每册只下发几张预览，
-  // 在客户端对已下发的照片做匹配只会命中每册的前几张 —— 搜索会静默变窄。
-  //
-  // 结果与查询词一起存（而不是「存结果 + 另存 loading」），于是「是否在搜索中」
-  // 由「结果里的 q 是否等于当前 activeQuery」派生，effect 里不需要任何 setState。
+  // 照片描述搜索必须走服务端：首页每册只下发几张预览。
   const [photoHits, setPhotoHits] = useState<{
     q: string;
     rows: PhotoSearchHit[];
@@ -287,8 +281,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
   }, [matchedAlbums, albumColsCount, heights]);
 
   // 打开相册时才去取全量照片：列表里只有几张预览。
-  // 重置 albumPhotos 放在 openAlbum / 返回回调里而不是 effect 体内，
-  // 否则会触发 react-hooks/set-state-in-effect，也会让「返回再开」闪出上一个相册的照片。
   useEffect(() => {
     const album = activeAlbum;
     if (!album) return;

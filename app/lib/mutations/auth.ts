@@ -6,7 +6,7 @@ import {
   supabaseUpdatePassword,
   type AppUser,
 } from "@/app/lib/supabase";
-import { ensureUserAndBootstrapAdmin, invalidateAuthCache } from "@/app/lib/auth";
+import { ensureUserAndBootstrapAdmin, hasAnyAdmin, invalidateAuthCache } from "@/app/lib/auth";
 import { hitRateLimit, resetRateLimit } from "@/app/lib/rate-limit";
 import { recordLoginLog } from "@/app/lib/login-log";
 import { BusinessError } from "@/app/lib/business-error";
@@ -19,12 +19,9 @@ export interface AuthRequestContext {
 }
 
 // 登录锁定阈值。计数落在 Postgres（rate_limit 表）——进程内 Map 在 Vercel
-// 多实例下等于「每实例配额」，攻击者轮换实例即可绕过。
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-// 邮箱维度之外再加一道 IP 维度（账号锁定 DoS 的兜底）：
-// 单靠邮箱，攻击者故意打错 5 次就能把他人账号锁死。
-// IP 阈值放宽（共享出口 IP 后可能有多个正常用户），只拦「同一来源狂打」。
+// 邮箱维度之外再加一道 IP 维度（账号锁定 DoS 的兜底）。
 const LOGIN_IP_MAX_ATTEMPTS = 30;
 const LOGIN_IP_WINDOW_MS = 15 * 60 * 1000;
 
@@ -49,10 +46,7 @@ export async function loginUser(
     throw new BusinessError("请输入邮箱和密码", 400);
   }
 
-  // 每次尝试先累计计数，用返回的 decision 同时完成「判定」与「计数」：
-  //   · allowed=false → 已经超限，直接 429；
-  //   · allowed=true  → 放行，失败时用 count 判断是否恰好达到锁定阈值。
-  // 先判 IP 再判邮箱：IP 已被拦时不再给邮箱计数，避免「一个来源狂打」连带锁死某个无辜邮箱。
+  // 每次尝试先累计计数，用返回的 decision 同时完成「判定」与「计数」。
   const ipLimit = await hitRateLimit(
     `login-ip:${ctx.ip}`,
     LOGIN_IP_MAX_ATTEMPTS,
@@ -74,8 +68,7 @@ export async function loginUser(
     session = res.session;
     user = res.user;
   } catch {
-    // recordLoginLog 内部已自行 try/catch 且从不抛出（见 app/lib/login-log.ts），
-    // 这里不再多包一层空的 try/catch —— 那只会让人误以为它可能失败。
+    // recordLoginLog 内部已自行 try/catch 且从不抛出（见 app/lib/login-log.ts）。
     await recordLoginLog({
       ...ctx,
       userId: "",
@@ -103,8 +96,11 @@ export async function loginUser(
     const row = await ensureUserAndBootstrapAdmin(user);
     isAdmin = Boolean(row?.is_admin);
   } catch (err) {
-    // 不静默：这里失败会让管理员登录后拿不到后台权限（审计 R3）
     console.error("[auth] ensureUserAndBootstrapAdmin 失败，本次按非管理员处理:", err);
+    // 库里一个管理员都没有时，本次登录本该补上「第一个管理员」——补不上就意味着
+    if (!(await hasAnyAdmin())) {
+      throw new BusinessError("站点尚未完成初始化（管理员记录写入失败），请稍后重试", 503);
+    }
   }
 
   return { session, user, isAdmin };
@@ -114,22 +110,24 @@ export async function loginUser(
 const REGISTER_LIMIT = 5;
 const REGISTER_WINDOW_MS = 10 * 60 * 1000;
 
-/**
- * 密码长度上界。
- *
- * ⚠️ 只有下界（6 位）是不够的：`password` 来自请求体，没有上界的话，
- * 一个 1MB 的字符串会被原样 POST 给 Supabase Auth —— 白白吃掉函数内存与
- * 一次大请求体的出网带宽，且要由 GoTrue 来告诉我们太长。
- * 这里在本地直接拒绝。72 是 bcrypt 的经典输入上界（超出部分不参与计算），
- * Supabase 默认也用它，所以取 72 与上游语义一致，不会出现「本地通过、上游拒绝」。
- */
+/** 密码长度上界。 */
 const PASSWORD_MAX_LENGTH = 72;
 const PASSWORD_MIN_LENGTH = 6;
+
+export interface RegisterResult {
+  session: SessionData | null;
+  user: AppUser;
+  needsConfirm: boolean;
+  /** 权威结论：读自本站 user 表（ensureUserAndBootstrapAdmin 返回的那一行）。 */
+  isAdmin: boolean;
+  /** 写本站 user 表失败（原因已落服务端日志）。 */
+  adminBootstrapFailed: boolean;
+}
 
 export async function registerUser(
   input: { email?: unknown; password?: unknown; nickname?: unknown },
   ctx: AuthRequestContext
-): Promise<{ session: SessionData | null; user: AppUser; needsConfirm: boolean }> {
+): Promise<RegisterResult> {
   const rl = await hitRateLimit(`register:${ctx.ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS);
   if (!rl.allowed) {
     throw new BusinessError("注册过于频繁，请稍后再试", 429, {
@@ -168,23 +166,23 @@ export async function registerUser(
   try {
     reg = await supabaseRegister(email, password, nickname);
   } catch (e) {
-    // 注册失败把 Supabase 的**面向用户**提示原样回给调用方（400），
-    // 如「User already registered」「Password should be at least 6 characters」。
-    // 包成 BusinessError 是为了让 `safeErrMessage` 在生产环境也保留原文
-    // （审计 R1 的例外通道：只有业务自抛的提示才回原文）。
+    // 注册失败把 Supabase 的面向用户提示原样回给调用方（400）。
     throw new BusinessError(errMsg(e, "注册失败"), 400);
   }
 
+  let isAdmin = false;
+  let adminBootstrapFailed = false;
   try {
-    await ensureUserAndBootstrapAdmin(reg.user);
+    const row = await ensureUserAndBootstrapAdmin(reg.user);
+    isAdmin = Boolean(row?.is_admin);
   } catch (e) {
-    // ⚠️ 不静默：失败意味着账号建了但没成为管理员，用户会「注册成功却进不了后台」——
-    // 没有这条日志就完全查不出来源。
-    console.error("[auth] 引导管理员失败（账号已创建，但可能不是管理员）:", e);
+    adminBootstrapFailed = true;
+    // 不静默：失败意味着 Supabase 账号建好了、本站 user 表却没写进去。
+    console.error("[auth] 引导管理员失败（Supabase 账号已创建，但本站 user 表未写入）:", e);
   }
 
   if (reg.needsConfirm || !reg.session) {
-    return { session: null, user: reg.user, needsConfirm: true };
+    return { session: null, user: reg.user, needsConfirm: true, isAdmin, adminBootstrapFailed };
   }
 
   await recordLoginLog({
@@ -195,7 +193,7 @@ export async function registerUser(
     summary: "注册并登录",
   });
 
-  return { session: reg.session, user: reg.user, needsConfirm: false };
+  return { session: reg.session, user: reg.user, needsConfirm: false, isAdmin, adminBootstrapFailed };
 }
 
 

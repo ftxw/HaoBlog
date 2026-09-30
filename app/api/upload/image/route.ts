@@ -19,10 +19,7 @@ import {
 const ALLOWED_TYPES: readonly string[] = ALLOWED_IMAGE_TYPES;
 const MAX_SIZE = MAX_UPLOAD_SIZE;
 
-/**
- * 服务端 magic bytes 校验：客户端自报的 file.type 可伪造，必须以文件头为准。
- * 返回与声明类型一致才放行。
- */
+/** 服务端 magic bytes 校验：客户端自报的 file.type 可伪造，必须以文件头为准。 */
 function matchesMagicBytes(head: Uint8Array, type: string): boolean {
   const starts = (...bytes: number[]) =>
     bytes.every((b, i) => head[i] === b);

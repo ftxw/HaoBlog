@@ -1,11 +1,6 @@
 import { siteConfigDefs } from "@/app/lib/site-config-defs";
 
-/**
- * 前端兜底配置。
- *
- * 默认值的唯一来源是 `app/lib/site-config-defs.ts`（seed / 初始化接口 / 后台 schema 的数据源），
- * 本文件只按 key 取默认值，不重复写第二份。
- */
+/** 前端兜底配置：默认值唯一来源是 app/lib/site-config-defs.ts，本文件只按 key 取。 */
 
 /** 取某键的权威默认值 */
 function defValue(key: string): string {
@@ -36,9 +31,8 @@ export const siteConfig = {
   // 头像设置（空字符串时组件会用本地默认头像）
   avatarUrl: defValue("avatarUrl"),
 
-  // 背景设置：站点背景恒为三色光晕（.app-glow，浅深主题同值）。
-  // 空数组 = 使用内置的「靛 / 粉 / 青」；填入颜色数组即按顺序覆盖
-  // 「左上 / 右上 / 底部」三团的色相。（「背景图片」模式与 bgImages 已移除）
+  // 背景：站点背景恒为三色光晕（.app-glow）。空数组用内置「靛/粉/青」，
+  // 填色即按顺序覆盖「左上/右上/底部」三团色相。
   themeColors: defArray("themeColors"),
 
   // 默认封面图

@@ -1,4 +1,3 @@
-
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
@@ -169,18 +168,7 @@ async function verifyLocally(token: string): Promise<AppUser | null> {
   }
 }
 
-/**
- * 「鉴权上游不可用」这一类的错误标记。
- *
- * ⚠️ 必须和「令牌无效」区分开，否则鉴权服务一抖动，全站已登录用户会被集体登出：
- * 调用链是 verifyAccessToken 抛错 → http.ts 判成 401 → /api/auth/me 带 canRefresh:true →
- * 前端去刷新 → 刷新同样失败 → 清 cookie 跳登录页。而用户的令牌其实完全有效。
- *
- * 注意这里**不需要**按错误类型猜：`authFetchWithToken` 在 `!res.ok` 时抛的是
- * 上游返回的文案（如 "invalid JWT"），而超时/网络失败抛的是 AbortError /
- * TimeoutError / TypeError。所以「不是那几条明确的令牌错误」就等于基础设施问题 ——
- * 用**白名单**认定令牌错误，比用黑名单猜哪些是网络错误更可靠。
- */
+/** 「鉴权上游不可用」这一类的错误标记。 */
 export class UpstreamAuthError extends Error {
   constructor(message: string) {
     super(message);
@@ -225,9 +213,7 @@ export async function verifyAccessToken(token: string): Promise<AppUser> {
     // 令牌确实无效（GoTrue 明确拒绝）→ 保持「无效的令牌」语义（映射成 401）。
     if (isDefinitelyInvalidToken(e)) throw new Error("无效的令牌");
 
-    // 其余（超时、网络失败、上游 5xx）→ 归为「鉴权服务不可用」，
-    // 由 http.ts::errorStatus 映射成 503，而不是 401。
-    // 不静默：这类问题必须留痕，否则表现为「用户莫名被登出」而无从排查。
+    // 其余（超时、网络失败、上游 5xx）→ 归为「鉴权服务不可用」。
     console.error("[supabase] 校验 access token 时上游不可用:", e);
     throw new UpstreamAuthError("鉴权服务暂时不可用，请稍后重试");
   }

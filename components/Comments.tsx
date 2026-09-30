@@ -139,8 +139,7 @@ export default function Comments<T extends CommentItem>({
     if (!autoCompose || autoComposedRef.current) return;
     if (!user) return;
     autoComposedRef.current = true;
-    // rAF 把 setState 移出 effect 同步体（规避 react-hooks/set-state-in-effect）；
-    // 相对原「首帧后展开」仅延后不到一帧，无感知；聚焦仍按原 120ms 延迟以等展开动画。
+    // rAF 把 setState 移出 effect 同步体（规避 react-hooks/set-state-in-effect）。
     const raf = requestAnimationFrame(() => {
       setComposing(true);
       setShowEmoji(false);
@@ -175,9 +174,6 @@ export default function Comments<T extends CommentItem>({
   }, [showEmoji]);
 
   // 首屏 RSC 直出的评论：comments / commentsLoading / totalCount 的初值已在 useState 惰性
-  // 初始化里就位（commentsLoading 初值即 !initialComments），这里只需向父级上报一次总数。
-  // 用 ref 固化「挂载时的初值」——它不参与依赖，从而既修掉 exhaustive-deps 缺失依赖告警，
-  // 又不会在父组件重渲染传入新 initialComments 时重复上报（保持历史语义：仅挂载时生效）。
   const initialCommentsRef = useRef(initialComments);
   useEffect(() => {
     if (!initialCommentsRef.current) return;

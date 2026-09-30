@@ -281,14 +281,7 @@ export default function DashboardClient({
             ) : (
               <ul className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
                 {(loginLogs.data?.data.list ?? []).map((log) => {
-                  /*
-                   * 按「失败」判定，而不是「含『成功』」。
-                   *
-                   * 这个布尔值同时决定徽章文字（成功/失败），所以判错方向会把正常记录
-                   * 显示成红色的「失败」。不能用 `includes("成功")`：任何不含
-                   * 「成功」二字的新文案（例如注册路径记的「注册并登录」）都会被误判。
-                   * 目前只有登录失败那一处会写含「失败」的 summary，反过来判定是安全的。
-                   */
+                  /* 按「失败」判定，而不是「含『成功』」。 */
                   const success = !log.summary.includes("失败");
                   return (
                     <li

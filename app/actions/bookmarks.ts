@@ -18,18 +18,7 @@ import type {
 } from "@/app/lib/mutations/bookmarks";
 import { purgePath } from "@/app/lib/revalidate";
 
-/**
- * 写完之后让**前台**书签页的缓存失效。
- *
- * ⚠️ 路径必须是 `/bookmark`（单数）—— 前台路由目录就叫 `app/bookmark/`，
- * 错写成 `/bookmarks` 会刷到一个不存在的路径、等于没刷。且它 `revalidate = 300` 做了 ISR，
- * 不刷就会最多 5 分钟看不到改动。
- * mutations 里的 `invalidateBookmarkCaches()` 也刷同一路径，重复调用是幂等的。
- *
- * ⚠️ 刻意**不** revalidate 后台当前页（`/admin/bookmarks`）：`useApi(url, initial)` 的 state
- * 只在首次挂载时吃 initial，revalidate 会让 RSC 白跑一遍查询、界面却不会变 ——
- * 纯属多付一次往返。后台列表的刷新仍由调用点自己 `reload()` 负责。
- */
+/** 写完之后让前台书签页的缓存失效。 */
 function revalidatePublicBookmarks() {
   purgePath("/bookmark");
 }

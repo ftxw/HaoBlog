@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 import { invalidateProjectCaches } from "@/app/lib/api-cache";
 import {
@@ -16,13 +15,7 @@ import {
   requireStringArray,
 } from "@/app/lib/mutations/shared";
 
-/**
- * 项目写路径的入参。
- *
- * ⚠️ 刻意**没有** `likes`：`project.likes` 是由 content_like 触发器重算的派生列
- * （迁移 20260929164500），不由调用方写入。加进来就是「能写但写了不算数」的陷阱字段：
- * 任何一次点赞/取消点赞都会把它覆盖成真实条数。
- */
+/** 项目写路径的入参。 */
 export interface ProjectInput {
   name?: string;
   description?: string;
@@ -67,11 +60,7 @@ export async function createProject(input: ProjectInput) {
       status_label: String(input.status_label ?? ""),
       is_featured: Boolean(input.is_featured),
       sort,
-      // ⚠️ 刻意不写 `likes`：该列已由迁移 20260929164500 的触发器
-      // （refresh_content_like_count）从 content_like 表重算。
-      // 这里就算收下调用方给的值，下一次有人点赞/取消点赞就会被覆盖掉 ——
-      // 收下来只会制造「明明填了 100 却显示 3」的困惑。
-      // 需要预置点赞数就插 content_like 行，不要写这个派生列。
+      // 刻意不写 likes：该列由数据库触发器 refresh_content_like_count
     },
   });
 
@@ -118,12 +107,7 @@ export async function deleteProject(projectId: string) {
   const id = requireId(projectId, "无效的项目ID");
 
   try {
-    /*
-     * 主体与该项目的点赞记录必须一起删，放在同一事务里保证要么都成、要么都不成
-     * （`content_like` 是多态表，没有外键级联，不显式删就会留下永久孤儿行 ——
-     * 详见 `purgeContentLikes` 的注释）。先删主体、后删点赞，可让点赞表触发器
-     * 的重算 UPDATE 匹配到 0 行，省掉一次无意义的 count 扫描。
-     */
+    /* 主体与该项目的点赞记录必须一起删，放在同一事务里保证要么都成、要么都不成 */
     await prisma.$transaction(
       async (tx) => {
         await tx.project.delete({ where: { id } });

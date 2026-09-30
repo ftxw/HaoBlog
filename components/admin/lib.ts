@@ -74,21 +74,7 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   return res;
 }
 
-/**
- * 后台读缓存策略：**只保留服务端一层**。
- *
- * ⚠️ 不要在客户端再叠一层模块级缓存（例如 TTL 30s 的 Map）：它与服务端 `unstable_cache`
- * （TTL 60s，见 app/lib/api-cache.ts）叠在一起问题有二：
- *   1) 两层 TTL 不同步，「后台刷新后仍看到旧值」；
- *   2) 模块级缓存不跨标签页，写操作后的失效只能清当前页，别的标签页仍返回旧值。
- *
- * 这里的做法是：所有后台 GET 一律 `no-store` 透传到服务端，服务端缓存由写操作里的
- * `invalidate*Caches()`（revalidateTag，跨实例跨标签页）统一失效。这样单一缓存源成立，
- * 后台导航多一次请求的代价可接受（后台是低频场景）。
- *
- * `inflightGets` 保留：它只是**同一时刻相同 GET 的请求合并**（非缓存，命中也总是拿最新
- * 在途结果），不引入陈旧数据。
- */
+/** 后台读缓存策略：只保留服务端一层。 */
 const inflightGets = new Map<string, Promise<unknown>>();
 
 export function invalidateApiCache(): void {

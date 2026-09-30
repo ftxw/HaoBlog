@@ -6,8 +6,7 @@ import { thumbUrlOf } from "@/app/lib/image-thumb";
 import SearchBar from "@/components/SearchBar";
 import ProfileCard from "@/components/home/ProfileCard";
 import SafeImage from "@/components/ui/SafeImage";
-// 修复首屏抖动：这些组件 SSR 安全，改为服务端渲染，HTML 直接包含完整布局，
-// 避免 hydration 后逐个挂载撑开容器造成布局跳变。
+// 修复首屏抖动：这些组件 SSR 安全，改为服务端渲染，HTML 直接包含完整布局。
 import CloudPlayer from "@/components/music/CloudPlayer";
 import LyricBar from "@/components/music/LyricBar";
 import LatestPostsCarousel from "@/components/home/LatestPostsCarousel";
@@ -146,9 +145,7 @@ export default function HomeClient({
                       fill
                       priority
                       alt={photoWall.title}
-                      /* 海报是 lg 栅格 12 列里的 4 列：容器 max-w 72rem、px-2rem、gap-6(24px)
-                         → 4 列实际约 305~347px。缺 sizes 时 SafeImage 的 fill 分支按 100vw 兜底，
-                         next/image 会按整屏宽挑变体（等于给这张 347px 的图下发整屏宽的图）。 */
+                      /* 海报是 lg 栅格 12 列里的 4 列：容器 max-w 72rem、px-2rem、gap-6(24px) */
                       sizes="(min-width:1024px) 345px, 100vw"
                       className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
                     />

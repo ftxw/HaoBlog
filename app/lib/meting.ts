@@ -331,7 +331,7 @@ class MetingApiClient implements MusicClient {
   }
 }
 
-/** 音乐上游**唯一**来自后台「站点设置 → 音乐设置」，代码里不再有写死的 API 或备用源。 */
+/** 音乐上游唯一来自后台「站点设置 → 音乐设置」，代码里不再有写死的 API 或备用源。 */
 export async function createMeting(): Promise<MusicClient> {
   const raw = (await getDbConfigValue("cloudMusicApiUrl")).trim().replace(/\/+$/, "");
   if (!raw) {

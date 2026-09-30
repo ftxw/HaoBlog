@@ -72,15 +72,7 @@ function getLast30Days(): string[] {
   return days;
 }
 
-/*
- * 模块级构造（而不是在函数体内每次请求新建）：`unstable_cache` 包出来的函数在
- * 模块级只创建一次，语义上就是「一份共享的结果缓存」；放进函数体每次调用新建，
- * 虽然 Data Cache 的 key 相同仍会命中，但会白建包装、也让「这里有一份缓存」
- * 这件事在阅读时看不出来。全项目统一用模块级（对照 site-config-db.ts）。
- *
- * tag 用独立的 `dashboardStats`：它的失效条件是「内容行数变化」，
- * 比任何按内容类型划分的 tag 都宽，合并会让每次发文都连带清掉这份重查询缓存。
- */
+/* 模块级构造（而不是在函数体内每次请求新建）：unstable_cache 包出来的函数在 */
 const statsCache = unstable_cache(getDashboardStats, [STATS_CACHE_KEY], {
   revalidate: STATS_CACHE_TTL / 1000,
   tags: [CACHE_NAMESPACE.dashboardStats],

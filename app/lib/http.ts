@@ -38,8 +38,7 @@ export function parsePagination(
   }: { defaultSize?: number; maxSize?: number } = {}
 ): { page: number; size: number } {
   return {
-    // page 上界 10000：必须设上界，否则 `?page=1e15` 会生成巨大 OFFSET
-    // 触发全表扫。10000 页（配默认 size）已远超真实内容量，超过一律夹到上限。
+    // page 上界 10000：必须设上界，否则 ?page=1e15 会生成巨大 OFFSET
     page: toPositiveInt(searchParams.get("page"), 1, 10000),
     size: toPositiveInt(searchParams.get("size"), defaultSize, maxSize),
   };
@@ -55,15 +54,7 @@ export function safeErrMessage(err: unknown, fallback = "服务器错误"): stri
   return BUSINESS_HINTS.test(raw) ? raw : fallback;
 }
 
-/**
- * ⚠️ 鉴权类错误必须映射成语义正确的状态码：
- *   · 无权限是 **403** 而非 401，否则前端会把「权限不足」误判成「掉登录态」并去刷新令牌；
- *   · 令牌无效是 **401**（前端该去刷新）；
- *   · **鉴权服务不可用是 503** —— 这一条尤其重要：如果把它也当成 401，
- *     前端会去刷新令牌、刷新同样失败、于是清 cookie 跳登录页，
- *     结果是 Supabase 抖动一下就把全站用户登出（而他们的令牌其实有效）。
- *     503 让前端把它当作「服务端暂时故障」，保留会话。
- */
+/** 鉴权类错误必须映射成语义正确的状态码。 */
 export function errorStatus(err: unknown): number {
   if (err instanceof BusinessError) return err.status;
   const raw = err instanceof Error ? err.message : "";

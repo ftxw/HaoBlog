@@ -1,15 +1,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 
-/**
- * ⚠️ 缓存失效必须容忍「没有 Next 运行时」的场景。
- *
- * `revalidateTag` / `revalidatePath` 依赖 static generation store，在裸 node 进程
- * （seed、CLI、tsx 工具）里调用会抛 `Invariant: static generation store missing`。
- *
- * 写路径的顺序是「先落库、后失效」，异常抛出去会让调用方以为**整个写操作失败了**，
- * 而数据其实已经写成功。那类场景下本来也没有运行时缓存可失效，吞掉是正确的语义。
- * 只吞这一种错误，其余（真问题）照常抛出。
- */
+/** 缓存失效必须容忍「没有 Next 运行时」的场景。 */
 function safe(run: () => void): void {
   try {
     run();

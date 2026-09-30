@@ -4,9 +4,7 @@ import { loginUser } from "@/app/lib/mutations/auth";
 import { setSessionCookie } from "@/app/lib/session-cookie";
 
 export async function POST(request: Request) {
-  // JSON 解析单独包一层：`request.json()` 对非法 body 抛 SyntaxError，
-  // 它不是 BusinessError，落到下面会被 businessFail 映射成 500「登录失败」——
-  // 而实际原因是**客户端请求格式错**，应当是 400，不能混成 500。
+  // JSON 解析单独包一层：request.json() 对非法 body 抛 SyntaxError。
   let body: { email?: unknown; password?: unknown };
   try {
     body = await request.json();

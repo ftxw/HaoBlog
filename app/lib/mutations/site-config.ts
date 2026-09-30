@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 import { BusinessError } from "@/app/lib/business-error";
 import { clearSiteConfigCache } from "@/app/lib/site-config-db";
@@ -35,10 +34,7 @@ export async function saveSiteConfigValues(body: unknown) {
     throw new BusinessError("没有可保存的配置项", 400);
   }
 
-  // ON CONFLICT 只更新 value/updated_at，**刻意不动 description**：
-  // 保存只提交键与值，新插入行的 description 用 '' 兜底；命中已有行时保留原描述。
-  // description 的唯一写入方是 syncSiteConfig（把 siteConfigDefs 里代码定义的说明同步进库），
-  // 后台 UI 不提供描述编辑 —— 所以这里若把它一并覆盖，会把已有说明清空。
+  // ON CONFLICT 只更新 value/updated_at，刻意不动 description。
   await prisma.$executeRaw`
     INSERT INTO "site_config" ("key", "value", "description", "updated_at")
     SELECT src."key", src."value", ''::varchar(1024), now()

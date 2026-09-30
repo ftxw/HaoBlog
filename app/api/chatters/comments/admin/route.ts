@@ -17,8 +17,7 @@ export async function GET(request: Request) {
     const statusFilter = parseCommentStatusFilter(searchParams.get("status"));
     const { page, size } = parsePagination(searchParams);
 
-    // 同 /api/comments/admin：列表只要顶层评论，总数必须用同一个 where，
-    // 否则把回复也算进总数，分页器页数偏大、末页为空。
+    // 同 /api/comments/admin：列表只要顶层评论，总数必须用同一个 where。
     const where: Prisma.ChatterCommentWhereInput = {
       parent_id: null,
       ...(statusFilter ? { status: statusFilter } : {}),

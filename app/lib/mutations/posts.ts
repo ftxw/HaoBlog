@@ -51,15 +51,7 @@ function resolveTagNames(value: unknown): string[] | undefined {
   return value.map((v) => String(v ?? ""));
 }
 
-/**
- * 解析发布时间。
- *
- * ⚠️ 必须显式排除 `Invalid Date`：`new Date("随便一个字符串")` **不抛错**，而是返回一个
- * `Invalid Date` 对象（`getTime()` 为 NaN）。直接把它交给 Prisma 会在驱动层
- * 抛出难以定位的错误并落成 500「保存失败」；而后台日期选择器理论上只会给合法值，
- * 手工构造的请求却可以随便给。这里把非法值按「未提供」处理（回落 `fallback`），
- * 语义上等于「不修改/不设置发布时间」，比 500 更合理，也和后端其它入参的宽松口径一致。
- */
+/** 解析发布时间。 */
 function resolvePublishedAt(
   raw: unknown,
   status: PostStatus,
@@ -188,17 +180,7 @@ export async function updatePost(postId: string, input: PostInput) {
   invalidatePostCaches();
   purgePath(`/posts/${id}`);
 
-  /*
-   * ⚠️ 这里**必须**重新查一次，不能直接返回上面 `tx.post.update` 的结果。
-   *
-   * 原因在 `include` 的求值时机：Prisma 处理 `update({ include: { tags } })` 时，
-   * 标签是在 `syncPostTags()` **之前**读出来的（先跑主表 UPDATE + 关联读，事务回调才继续）。
-   * 所以事务回调里那个 `updated.tags` 是**改标签之前**的快照。
-   * 直接返回它，前台会拿到旧标签 —— 表现为「保存了标签，列表刷新后才对」。
-   *
-   * 这次重查是事务提交后的独立读，看到的是最终状态。
-   * （`createPost` 没有这个问题：新建时标签本来就是空的，`created.tags` 也是空，不存在陈旧。）
-   */
+  /* 这里必须重新查一次，不能直接返回上面 tx.post.update 的结果。 */
   if (tagNames) {
     const detailed = await prisma.post.findUnique({
       where: { id },
@@ -222,14 +204,7 @@ export async function deletePost(postId: string) {
     await prisma.$transaction(
       async (tx) => {
         await tx.post.delete({ where: { id } });
-        /*
-         * 清掉这篇文章的点赞记录。
-         *
-         * `content_like` 是多态表（target_type + target_id），没有外键指向 post，
-         * 因此 `schema.prisma` 的 `Comment` / `PostTag` 那种 `onDelete: Cascade`
-         * 覆盖不到它 —— 不在这里显式删，这些行就是**永久孤儿**。
-         * 详见 `purgeContentLikes` 的注释。
-         */
+        /* 清掉这篇文章的点赞记录。 */
         await purgeContentLikes(tx, "post", id);
       },
       { timeout: 20_000 }

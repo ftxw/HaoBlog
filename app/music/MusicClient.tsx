@@ -389,11 +389,7 @@ export default function MusicClient() {
                         </div>
                       </div>
                     ) : (
-                      /* 无歌词兜底（C9/C10）：结构与样式照抄母版 music/index.astro:303-308 ——
-                         h-full flex-col items-center justify-center gap-3（无 md 变体）；
-                         图标 spin-slow（=6s/圈，不是 Tailwind animate-spin 的 1s/圈）
-                         + h-8 w-8 text-accent opacity-40（非 text-accent/40）；
-                         文案 text-base（无 md:text-xl）。 */
+                      /* 无歌词兜底：图标 spin-slow（6s/圈）+ accent 40% 透明，文案 text-base。 */
                       <div className="h-full flex flex-col items-center justify-center gap-3">
                         <Disc className="spin-slow h-8 w-8 text-accent opacity-40" aria-hidden="true" />
                         <p className="animate-pulse text-base font-black text-accent">

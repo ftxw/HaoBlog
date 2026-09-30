@@ -3,7 +3,6 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
-  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getDbSiteConfig } from "@/app/lib/site-config-db";
 import { normalizeCdnDomain } from "@/app/lib/image-thumb";
@@ -23,15 +22,7 @@ export interface S3ImageHostConfig {
   imageCdnDomain: string;
 }
 
-/**
- * 图床配置的**唯一来源**是后台「站点配置」（SiteConfig 表）；不再支持环境变量兜底。
- *
- * ⚠️ 整份配置一次取回，再按 key 读，而不是逐个 `getDbConfigValue()`。
- * `getDbConfigValue()` 每次都要生成 key、过一次 `unstable_cache`（Data Cache）并复制
- * 返回字符串；这里要取 6 个键，逐个调用就是 6 次缓存往返。而读图床配置处在
- * **图片代理与上传的热路径**上（`/api/img-proxy` 每次请求至少调 2 次
- * `isS3Configured()` + `getImageFromS3()` = 12 次），这种重复开销被直接放大。
- */
+/** 图床配置的唯一来源是后台「站点配置」（SiteConfig 表）；不再支持环境变量兜底。 */
 export async function getS3ImageHostConfig(): Promise<S3ImageHostConfig> {
   const cfg = await getDbSiteConfig();
   // 种子会把「未配置」写成空串，所以空串与缺失同义，都回落到默认值。
@@ -140,54 +131,7 @@ export async function uploadImageToS3(
   return { url: imageUrlOf(key, cfg), key };
 }
 
-export interface S3ProbeResult {
-  ok: boolean;
-  ms: number;
-  errorName?: string;
-  error?: string;
-  attempts?: number;
-}
-
-export async function probeS3(
-  timeoutMs: number = 15_000
-): Promise<S3ProbeResult> {
-  const started = Date.now();
-  try {
-    const cfg = await getS3ImageHostConfig();
-    if (!cfg.endpoint || !cfg.bucket || !cfg.accessKey || !cfg.secretKey) {
-      return { ok: false, ms: 0, errorName: "NotConfigured", error: "图床未配置" };
-    }
-    const client = await getClient();
-    // 这里不走上面的 send() 包装：S3Command 是有意收窄的联合类型（新增命令必须显式扩充），
-    // 而 ListObjectsV2 只用于自检这一处，单独调用更省事也更类型安全。
-    await client.send(
-      new ListObjectsV2Command({ Bucket: cfg.bucket, MaxKeys: 1 }),
-      { abortSignal: AbortSignal.timeout(timeoutMs) }
-    );
-    return { ok: true, ms: Date.now() - started };
-  } catch (err) {
-    const e = err as {
-      name?: string;
-      message?: string;
-      $metadata?: { attempts?: number };
-    };
-    return {
-      ok: false,
-      ms: Date.now() - started,
-      errorName: e?.name || "Unknown",
-      error: e?.message || String(err),
-      attempts: e?.$metadata?.attempts,
-    };
-  }
-}
-
-/**
- * 已报告过的读取错误签名（`name:code`）。
- *
- * 为什么要去重：本函数在每个图片请求上都会被调用，而图床配置错误（桶名写错、
- * 凭证过期、端点不通）会让**每一次**读取都失败 —— 不去重就是给日志按量计费埋雷，
- * 而且真正要看的告警会被淹没。同一类错误只报第一遍就够了。
- */
+/** 已报告过的读取错误签名（name:code）。 */
 const reportedReadErrors = new Set<string>();
 
 export async function getImageFromS3(key: string): Promise<{
@@ -208,14 +152,7 @@ export async function getImageFromS3(key: string): Promise<{
       contentType: obj.ContentType || "application/octet-stream",
     };
   } catch (e) {
-    /*
-     * 区分「对象不存在」与「基础设施有问题」。
-     *
-     * 前者是**完全正常**的（图片被删、旧 URL 还在被引用、缩略图没生成），不该打日志；
-     * 后者（桶不存在、凭证错、端点不通、超时）若也一并变成 `null`，调用方只会看到
-     * 一个 404/503，日志里只写着「图片不存在」—— 排查时完全看不出是配置错了。
-     * 所以这里把非 404 的错误报出来（同类错误只报一次）。
-     */
+    /* 区分「对象不存在」与「基础设施有问题」。 */
     const err = e as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
     const status = err?.$metadata?.httpStatusCode;
     const isNotFound =

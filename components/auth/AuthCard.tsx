@@ -176,8 +176,7 @@ export default function AuthCard({
           </div>
         )}
 
-        {/* 强调色按钮文字用 text-accent-ink：深色主题下 accent 是亮青（#22d3ee），
-            硬编码 text-white 会白字压亮青、对比度过低；accent-ink 会随主题翻转。 */}
+        {/* 强调色按钮文字用 text-accent-ink：深色主题下 accent 是亮青（#22d3ee）。 */}
         <button
           type="submit"
           disabled={pending}

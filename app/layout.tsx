@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// 说明：highlight.js 与 KaTeX 的 CSS 已改为按需加载——
-// 仅在真正渲染 Markdown 代码高亮/公式的路由里引入：
-//   app/posts/[postId]/page.tsx（文章详情）
-//   components/about/AboutMarkdown.tsx（关于页）
-// 不再全站注入，避免普通页面/后台白下载这两套样式。
+// highlight.js 与 KaTeX 的 CSS 按需加载（仅文章详情与关于页引入），不在此全站注入。
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { MusicProvider } from "@/components/providers/MusicProvider";
@@ -53,10 +49,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // ⚠️ 必须是**剔除私钥**的子集：这份配置会作为 initialConfig 注入
-  // SiteConfigProvider（客户端组件），而 getDbSiteConfig() 返回的是
-  // site_config 全表（含 accessKey / secretKey）。传全量 = 把图床私钥
-  // 明文写进每张前台页面的 HTML 源码，匿名访客和爬虫都能直接读到。
+  // 必须是剔除私钥的子集：这份配置会作为 initialConfig 注入
   const dbConfig = await getPublicSiteConfig();
 
   configureCdnDomain(dbConfig.imageCdnDomain);
@@ -78,13 +71,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        {/*
-          ⚠️ 必须包在 <style> 里。
-          <noscript> 的内容只有在脚本被禁用时才会被当成**标记**解析；
-          而这仅仅是 CSS 文本 —— 没有 <style> 包裹就永远不会作为样式生效，
-          于是 globals.css 里 [data-reveal]{opacity:0} 的兜底失效，
-          无 JS / JS 加载失败 / 被拦截的访客会看到**整页空白**（元素永远停在 opacity:0）。
-        */}
+        {/* 必须包在 <style> 里。 */}
         <noscript
           dangerouslySetInnerHTML={{
             __html:

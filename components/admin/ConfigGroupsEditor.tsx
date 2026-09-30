@@ -239,9 +239,7 @@ export default function ConfigGroupsEditor({
         title={title}
         description={description}
         actions={
-          /* 「业务链接」分组由 BusinessLinksManager 自己管增删改，它没有 siteConfigDefs 项 ——
-             此时 handleSave 提交的是空载荷（服务端已改成 400）。按钮留在页头只会让人
-             点出一个错误提示，所以这个分组下干脆不渲染它。 */
+          /* 「业务链接」分组由 BusinessLinksManager 自己管增删改，没有 siteConfigDefs 项，故不渲染保存按钮。 */
           activeGroup === "business-links" ? null : (
             <Button onClick={handleSave} loading={saving} disabled={loading || !activeGroup}>
               <Save className="h-4 w-4" />

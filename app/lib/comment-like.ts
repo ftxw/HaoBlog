@@ -81,12 +81,7 @@ export async function handleCommentLike(
     const next = await bump(kind, id, unlike);
     if (!next) return fail("评论不存在", 404);
     INVALIDATORS[kind]();
-    // ⚠️ 必须走 ok() 信封（`{ code, message, data }`），不能直接 NextResponse.json。
-    // 三个前端调用方都经由 api-client/request.ts 的 unwrapApi()，它会检查响应里有 `code` 字段；
-    // 裸 JSON 会被判定为「响应格式异常」并抛错。这会让点赞/取消点赞在**文章、
-    // 说说、项目**三处评论区静默失效（调用方的 catch 只 console.warn），
-    // 用户点 👍 没有任何反应，也没有报错可查。
-    // data 只回 `likes`：前端 Comments.tsx 的 likeComment 契约就是 `{ likes: number }`。
+    // 必须走 ok() 信封（{ code, message, data }），不能直接 NextResponse.json。
     return ok({ likes: next.likes });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && (err as { code?: string }).code === "P2025") {

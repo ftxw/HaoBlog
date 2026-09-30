@@ -88,17 +88,12 @@ export async function GET(req: NextRequest) {
             MUSIC_DEADLINE,
             "music playlist"
           ),
-        /*
-         * 歌单只由 `id` / `ids` 决定，缓存键就只认这两个参数。
-         * 前端会带 `_t=<时间戳>` 之类的 cache buster 打这个接口 —— 用了白名单之后
-         * 它们天然不参与键，不必再像之前那样先手工剥掉 `_t` 再构造 Request。
-         */
+        /* 歌单只由 id / ids 决定，缓存键就只认这两个参数。 */
         { keyParams: ["id", "ids"] }
       );
     } catch (upstreamErr) {
       console.error("Music playlist upstream error:", upstreamErr);
-      // businessFail：未配置音乐 API 时抛的是 BusinessError（503 + 明确文案），
-      // 不该被压成笼统的「数据源不可用」——那会让后台不知道该去填哪个配置。
+      // businessFail：未配置音乐 API 时抛的是 BusinessError（503 + 明确文案）。
       const res = businessFail(upstreamErr, "音乐数据源不可用");
       res.headers.set("Cache-Control", "no-store");
       return res;

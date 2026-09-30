@@ -17,10 +17,7 @@ export async function GET(request: Request) {
     const statusFilter = parseCommentStatusFilter(searchParams.get("status"));
     const { page, size } = parsePagination(searchParams);
 
-    // ⚠️ 列表与总数必须用**同一个 where**：列表只要顶层评论（parent_id IS NULL，
-    //    回复随 COMMENT_ADMIN_SELECT 的 replies 嵌套带出），count 若用不带
-    //    parent_id 的 where，总数会把回复也算进去 —— 分页器多出约一倍页数，
-    //    翻到最后几页只能拿到空列表。
+    // 列表与总数必须用同一个 where：列表只要顶层评论（parent_id IS NULL。
     const where: Prisma.CommentWhereInput = {
       parent_id: null,
       ...(statusFilter ? { status: statusFilter } : {}),

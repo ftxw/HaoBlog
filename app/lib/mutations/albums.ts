@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 import { invalidateAlbumCaches } from "@/app/lib/api-cache";
 import {
@@ -86,10 +85,7 @@ export async function updateAlbum(albumId: string, input: AlbumInput) {
 export async function deleteAlbum(albumId: string) {
   const id = requireId(albumId, "无效的相册ID");
 
-  /*
-   * 这两次读互不依赖，并行发出即可 —— 串行会白多一个数据库往返。
-   * 只有两个查询，不会挤占 prisma.ts 里 `max: 5` 的连接池。
-   */
+  /* 这两次读互不依赖，并行发出即可 —— 串行会白多一个数据库往返。 */
   const [photos, album] = await Promise.all([
     prisma.photo.findMany({
       where: { album_id: id },
@@ -209,10 +205,7 @@ export async function reorderPhotos(input: PhotoReorderInput) {
   const albumId = String(input.album_id ?? "").trim();
   if (!albumId) throw new BusinessError("参数无效", 400);
 
-  /*
-   * ⚠️ 这里只取**本相册**的照片，`sort` 序号也只在本相册内有意义 ——
-   * 一次拖动因此不会波及其它相册的行（见 sort-order.ts 的差值化说明）。
-   */
+  /* 只取本相册的照片，sort 序号也只在本相册内有意义，一次拖动不会波及其它相册。 */
   const list = await prisma.photo.findMany({
     where: { album_id: albumId },
     orderBy: [...SORT_ROW_ORDER_BY],

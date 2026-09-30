@@ -1,14 +1,4 @@
-/**
- * 说说在 `/moments` 前台的展示形态。
- *
- * 为什么要与 `queries/chatters.ts` 的 `ChatterItem` 分开：
- * `/moments` 是「首屏 60 条 + 滚动续拉」，续拉发生在**客户端**（MomentListClient），
- * 而首屏映射发生在**服务端**（page.tsx）—— 两边必须是同一份映射，否则续拉进来的
- * 条目字段口径会和首屏不一致。客户端不能 import `queries/chatters.ts`（它 import 了
- * Prisma，会把整条数据库依赖拖进浏览器包），所以映射放在这个纯模块里。
- *
- * 与 ChatterItem 的差异：丢掉 `status`（前台只取已发布）与 `updated_at`（前台不展示）。
- */
+/** 说说在 /moments 前台的展示形态。 */
 export interface MomentItem {
   id: string;
   date: string;

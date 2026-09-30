@@ -3,10 +3,7 @@ import type { PhotoSearchHit } from "@/app/lib/queries/albums";
 
 export type { PhotoSearchHit };
 
-/**
- * 相册详情里的照片行。这里保留服务端字段名（`taken_at`）而不是映射成 `takenAt`：
- * 映射在消费处一次做完，避免出现「一半驼峰一半下划线」的中间形态。
- */
+/** 相册详情里的照片行。这里保留服务端字段名（taken_at）而不是映射成 takenAt。 */
 export interface AlbumDetailPhoto {
   url: string;
   caption: string;

@@ -1,16 +1,10 @@
-
 import type { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { prisma } from "@/app/lib/prisma";
 import { formatDateCN } from "@/app/lib/format";
 import { escapeLike } from "./like-escape";
 
-/**
- * 单次读取照片数的安全阀。
- * 相册里的照片是「一批一张都想要」的形态，没有分页，所以必须有个上界：
- * 万一某天有人批量导入上万张，无上界的查询会同时压垮 DB 响应体与浏览器内存。
- * 2000 张对个人站的照片墙来说已经是「多到不正常」的量级。
- */
+/** 单次读取照片数的安全阀。 */
 export const PHOTO_TAKE = 2000;
 
 export interface AlbumItem {
@@ -106,10 +100,7 @@ export const getAlbumDetail = cache(async (id: string) =>
   })
 );
 
-/**
- * 相册日期展示（未设置 published_at 时回退到 updated_at）。
- * 两个前台页面都用它，避免各自抄一份解析逻辑。
- */
+/** 相册日期展示（未设置 published_at 时回退到 updated_at）。 */
 export function formatAlbumDate(value: Date | string | null | undefined): string {
   if (!value) return "";
   const d = typeof value === "string" ? new Date(value) : value;
@@ -117,13 +108,7 @@ export function formatAlbumDate(value: Date | string | null | undefined): string
   return formatDateCN(d);
 }
 
-/**
- * 画廊首页每个相册下发的**预览**照片数。
- *
- * 相册详情（`/api/albums/[albumId]`、`/photowall/[albumId]`）是按需取全量的，
- * 首页列表只需要「够卡片堆叠显示 + 能算封面比例」的几张 ——
- * 一个相册最多 2000 张（PHOTO_TAKE），把全量内联进 /photowall 的 HTML 是纯浪费。
- */
+/** 画廊首页每个相册下发的预览照片数。 */
 export const ALBUM_PREVIEW_TAKE = 4;
 
 export interface AlbumPreviewItem {
@@ -133,7 +118,7 @@ export interface AlbumPreviewItem {
   cover: string;
   date: string;
   layout: "grid" | "timeline";
-  /** 卡片堆叠与封面比例用的**预览**照片，不是相册全部照片 */
+  /** 卡片堆叠与封面比例用的预览照片，不是相册全部照片 */
   photos: {
     url: string;
     caption?: string;
@@ -192,20 +177,13 @@ export interface PhotoSearchHit {
 /** 搜索结果条数上界：这个区块的用途是「看看有没有」，不需要把命中的照片全拉回来。 */
 export const PHOTO_SEARCH_TAKE = 60;
 
-/**
- * 按照片描述搜索（跨相册）。
- *
- * 必须放在服务端：相册首页现在每册只下发 ALBUM_PREVIEW_TAKE 张预览，
- * 若在客户端对已下发的照片做匹配，就只会命中每册的前几张 —— 搜索会**静默变窄**
- * （用户看不出是漏了，只觉得「搜不到」）。
- */
+/** 按照片描述搜索（跨相册）。 */
 export async function searchPhotos(keyword: string): Promise<PhotoSearchHit[]> {
   const q = keyword.trim();
   if (!q) return [];
   const rows = await prisma.photo.findMany({
     where: {
-      // mode: "insensitive" 必须显式写（生成 ILIKE），否则大小写敏感、等于不可用；
-      // 用户输入里的 % 和 _ 要转义，否则会被当成通配符。
+      // mode: "insensitive" 必须显式写（生成 ILIKE），否则大小写敏感、等于不可用。
       caption: { contains: escapeLike(q), mode: "insensitive" },
     },
     orderBy: { created_at: "desc" },

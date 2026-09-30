@@ -3,8 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import "./globals.css";
 
-// 主题取自 <html> 的 dark 类。用 useSyncExternalStore 而非 effect 内 setState：
-// 既规避 react-hooks/set-state-in-effect，又能在主题切换时实时跟随。
+// 主题取自 <html> 的 dark 类。用 useSyncExternalStore 而非 effect 内 setState。
 function subscribeThemeClass(onStoreChange: () => void) {
   const observer = new MutationObserver(onStoreChange);
   observer.observe(document.documentElement, {
