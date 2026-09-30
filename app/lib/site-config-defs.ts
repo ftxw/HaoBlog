@@ -107,7 +107,7 @@ export const siteConfigDefs: SiteConfigDef[] = [
   { key: "authorName", label: "作者名", type: "text", description: "博主昵称", defaultValue: "Admin", group: "basic" },
   { key: "authorEmail", label: "RSS 作者邮箱", type: "text", description: "仅用于 RSS <author> 字段；留空则只输出作者名", defaultValue: "", group: "basic" },
   { key: "bio", label: "个人简介", type: "textarea", description: "首页卡片与关于页展示的简介", defaultValue: "欢迎来到我的博客", group: "basic" },
-  { key: "avatarUrl", label: "头像", type: "singleImage", description: "头像图片地址（空则使用默认）", defaultValue: "/images/hong.jpg", group: "basic" },
+  { key: "avatarUrl", label: "头像", type: "singleImage", description: "头像图片地址，同时用作站点图标；清空后头像与图标都不显示", defaultValue: "/images/icon.webp", group: "basic" },
   { key: "socialLogos", label: "技能 Logo", type: "multiImage", description: "上传技能 logo 图片，前台展示（最多 5 张，上传几张显示几张，纯展示无链接）", defaultValue: "[]", group: "basic" },
   { key: "navTitle", label: "导航标题", type: "text", description: "顶部导航 Logo 标题（留空使用作者名）", defaultValue: "", group: "siteInfo" },
   { key: "navSuffix", label: "分隔符", type: "text", description: "Logo 中间的分隔符（默认の）", defaultValue: "の", group: "siteInfo" },

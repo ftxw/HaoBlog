@@ -51,13 +51,22 @@ export default async function AboutPage() {
           </div>
 
           <div className="relative px-5 pb-10 sm:px-8 md:px-10">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-canvas shadow-lg overflow-hidden -mt-12 md:-mt-16 relative z-20 bg-surface-strong">
-              {/* eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优 */}
-              <img
-                src={avatarUrl}
-                alt="avatar"
-                className="w-full h-full object-cover"
-              />
+            {/* 这个圆靠负边距压在封面上，无头像时必须保留等高占位 —— 否则下方标题上移、压到封面 */}
+            <div
+              className={`-mt-12 h-24 w-24 relative z-20 md:-mt-16 md:h-32 md:w-32 ${
+                avatarUrl
+                  ? "overflow-hidden rounded-full border-4 border-canvas bg-surface-strong shadow-lg"
+                  : ""
+              }`}
+            >
+              {avatarUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
 
             <div className="mt-4 md:mt-6 mb-12 md:mb-16 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -79,20 +88,22 @@ export default async function AboutPage() {
 
         <aside className="flex w-full flex-shrink-0 flex-col gap-6 lg:w-[320px]">
           <div className="glass rounded-card p-6 text-center">
-            <div
-              className="accent-ring mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full p-1 shadow-md transition-transform duration-500 hover:rotate-3"
-              aria-hidden="true"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优 */}
-              <img
-                src={avatarUrl}
-                alt={`${authorName} 的头像`}
-                width={80}
-                height={80}
-                loading="lazy"
-                className="h-full w-full rounded-full object-cover"
-              />
-            </div>
+            {avatarUrl && (
+              <div
+                className="accent-ring mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full p-1 shadow-md transition-transform duration-500 hover:rotate-3"
+                aria-hidden="true"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优 */}
+                <img
+                  src={avatarUrl}
+                  alt={`${authorName} 的头像`}
+                  width={80}
+                  height={80}
+                  loading="lazy"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </div>
+            )}
             <h2 className="mb-2 text-xl font-bold text-ink">{authorName}</h2>
             <p className="mb-4 text-xs font-medium leading-relaxed text-ink-2">{authorBio}</p>
           </div>

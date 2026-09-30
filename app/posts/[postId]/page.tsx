@@ -174,18 +174,20 @@ export default async function PostPage({
 
         <aside className="w-full lg:w-[320px] flex flex-col gap-6 flex-shrink-0">
           <div className="glass rounded-card p-6 text-center">
-            <div className="accent-ring w-20 h-20 mx-auto rounded-full p-1 shadow-md mb-4 transition-transform duration-500 hover:rotate-3">
-              <div className="w-full h-full rounded-full overflow-hidden bg-surface-strong">
-                <Image
-                  src={avatarUrl}
-                  alt="avatar"
-                  width={80}
-                  height={80}
-                  unoptimized={imageUnoptimized(avatarUrl)}
-                  className="w-full h-full rounded-full object-cover"
-                />
+            {avatarUrl && (
+              <div className="accent-ring w-20 h-20 mx-auto rounded-full p-1 shadow-md mb-4 transition-transform duration-500 hover:rotate-3">
+                <div className="w-full h-full rounded-full overflow-hidden bg-surface-strong">
+                  <Image
+                    src={avatarUrl}
+                    alt="avatar"
+                    width={80}
+                    height={80}
+                    unoptimized={imageUnoptimized(avatarUrl)}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <h3 className="text-xl font-bold text-ink mb-2">{authorName}</h3>
             <p className="text-xs text-ink-2 leading-relaxed font-medium mb-4">{authorBio}</p>
             <ClientSocials />

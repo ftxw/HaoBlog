@@ -29,20 +29,22 @@ export default function ProfileCard({
       className="glass group relative flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-card p-5 no-underline transition-all duration-700 hover:scale-[1.02] sm:p-6 md:min-h-[280px] md:p-8"
     >
       <div className="flex items-start justify-between relative z-10">
-        <div className="flex items-center gap-4 md:gap-6 w-full">
-          <div className="accent-ring relative h-16 w-16 flex-shrink-0 rounded-card-sm p-1 shadow-lg transition-transform duration-500 group-hover:rotate-3 sm:h-20 sm:w-20 md:h-24 md:w-24">
-            <div className="relative h-full w-full overflow-hidden rounded-card-sm bg-surface-strong">
-              <SafeImage
-                src={avatarUrl}
-                alt="avatar"
-                fill
-                sizes="(min-width: 768px) 96px, (min-width: 640px) 80px, 64px"
-                /* 首屏 hero 卡里的头像：Next 实测把它报成 LCP 元素（25s virtual-time 复跑仍如此）。 */
-                priority
-                className="object-cover bg-surface-strong"
-              />
-            </div>
-          </div>
+          <div className="flex items-center gap-4 md:gap-6 w-full">
+            {avatarUrl && (
+              <div className="accent-ring relative h-16 w-16 flex-shrink-0 rounded-card-sm p-1 shadow-lg transition-transform duration-500 group-hover:rotate-3 sm:h-20 sm:w-20 md:h-24 md:w-24">
+                <div className="relative h-full w-full overflow-hidden rounded-card-sm bg-surface-strong">
+                  <SafeImage
+                    src={avatarUrl}
+                    alt="avatar"
+                    fill
+                    sizes="(min-width: 768px) 96px, (min-width: 640px) 80px, 64px"
+                    /* 首屏 hero 卡里的头像：Next 实测把它报成 LCP 元素（25s virtual-time 复跑仍如此）。 */
+                    priority
+                    className="object-cover bg-surface-strong"
+                  />
+                </div>
+              </div>
+            )}
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-ink mb-1 md:mb-2 pb-1 leading-snug tracking-wider transition-colors duration-700 truncate">
               {authorName}
