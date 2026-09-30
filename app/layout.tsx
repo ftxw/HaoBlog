@@ -26,8 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
   // 社交平台抓取、浏览器取 favicon 都不一定带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
   const proxied = (url: string) =>
     absoluteUrlOf(proxyUrlOf(url, normalizeCdnDomain(dbConfig.imageCdnDomain)), base.toString());
-  const ogImage = proxied(cover);
-  const icon = proxied(avatar);
+  // 两个键都可能被后台清空 → 无图可分享时不输出 og:image（空串会被解析成页面自身地址）
+  const ogImage = cover ? proxied(cover) : undefined;
+  const icon = avatar ? proxied(avatar) : undefined;
 
   return {
     metadataBase: base,
@@ -44,13 +45,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [ogImage],
+      images: ogImage ? [ogImage] : undefined,
     },
     twitter: {
-      card: "summary_large_image",
+      card: ogImage ? "summary_large_image" : "summary",
       title,
       description,
-      images: [ogImage],
+      images: ogImage ? [ogImage] : undefined,
     },
   };
 }

@@ -18,7 +18,8 @@ import { runAction, useApi, uploadImage } from "@/components/admin/lib";
 import { saveSiteConfigAction } from "@/app/actions/site-config";
 import { Button, Card, Loading, PageHeader, cn } from "@/components/admin/ui";
 import ImageUploader from "@/components/admin/ImageUploader";
-import { aboutContentDefault, defaultConfigValue } from "@/app/lib/site-config-defs";
+import { defaultConfigValue } from "@/app/lib/site-config-defs";
+import { resolveCoverChain } from "@/app/lib/content-cover";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
 import { POST_BODY_STYLE } from "@/app/lib/post-body-style";
 
@@ -40,10 +41,23 @@ export default function AdminAboutPage() {
   const [contentDraft, setContentDraft] = useState<string | null>(null);
 
   const initialized = Boolean(config.data);
-  const cover =
-    coverDraft ?? (config.data?.aboutCover || defaultConfigValue("aboutCover"));
+  /* 与前台 pickConfigValue 同语义：只有「键不存在」才回落默认值，空串是显式清空。
+     这里若用 || 兜底，后台一保存就会把默认封面 / 示例正文写回库，永远清不掉。 */
+  const cover = coverDraft ?? config.data?.aboutCover ?? defaultConfigValue("aboutCover");
   const content =
-    contentDraft ?? (config.data?.aboutContent || aboutContentDefault);
+    contentDraft ?? config.data?.aboutContent ?? defaultConfigValue("aboutContent");
+
+  /* 前台实际会显示哪张图：手动设置 → 正文第一张图 → 文章默认封面 → 不显示。
+     只为给后台一个「所见即所得」的提示，取值走前台同一个 resolveCoverChain。 */
+  const postDefaultCover =
+    config.data?.defaultPostCover ?? defaultConfigValue("defaultPostCover");
+  const effective = resolveCoverChain(cover, content, postDefaultCover);
+  const effectiveCoverFrom = {
+    explicit: "手动设置",
+    content: "正文第一张图",
+    fallback: "文章默认封面",
+    "": "",
+  }[effective.source];
 
   const previewHtml = useMarkdownPreview(content, tab === "preview");
 
@@ -275,7 +289,15 @@ export default function AdminAboutPage() {
                 category="system"
               />
               <p className="mt-2 text-xs text-admin-ink-5">
-                顶部大图，上传后自动保存到图床；留空使用默认封面
+                顶部大图，上传后自动保存到图床。留空时自动取正文第一张图，仍没有则用「站点配置 → 文章默认封面」；都没有则不显示封面
+              </p>
+              <p
+                className="mt-1 truncate text-xs text-admin-ink-5"
+                title={effective.url || undefined}
+              >
+                {effective.url
+                  ? `当前生效：${effectiveCoverFrom}（${effective.url}）`
+                  : "当前不显示封面"}
               </p>
             </Card>
           </div>

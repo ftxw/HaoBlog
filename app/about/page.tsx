@@ -6,10 +6,10 @@ import Link from "next/link";
 import { prisma } from "@/app/lib/prisma";
 import { getDbSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { formatDateCN } from "@/app/lib/format";
-import { aboutContentDefault } from "@/app/lib/site-config-defs";
-import { normalizeCdnDomain } from "@/app/lib/image-thumb";
+import { normalizeCdnDomain, thumbUrlOf } from "@/app/lib/image-thumb";
+import { resolveCoverChain } from "@/app/lib/content-cover";
 import FadeIn from "@/components/ui/FadeIn";
-import ThumbCoverImg from "@/components/ui/ThumbCoverImg";
+import SafeImage from "@/components/ui/SafeImage";
 import AboutMarkdown from "@/components/about/AboutMarkdown";
 import { NAV_LINKS } from "@/app/lib/nav-links";
 
@@ -23,9 +23,17 @@ export default async function AboutPage() {
   const avatarUrl = pickConfigValue(dbConfig, "avatarUrl");
   const authorName = pickConfigValue(dbConfig, "authorName");
   const authorBio = pickConfigValue(dbConfig, "bio");
-  const markdown = dbConfig.aboutContent || aboutContentDefault;
-  const coverImage = pickConfigValue(dbConfig, "aboutCover");
+  /* 与头像 / 封面同语义：只有「键不存在」才用默认示例正文，空串是后台「显式清空」。 */
+  const markdown = pickConfigValue(dbConfig, "aboutContent");
   const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
+
+  /* 封面取值链与文章封面同机制：手动设置 → 正文第一张图 → 文章默认封面 → 不显示。
+     最后一级的「文章默认封面」若被后台清空，就真的什么都不显示（同头像）。 */
+  const coverImage = resolveCoverChain(
+    pickConfigValue(dbConfig, "aboutCover"),
+    markdown,
+    pickConfigValue(dbConfig, "defaultPostCover")
+  ).url;
 
   const recentPosts = await prisma.post
     .findMany({
@@ -41,33 +49,48 @@ export default async function AboutPage() {
     <div className="relative pb-20">
       <FadeIn className="container-page flex flex-col lg:flex-row gap-6 pb-6 pt-6 md:gap-8 md:pt-12 relative z-10">
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card transition-colors duration-700">
-          <div className="w-full h-40 sm:h-48 md:h-64 relative bg-surface-muted overflow-hidden group">
-            <ThumbCoverImg
-              src={coverImage}
-              alt="About Hero"
-              className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
-            />
-            <div className="scrim-bottom pointer-events-none absolute inset-0" />
-          </div>
-
-          <div className="relative px-5 pb-10 sm:px-8 md:px-10">
-            {/* 这个圆靠负边距压在封面上，无头像时必须保留等高占位 —— 否则下方标题上移、压到封面 */}
-            <div
-              className={`-mt-12 h-24 w-24 relative z-20 md:-mt-16 md:h-32 md:w-32 ${
-                avatarUrl
-                  ? "overflow-hidden rounded-full border-4 border-canvas bg-surface-strong shadow-lg"
-                  : ""
-              }`}
-            >
-              {avatarUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优
-                <img
-                  src={avatarUrl}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                />
-              )}
+          {coverImage && (
+            <div className="w-full h-40 sm:h-48 md:h-64 relative bg-surface-muted overflow-hidden group">
+              <SafeImage
+                src={thumbUrlOf(coverImage, cdnDomain)}
+                alt="About Hero"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 70vw"
+                className="object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
+              />
+              <div className="scrim-bottom pointer-events-none absolute inset-0" />
             </div>
+          )}
+
+          {/* 无封面时内容区直接贴卡片顶端，顶部留白要自己补（有封面时由头像圆的负边距撑开） */}
+          <div
+            className={`relative px-5 pb-10 sm:px-8 md:px-10 ${
+              coverImage ? "" : "pt-8 md:pt-10"
+            }`}
+          >
+            {/* 有封面时这个圆靠负边距压在封面上，此时即便没有头像也要保留等高占位 ——
+                否则下方标题上移、压到封面。无封面时它不再压任何东西，也就无需占位。 */}
+            {(avatarUrl || coverImage) && (
+              <div
+                className={`relative z-20 h-24 w-24 md:h-32 md:w-32 ${
+                  coverImage ? "-mt-12 md:-mt-16" : ""
+                } ${
+                  avatarUrl
+                    ? "overflow-hidden rounded-full border-4 border-canvas bg-surface-strong shadow-lg"
+                    : ""
+                }`}
+              >
+                {avatarUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- 头像可为图床外链（imageCdnDomain/avatarUrl），原生 img 直连最优
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            )}
 
             <div className="mt-4 md:mt-6 mb-12 md:mb-16 flex flex-col md:flex-row justify-between items-center gap-6">
               <div>

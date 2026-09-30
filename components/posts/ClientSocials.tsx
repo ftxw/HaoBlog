@@ -1,14 +1,10 @@
 "use client";
 
-import { useConfigJson } from "@/components/providers/SiteConfigProvider";
+import { useConfigImages } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
 
-const NO_LOGOS: string[] = [];
-
 export default function ClientSocials() {
-  const socialLogos = useConfigJson<string[]>("socialLogos", NO_LOGOS).filter(
-    (x) => typeof x === "string"
-  );
+  const socialLogos = useConfigImages("socialLogos");
 
   if (socialLogos.length === 0) return null;
 

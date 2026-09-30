@@ -115,7 +115,7 @@ export const siteConfigDefs: SiteConfigDef[] = [
   { key: "buildDate", label: "建站日期", type: "text", description: "建站日期（ISO 格式，如 2026-06-26T00:00:00）", defaultValue: "2026-06-26T00:00:00", group: "siteInfo" },
 
   { key: "themeColors", label: "主题颜色", type: "json", description: "光晕颜色。留空 [] 用内置的靛 / 粉 / 青；最多填 3 个颜色，按顺序覆盖「左上 / 右上 / 底部」三团光晕的色相（多填忽略、少填保留内置），如 [\"#a18cd1\",\"#fbc2eb\",\"#a1c4fd\"]。取色与预览：npm run preview:glow", defaultValue: JSON.stringify([]), group: "site" },
-  { key: "defaultPostCover", label: "文章默认封面", type: "singleImage", description: "文章未设置封面时使用", defaultValue: "/images/default.avif", group: "site" },
+  { key: "defaultPostCover", label: "文章默认封面", type: "singleImage", description: "文章未设置封面时使用；清空后这类文章不显示封面", defaultValue: "/images/default.webp", group: "site" },
   { key: "themeMode", label: "默认主题", type: "select", description: "访客首次访问（未手动切换过主题）时使用的主题，默认夜晚", defaultValue: "dark", group: "site", options: [
     { label: "夜晚（暗色）", value: "dark" },
     { label: "白天（亮色）", value: "light" },
@@ -135,7 +135,7 @@ export const siteConfigDefs: SiteConfigDef[] = [
   { key: "secretKey", label: "Secret Access Key", type: "text", description: "API 访问密钥（敏感，仅服务器可见），必填", defaultValue: "", group: "imageHost" },
   { key: "imageCdnDomain", label: "图床访问域名（可选）", type: "text", description: "填写后图片直链走该域名（对象存储/CDN，不经博客代理），如 https://img.example.com；留空则维持代理模式（私有桶 + /api/img-proxy 中转）。需先在存储服务侧把桶绑定该域名并放行访问", defaultValue: "", group: "imageHost" },
 
-  { key: "aboutCover", label: "关于页封面", type: "singleImage", description: "关于页顶部大图（空则使用默认）", defaultValue: "/images/2.webp", group: "about" },
+  { key: "aboutCover", label: "关于页封面", type: "singleImage", description: "关于页顶部大图。留空时自动取正文第一张图，仍没有则用「文章默认封面」；都没有则不显示封面", defaultValue: "", group: "about" },
   { key: "aboutContent", label: "关于页正文", type: "textarea", description: "关于页正文内容（Markdown 格式）", defaultValue: aboutContentDefault, group: "about" },
 
   { key: "icp_name", label: "ICP 备案号", type: "text", description: "ICP 备案号（留空不显示）", defaultValue: "", group: "icp" },

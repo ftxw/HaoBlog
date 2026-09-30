@@ -5,6 +5,7 @@ import { Clock } from "lucide-react";
 import Link from "next/link";
 import SafeImage from "@/components/ui/SafeImage";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
+import { resolveCoverChain } from "@/app/lib/content-cover";
 import { formatDateCN } from "@/app/lib/format";
 import { thumbUrlOf } from "@/app/lib/image-thumb";
 import type { PostListItem } from "@/app/lib/queries/posts";
@@ -17,7 +18,9 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const defaultCover = useConfigValue("defaultPostCover");
-  const imageSrc = post.cover || defaultCover;
+  /* 与文章内页 / 关于页封面走同一个取值链：手动 → 正文第一张图 → 兜底 → 空串不渲染。
+     文章封面的「正文第一张图」在保存时已落进 post.cover，所以正文位传空串。 */
+  const imageSrc = resolveCoverChain(post.cover, "", defaultCover).url;
   const [thumbBroken, setThumbBroken] = useState(false);
   const [prevSrc, setPrevSrc] = useState(imageSrc);
   if (prevSrc !== imageSrc) {
@@ -34,21 +37,24 @@ export default function PostCard({ post }: PostCardProps) {
     <div className="h-full">
       <Link href={`/posts/${post.id}`} className="block group h-full">
         <div className="glass flex h-full flex-col overflow-hidden rounded-card transition-all duration-700 hover:scale-[1.02]">
-          <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
-            <SafeImage
-              src={displaySrc}
-              alt={post.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-            <div className="scrim-bottom pointer-events-none absolute inset-0 transition-transform duration-700 group-hover:scale-110"></div>
-            {post.is_pinned && (
-              <span className="absolute right-3 top-3 rounded-pill bg-surface-strong px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm">
-                置顶
-              </span>
-            )}
-          </div>
+          {/* 与头像 / 关于页封面同一套：文章封面与默认封面都为空时不渲染封面块 */}
+          {imageSrc && (
+            <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
+              <SafeImage
+                src={displaySrc}
+                alt={post.title}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+              <div className="scrim-bottom pointer-events-none absolute inset-0 transition-transform duration-700 group-hover:scale-110"></div>
+              {post.is_pinned && (
+                <span className="absolute right-3 top-3 rounded-pill bg-surface-strong px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm">
+                  置顶
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-1 flex-col p-6">
             <div className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-accent">

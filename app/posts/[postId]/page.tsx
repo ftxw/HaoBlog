@@ -62,10 +62,10 @@ export async function generateMetadata({ params }: { params: Promise<{ postId: s
   const description = post.description || undefined;
   const cover = post.cover || pickConfigValue(dbConfig, "defaultPostCover");
   // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
-  const image = absoluteUrlOf(
-    proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)),
-    base
-  );
+  // 文章封面与默认封面都被清空时无图可分享 → 不输出 images（空串会被解析成页面自身地址）。
+  const image = cover
+    ? absoluteUrlOf(proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)), base)
+    : undefined;
 
   return {
     title,
@@ -76,17 +76,17 @@ export async function generateMetadata({ params }: { params: Promise<{ postId: s
       description,
       type: "article",
       url: `/posts/${postId}`,
-      images: [image],
+      images: image ? [image] : undefined,
       publishedTime: post.published_at
         ? new Date(post.published_at).toISOString()
         : undefined,
       tags: (post.tags ?? []).map((t) => t.tag.name),
     },
     twitter: {
-      card: "summary_large_image",
+      card: image ? "summary_large_image" : "summary",
       title,
       description,
-      images: [image],
+      images: image ? [image] : undefined,
     },
   };
 }
@@ -128,18 +128,21 @@ export default async function PostPage({
       <ViewCounter postId={postId} />
       <FadeIn className="container-page flex flex-col lg:flex-row gap-6 pb-6 pt-6 md:gap-8 md:pt-12 relative z-10">
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card">
-          <div className="w-full aspect-video max-h-[300px] bg-surface-muted relative overflow-hidden">
-            <SafeImage
-              src={thumbUrlOf(cover, cdnDomain)}
-              alt={post.title || "封面"}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 70vw"
-              unoptimized={imageUnoptimized(cover)}
-              className="object-cover opacity-90"
-            />
-            <div className="scrim-bottom pointer-events-none absolute inset-0"></div>
-          </div>
+          {/* 与头像 / 关于页封面同一套：文章封面与默认封面都为空时整块不渲染 */}
+          {cover && (
+            <div className="w-full aspect-video max-h-[300px] bg-surface-muted relative overflow-hidden">
+              <SafeImage
+                src={thumbUrlOf(cover, cdnDomain)}
+                alt={post.title || "封面"}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 70vw"
+                unoptimized={imageUnoptimized(cover)}
+                className="object-cover opacity-90"
+              />
+              <div className="scrim-bottom pointer-events-none absolute inset-0"></div>
+            </div>
+          )}
 
           <div className="p-5 md:p-12 relative">
             <BackButton />

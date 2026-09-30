@@ -8,6 +8,7 @@ import {
   deleteImagesByUrls,
   extractImageUrlsFromContent,
 } from "@/app/lib/s3-image-host";
+import { resolveCoverChain } from "@/app/lib/content-cover";
 import { BusinessError } from "@/app/lib/business-error";
 import { isRecordNotFound, purgeContentLikes, requireId } from "@/app/lib/mutations/shared";
 import { CONTENT_STATUSES, type ContentStatusValue } from "@/app/lib/content-status";
@@ -38,13 +39,8 @@ function normalizeStatus(value: unknown, fallback: PostStatus): PostStatus {
 }
 
 function resolveCover(cover: unknown, content: string): string {
-  if (typeof cover === "string" && cover.trim()) return cover;
-  if (!content) return "";
-  return (
-    content.match(/!\[[^\]]*\]\(([^)\s]+)\)/)?.[1] ||
-    content.match(/<img[^>]+src=["']([^"']+)["']/)?.[1] ||
-    ""
-  );
+  // 手动封面 → 正文第一张图（「文章默认封面」那一级在渲染时才兜，不落库）
+  return resolveCoverChain(typeof cover === "string" ? cover : "", content).url;
 }
 
 function resolveTagNames(value: unknown): string[] | undefined {

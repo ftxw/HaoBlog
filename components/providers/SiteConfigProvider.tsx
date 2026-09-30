@@ -170,3 +170,19 @@ export function useConfigJson<T>(key: string, fallback: T): T {
     return fallback;
   }, [raw, fallback]);
 }
+
+const NO_IMAGES: string[] = [];
+
+/**
+ * 取图片列表类配置（type=multiImage，如 `socialLogos`）。
+ *
+ * 与 `avatarUrl` 等单图配置同一套「空即无」语义：非字符串项、空白项一律剔除 ——
+ * 空列表交给调用方直接不渲染，避免 `SafeImage` 拿到空串退化成原生 `<img src="">` 出裂图。
+ */
+export function useConfigImages(key: string): string[] {
+  const list = useConfigJson<string[]>(key, NO_IMAGES);
+  return useMemo(
+    () => list.filter((x) => typeof x === "string" && x.trim().length > 0),
+    [list]
+  );
+}

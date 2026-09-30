@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getServerAdmin } from "@/app/lib/server-auth";
 import { getDbConfigValue } from "@/app/lib/site-config-db";
-import { defaultConfigValue } from "@/app/lib/site-config-defs";
 import AdminShell from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = {
@@ -36,9 +35,9 @@ async function AdminGate({ children }: { children: React.ReactNode }) {
     redirect("/admin/login");
   }
 
-  // 显式串联回落：配置里被清空时仍要有作者名可显示。
-  const authorName =
-    (await getDbConfigValue("authorName")) || defaultConfigValue("authorName");
+  // 空串是后台「显式清空」，不回落默认值（与前台 pickConfigValue 同语义）；
+  // AdminShell 对空串自带兜底，只会显示「欢迎回来」。
+  const authorName = await getDbConfigValue("authorName");
 
   return <AdminShell authorName={authorName}>{children}</AdminShell>;
 }

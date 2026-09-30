@@ -11,6 +11,7 @@ import CommentAuthProvider from "@/components/providers/CommentAuthProvider";
 import ProjectComments from "./ProjectComments";
 import { formatDateCN } from "@/app/lib/format";
 import { useConfigValue } from "@/components/providers/SiteConfigProvider";
+import { resolveCoverChain } from "@/app/lib/content-cover";
 import PageHeader from "@/components/ui/PageHeader";
 import SegmentedFilter from "@/components/ui/SegmentedFilter";
 import Reveal from "@/components/ui/Reveal";
@@ -46,8 +47,12 @@ function ProjectTimelineNode({
   const isLeft = index % 2 === 0;
   const techStack = useMemo(() => toStringArray(project.tech_stack), [project.tech_stack]);
   const defaultCover = useConfigValue("defaultPostCover");
-  const cover =
-    project.images?.[0] || project.cover_image || defaultCover;
+  /* 与文章 / 关于页封面同一套取值链：项目图 → 项目封面图 → 文章默认封面 → 空串不渲染。 */
+  const cover = resolveCoverChain(
+    project.images?.[0] || project.cover_image,
+    "",
+    defaultCover
+  ).url;
   const [coverBroken, setCoverBroken] = useState(false);
   const [prevCoverKey, setPrevCoverKey] = useState(`${project.id}::${cover}`);
   if (prevCoverKey !== `${project.id}::${cover}`) {
@@ -77,21 +82,24 @@ function ProjectTimelineNode({
         className="group w-full text-left md:w-[calc(50%-4rem)]"
       >
         <div className="glass rounded-card transition-all duration-700 hover:scale-[1.02] overflow-hidden flex flex-col">
-          <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
-            <SafeImage
-              src={coverSrc}
-              alt={project.name}
-              fill
-              sizes="(min-width: 768px) 45vw, 100vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div className="scrim-bottom pointer-events-none absolute inset-0 transition-transform duration-700 group-hover:scale-110"></div>
-            {project.status_label && (
-              <span className="absolute right-3 top-3 rounded-pill bg-surface-strong px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm">
-                {project.status_label}
-              </span>
-            )}
-          </div>
+          {/* 与头像 / 关于页封面同一套：项目封面与默认封面都为空时不渲染封面块 */}
+          {cover && (
+            <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
+              <SafeImage
+                src={coverSrc}
+                alt={project.name}
+                fill
+                sizes="(min-width: 768px) 45vw, 100vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="scrim-bottom pointer-events-none absolute inset-0 transition-transform duration-700 group-hover:scale-110"></div>
+              {project.status_label && (
+                <span className="absolute right-3 top-3 rounded-pill bg-surface-strong px-2.5 py-1 text-[10px] font-semibold text-ink shadow-sm">
+                  {project.status_label}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-1 flex-col p-6">
             <div className="mb-3 flex items-center justify-between gap-2">

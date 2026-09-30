@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useConfigJson, useConfigValue } from "@/components/providers/SiteConfigProvider";
+import { useConfigImages, useConfigValue } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
-
-const NO_LOGOS: string[] = [];
 
 /** 首页个人信息卡。 */
 export default function ProfileCard({
@@ -19,9 +17,7 @@ export default function ProfileCard({
   const avatarUrl = useConfigValue("avatarUrl");
   const authorName = useConfigValue("authorName");
   const bio = useConfigValue("bio");
-  const socialLogos = useConfigJson<string[]>("socialLogos", NO_LOGOS).filter(
-    (x) => typeof x === "string"
-  );
+  const socialLogos = useConfigImages("socialLogos");
 
   return (
     <Link
