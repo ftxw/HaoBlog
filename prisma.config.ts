@@ -9,8 +9,10 @@ import { defineConfig } from "prisma/config";
 //   DATABASE_URL 的 6543 降级为 5432。
 //   因此线上环境只需配置 DATABASE_URL 一个变量；DIRECT_URL 仅在需要独立直连串
 //   （如 Supabase Direct connection）时按需追加。
-// - DDL 不参与构建。`pnpm build` 只跑 prisma generate + next build，不连数据库；
-//   迁移由 `pnpm db:migrate`（scripts/db-migrate.mjs）显式执行，可反复运行。
+// - 本文件只负责把「DDL 用的连接串」交给 Prisma CLI。构建期是否真的会连库，
+//   取决于 package.json#build —— 当前是
+//   `prisma generate && node scripts/auto-migrate.mjs && next build`，
+//   即**构建会连库并应用迁移**（空库建全部表；跳过条件见 scripts/auto-migrate.mjs）。
 function cliDdlUrl(): string {
   const direct = (process.env.DIRECT_URL || "").trim();
   if (direct) return direct;
