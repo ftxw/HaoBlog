@@ -34,11 +34,7 @@ export async function getDbSiteConfig(): Promise<Record<string, string>> {
   }
 }
 
-/**
- * 取配置值：只有「键不存在」才回落默认值；空串是后台**显式清空**的语义
- * （如 geoApiUrl 留空即关闭归属地查询），不能被默认值顶回来。
- * 前端 useConfigValue 必须与此同语义 —— 改这里要一起改。
- */
+/** 取配置值：只有「键不存在」才回落默认值，空串是后台显式清空。前端 useConfigValue 必须同语义。 */
 export function pickConfigValue(config: Record<string, string>, key: string): string {
   const value = config[key];
   return value === undefined ? defaultConfigValue(key) : value;

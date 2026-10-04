@@ -19,8 +19,7 @@ export interface AuthRequestContext {
   userAgent: string;
 }
 
-// 登录锁定阈值。计数落在 Postgres（rate_limit 表）——进程内 Map 在 Vercel
-// 多实例下会被绕过，只能当回落。
+// 登录锁定阈值：计数落 Postgres（进程内 Map 在 Vercel 多实例下会被绕过）。
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 // 邮箱维度之外再加一道 IP 维度（账号锁定 DoS 的兜底）。
@@ -97,8 +96,7 @@ export async function loginUser(
     isAdmin = Boolean(row?.is_admin);
   } catch (err) {
     console.error("[auth] ensureUserAndBootstrapAdmin 失败，本次按非管理员处理:", err);
-    // 本次登录本该补上「第一个管理员」——补不上又库里一个管理员都没有，
-    // 就会把用户锁在后台之外，必须如实报错而不是默默放行。
+    // 本该补上「第一个管理员」却补不上时，必须如实报错，否则会把用户锁在后台外。
     if (!(await hasAnyAdmin())) {
       throw new BusinessError("站点尚未完成初始化（管理员记录写入失败），请稍后重试", 503);
     }
@@ -232,10 +230,7 @@ export async function refreshSession(refreshToken: string): Promise<SessionData>
   return session;
 }
 
-/**
- * 登出：先吊销上游会话，再清本地鉴权缓存。
- * 上游失败也必须让本地登出成立，所以只留痕、不抛。
- */
+/** 登出：先吊销上游会话再清本地缓存；上游失败也要让本地登出成立，故只留痕不抛。 */
 export async function revokeSession(accessToken: string): Promise<void> {
   if (accessToken) {
     try {

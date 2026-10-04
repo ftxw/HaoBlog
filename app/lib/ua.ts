@@ -1,12 +1,4 @@
-/**
- * UA 解析：纯字符串匹配，无依赖。
- *
- * 两条硬约束，改动时务必保留：
- * 1. **移动端判定必须排在桌面端之前**。iPhone/iPad 的 UA 含「like Mac OS X」，
- *    Android 的 UA 含「Linux」，顺序颠倒会被认成 macOS / Linux。
- * 2. **内核套壳浏览器必须排在 Chrome 之前**。国产浏览器都是 Chromium 内核，
- *    UA 里同时带 `Chrome/`，不先匹配自家标识就一律显示成 Chrome。
- */
+/** UA 解析。顺序有约束：移动端判定必须排在桌面端之前，内核套壳浏览器必须排在 Chrome 之前。 */
 export function parseBrowser(ua: string): string {
   if (!ua) return "未知浏览器";
   if (ua.includes("EdgiOS/") || ua.includes("EdgA/") || ua.includes("Edg/")) return "Edge";

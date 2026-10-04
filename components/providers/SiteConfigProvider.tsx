@@ -148,8 +148,7 @@ export function SiteConfigProvider({
 export function useConfigValue(key: string): string {
   const { config } = useContext(SiteConfigContext);
   const value = config[key];
-  // 默认值与后台界面同源（site-config-defs）；只有键不存在才回落。
-  // 空串视为后台「显式清空」，与服务端 pickConfigValue 同语义。
+  // 默认值与后台同源（site-config-defs）；只有键不存在才回落，空串是显式清空。
   return value === undefined ? defaultConfigValue(key) : value;
 }
 
@@ -169,12 +168,7 @@ export function useConfigJson<T>(key: string, fallback: T): T {
 
 const NO_IMAGES: string[] = [];
 
-/**
- * 取图片列表类配置（type=multiImage，如 `socialLogos`）。
- *
- * 与 `avatarUrl` 等单图配置同一套「空即无」语义：非字符串项、空白项一律剔除 ——
- * 空列表交给调用方直接不渲染，避免 `SafeImage` 拿到空串退化成原生 `<img src="">` 出裂图。
- */
+/** 取图片列表类配置；非字符串/空白项一律剔除，空列表交给调用方不渲染（避免 <img src=""> 裂图）。 */
 export function useConfigImages(key: string): string[] {
   const list = useConfigJson<string[]>(key, NO_IMAGES);
   return useMemo(

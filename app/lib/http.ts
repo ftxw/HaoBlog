@@ -42,10 +42,7 @@ export function parsePagination(
   };
 }
 
-/**
- * ⚠️ 只有业务自抛的提示能原样回给客户端；其余（Prisma / Supabase 原文含表名、约束名、
- * 连接串片段）会泄露内部结构。业务错误一律用 BusinessError，别再靠文案比对放行。
- */
+/** ⚠️ 只有 BusinessError 的提示能原样回给客户端，其余原文会泄露内部结构。 */
 export function safeErrMessage(err: unknown, fallback = "服务器错误"): string {
   if (err instanceof BusinessError) return err.message || fallback;
   const raw = err instanceof Error ? err.message : "";

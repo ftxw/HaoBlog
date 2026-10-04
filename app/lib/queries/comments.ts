@@ -1,8 +1,4 @@
-/**
- * 后台三类评论列表的唯一实现。
- * 文章 / 说说 / 项目评论的表结构一致，差异只有「用哪张表 + 哪份 select」，
- * 三个 admin 路由因此只剩这两处不同。
- */
+/** 后台三类评论列表的唯一实现：文章/说说/项目表结构一致，差异只有「用哪张表 + 哪份 select」。 */
 
 import type { CommentStatusValue } from "@/app/lib/comment-rules";
 import { parseCommentStatusFilter } from "@/app/lib/comment-rules";

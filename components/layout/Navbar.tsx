@@ -72,9 +72,7 @@ export default function Navbar() {
         aria-hidden="true"
       />
       <span>
-        {/* navTitle 的默认值本身就是空串，「键不存在」与「后台清空」在这里等价 ——
-            所以这个 || 落到作者名，正是 navTitle 的「默认值」，不是在掩盖空串。
-            三段各自独立：清空 navSuffix / navAfter 就真的不输出。 */}
+        {/* navTitle 默认值就是空串，这个 || 落到作者名正是它的默认值；三段各自独立。 */}
         {navTitle || authorName}
         <span className="mx-1">{navSuffix}</span>
         {navAfter}

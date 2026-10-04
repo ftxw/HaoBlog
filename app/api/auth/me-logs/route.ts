@@ -5,10 +5,7 @@ import { listLoginLogs } from "@/app/lib/queries/dashboard";
 
 export async function GET(request: NextRequest) {
   try {
-    /* 必须管理员：listLoginLogs 的 where 是
-       `OR: [{ user_id: userId }, { user_id: "" }]`，而失败登录记录写的正是 user_id=""，
-       且 login_log 表没有 email 列 —— 用 getCurrentUser 会让任何注册用户分页拉走
-       全站所有人的失败登录 IP / 归属地 / UA。唯一消费方（后台仪表盘）本就在 /admin 之后。 */
+    /* 必须管理员：失败登录记录的 user_id 是空串，用 getCurrentUser 会让任何注册用户拉走全站失败登录明细。 */
     const user = await requireAdmin(request);
     const userId = String(user.id || "");
     const { searchParams } = new URL(request.url);

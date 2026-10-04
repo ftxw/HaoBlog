@@ -56,10 +56,7 @@ export function formatMonthKeyCN(d: Date): string {
   return p ? `${p.y}-${Number(p.m)}` : "";
 }
 
-/**
- * 相对时间。不传 `opts.now` 就用调用时的当前时钟 —— 因此只在客户端渲染时安全；
- * 若某处会在服务端直出同一份时间，必须把同一个 now 传下来，否则水合前后差一档。
- */
+/** 相对时间。不传 opts.now 就用当前时钟 —— 只在客户端渲染时安全，服务端直出须传同一个 now。 */
 export function relativeTime(
   dateStr: string,
   opts?: { dateFormat?: (d: Date) => string; now?: Date }

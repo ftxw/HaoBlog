@@ -10,21 +10,11 @@ import { escapeRegExp } from "./utils";
 export type { TocItem };
 
 export interface RenderPostOptions {
-  /**
-   * 图床直链域名（未配置图床域名时传空串）。
-   *
-   * **必须由调用方显式传入**，不要退回读 `getCdnDomain()` 那个模块级单例：
-   * 单例由 `RootLayout` 在渲染期设置，而 layout 与 page 是并发渲染的，
-   * page 有可能先跑到这里 → 读到空串 → 正文图片静默丢掉缩略图与 data-original。
-   * 设成必填就是为了让「忘记传」在编译期直接暴露。
-   */
+  /** 图床直链域名，未配时传空串。必须由调用方显式传入（不要读模块级单例，layout/page 并发渲染会读到空串）。 */
   cdnDomain: string;
 }
 
-/**
- * 正文图片可能有两种形态：站内代理路径（未配图床域名时上传的旧图），
- * 或图床域名直链（配了 imageCdnDomain 之后上传的图），两种都要改写成缩略图。
- */
+/** 正文图片有站内代理路径与图床直链两种形态，都要改写成缩略图。 */
 function buildImgSrcPattern(domain: string): RegExp {
   const alternatives = ["/api/img-proxy/imgs/[^\"']+"];
   if (domain) alternatives.push(`${escapeRegExp(domain)}/[^\"']+`);
@@ -54,8 +44,7 @@ export async function renderPostContent(
     }
   );
 
-  // toc 项里的 id 就是 assignHeadingIds 要写进 HTML 的那一份（extractToc 与
-  // assignHeadingIds 共用同一套 slug 规则，见 toc-ids.ts）。
+  // toc 的 id 就是 assignHeadingIds 写进 HTML 的那份（与 extractToc 共用同一套 slug 规则）。
   const toc = extractToc(mdContent);
   contentHtml = assignHeadingIds(
     contentHtml,
@@ -68,8 +57,7 @@ export async function renderPostContent(
   };
 }
 
-// v8：normalizeMarkdown 不再做容错补正（去掉「1.文本」补空格与「3+ 换行转 <br/>」），
-// 渲染结果随之改变，必须换 key 让旧缓存失效。
+// v8：normalizeMarkdown 不再做容错补正，渲染结果变了，必须换 key 失效旧缓存。
 const RENDER_CACHE_VERSION = "v8-no-md-fallback";
 
 const RENDER_CACHE_TTL_SEC = 3600;

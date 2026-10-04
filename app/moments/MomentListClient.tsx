@@ -30,10 +30,7 @@ function momentHasImage(moment: Moment): boolean {
   return Array.isArray(moment.images) && moment.images.length > 0;
 }
 
-/**
- * 相对时间依赖「现在」：now 为 null 表示还没挂载，此时退回绝对日期。
- * SSR 与水合首帧都走这一支，两边的输出才一致（挂载后才切成「x分钟前」）。
- */
+/** now 为 null 表示未挂载，退回绝对日期 —— SSR 与水合首帧走这支，两边输出才一致。 */
 function timeAgo(dateStr: string, now: number | null): string {
   if (now === null) return formatDateCN(new Date(dateStr));
   return relativeTime(dateStr, {

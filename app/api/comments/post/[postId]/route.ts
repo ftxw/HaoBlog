@@ -19,8 +19,7 @@ export async function GET(
       return fail("无效的文章ID");
     }
 
-    /* 宿主必须存在且已发布（草稿等同不存在）。这条检查刻意放在缓存外 ——
-       它是可见性判断，不该被评论列表的缓存遮住；单条主键查询，代价可忽略。 */
+    /* 宿主必须存在且已发布，检查放在缓存外以免被评论缓存遮住。 */
     await assertCommentHostVisible("post", postId, "文章不存在");
 
     // 不带 keyParams：评论列表只由路径里的 postId 决定，query 一律不进缓存键。

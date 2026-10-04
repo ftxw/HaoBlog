@@ -43,11 +43,7 @@ export function assertCommentContentLength(
   if (content.length > max) throw new BusinessError(message, 400);
 }
 
-/**
- * 目标（文章 / 说说 / 项目）必须存在**且已发布**。统一 404，不让外键的 P2003 冒成 500。
- * 草稿/隐藏内容对公开评论通道等同于不存在 —— 否则知道 ID 的人就能给未发布的文章/说说/项目
- * 留言、点赞、翻它的评论，与 `posts/[postId]` 对草稿一律 404 的口径不一致。
- */
+/** 宿主必须存在且已发布，草稿等同不存在（与 posts/[postId] 对草稿 404 同口径）。 */
 export function assertCommentTargetVisible(
   found: { status: string } | null,
   message: string
@@ -74,10 +70,7 @@ async function findHostStatus(
   return prisma.project.findUnique({ where: { id }, select: { status: true } });
 }
 
-/**
- * 公开评论通道（读列表 / 发评论 / 点赞）判断「宿主是否可见」的唯一实现。
- * 传进来的 id 是否合法由调用方先过 `parseId`。
- */
+/** 公开评论通道判断「宿主是否可见」的唯一实现（id 合法性由调用方先过 parseId）。 */
 export async function assertCommentHostVisible(
   kind: CommentHostKind,
   id: string,

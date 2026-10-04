@@ -61,8 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ postId: s
   const title = post.title || "文章";
   const description = post.description || undefined;
   const cover = post.cover || pickConfigValue(dbConfig, "defaultPostCover");
-  // 社交平台抓取不带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
-  // 文章封面与默认封面都被清空时无图可分享 → 不输出 images（空串会被解析成页面自身地址）。
+  // 社交抓取不带 Referer，图床防盗链会拦直链，故统一换站内地址；无图则不输出 images。
   const image = cover
     ? absoluteUrlOf(proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)), base)
     : undefined;

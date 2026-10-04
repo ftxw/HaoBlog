@@ -135,9 +135,7 @@ export function TimelineView({
     }
     const undated = ordered.filter((p) => !p.takenAt);
     if (undated.length) {
-      /* 用固定哨兵 key，不能依赖 `new Date()`：本组件会被服务端组件直接渲染（参与 SSR），
-         而当 SSR 与客户端首帧跨月时（月末/月初，或命中 ISR 缓存），
-         按「当前月」拼出的 key 与标题在两端会不一致 → hydration mismatch。 */
+      /* 固定哨兵 key，不能用 new Date()：本组件参与 SSR，跨月时 key 与标题两端不一致会 hydration mismatch。 */
       map.set("未排期", { date: null, items: undated });
     }
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));

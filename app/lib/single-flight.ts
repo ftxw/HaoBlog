@@ -14,8 +14,7 @@ export function singleFlight<T>(
   }
 
   const promise = fn().finally(() => {
-    // 只在槽位仍是本次调用时清理：超时后会有新调用覆盖同一 key，
-    // 无条件 delete 会把新登记的项一并抹掉，后续调用又各起一次。
+    // 只在槽位仍是本次调用时清理：无条件 delete 会把超时后新登记的项一起抹掉。
     if (inflight.get(key)?.promise === promise) inflight.delete(key);
   });
 

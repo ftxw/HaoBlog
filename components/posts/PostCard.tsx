@@ -18,8 +18,7 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const defaultCover = useConfigValue("defaultPostCover");
-  /* 与文章内页 / 关于页封面走同一个取值链：手动 → 正文第一张图 → 兜底 → 空串不渲染。
-     文章封面的「正文第一张图」在保存时已落进 post.cover，所以正文位传空串。 */
+  /* 与文章内页/关于页同一取值链；文章封面的「正文首图」保存时已落库，故正文位传空串。 */
   const imageSrc = resolveCoverChain(post.cover, "", defaultCover).url;
   const [thumbBroken, setThumbBroken] = useState(false);
   const [prevSrc, setPrevSrc] = useState(imageSrc);

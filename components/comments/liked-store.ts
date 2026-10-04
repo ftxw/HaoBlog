@@ -1,7 +1,4 @@
-/**
- * 评论点赞的本地记忆键。评论点赞不落库（服务端不记「谁赞过」），这份 localStorage 就是唯一凭据，
- * 所以必须按「内容类型 + 账号」隔离：共用一份会让切换账号后的首个点赞被发成「取消点赞」。
- */
+/** 评论点赞的本地记忆键。服务端不记谁赞过，localStorage 是唯一凭据，故必须按内容类型 + 账号隔离。 */
 export function likedStorageKey(kind: string, userId?: string): string {
   return `liked_${kind}_comments:${userId || "anonymous"}`;
 }

@@ -55,10 +55,7 @@ export function buildCommentTree<T extends { id: string; parent_id: string | nul
     else roots.push(node);
   }
 
-  /* 防御性收尾：若存在环（A 的父是 B、B 的父是 A，当前写入路径产不出来，
-     但 `parent_id` 一旦被直接改写就会出现），环上的节点既不是根、又互相挂在
-     `replies` 里 —— 渲染时会无限递归。把「从根走不到」的节点提升为根，
-     同时从它父节点的 replies 里摘掉，保证每条评论恰好出现一次且结构有限。 */
+  /* 防环：parent_id 若被改成互指会渲染无限递归，把走不到根的节点提升为根。 */
   const reachable = new Set<string>();
   const stack = [...roots];
   while (stack.length > 0) {

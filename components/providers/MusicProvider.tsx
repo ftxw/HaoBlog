@@ -68,11 +68,7 @@ interface MusicContextType {
   togglePlayMode: () => void;
 }
 
-/**
- * 高频播放进度。必须与上面那组低频状态分开两个 Context：
- * `<audio onTimeUpdate>` 每秒触发数次，把它和控件放在同一个 value 里，
- * 每次 timeupdate 都会让**所有** `useMusic()` 消费者（悬浮播放器、歌词条…）重渲染。
- */
+/** 高频播放进度单独一个 Context：timeupdate 每秒触发数次，与控件同 value 会让所有消费者重渲染。 */
 interface MusicProgressType {
   progress: number;
   currentTime: number;
@@ -227,8 +223,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (pathnameRef.current?.startsWith("/admin")) return;
     const cached = readCachedPlaylist(cloudMusicPlaylistId, cloudMusicIds);
     if (cached) {
-      // 水合后以本地缓存同步一次歌单（播放器跨页面可见的体验关键）
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: hydrate from localStorage cache
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 水合后从 localStorage 缓存同步歌单
       setPlaylist(cached);
     }
     const timer = window.setTimeout(() => {
@@ -291,8 +286,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false);
       return;
     }
-    /* 浏览器自动播放策略会拒绝 play()：必须把状态回滚，否则「暂停」会一直显示成「播放中」
-       （唱片旋转、波形动画、切歌时的自动播放判断全都会跟着错）。 */
+    /* play() 被自动播放策略拒绝时回滚 isPlaying，否则「暂停」会一直显示成「播放中」。 */
     audioRef.current.play().catch(() => setIsPlaying(false));
     setIsPlaying(true);
   }, [isPlaying]);
@@ -329,8 +323,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setDuration(dur);
     setProgress(dur > 0 ? (ct / dur) * 100 : 0);
     if (lyrics.length > 0) {
-      /* 从后往前单次扫描找「最后一个 time <= ct」。
-         （原实现是 [...lyrics].reverse().find(...)：每次 timeupdate 都复制+反转整个数组。） */
+      /* 从后往前单次扫描找「最后一个 time <= ct」，避免每次 timeupdate 复制+反转整个数组。 */
       for (let i = lyrics.length - 1; i >= 0; i--) {
         if (ct >= lyrics[i].time) {
           setCurrentLyric(lyrics[i].text);
@@ -367,8 +360,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setPlayMode((p) => (p === "loop" ? "single" : p === "single" ? "random" : "loop"));
   }, []);
 
-  /* 两个 value 都要 memo：否则 Provider 每次重渲染都会给出新对象，
-     拆成两个 Context 也白搭。低频组只在真正切换歌单/歌曲/播放态时才变。 */
+  /* 两个 value 都要 memo，否则 Provider 重渲染会给出新对象，拆 Context 也白搭。 */
   const controls = useMemo<MusicContextType>(
     () => ({
       playlist, currentIndex, currentSong: playlist[currentIndex],

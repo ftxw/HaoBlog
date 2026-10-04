@@ -146,13 +146,7 @@ export const siteConfigDefs: SiteConfigDef[] = [
 
 const DEF_BY_KEY = new Map(siteConfigDefs.map((def) => [def.key, def]));
 
-/**
- * 取某个配置键在这里声明的默认值（未声明的键返回空串）。
- *
- * 数据库里「没有这一行」时用它兜底：`syncSiteConfig()`（`pnpm db:seed`）本该把
- * 全部键连同默认值写进库，但没跑过种子的部署不会有这些行。此时若按空串处理，
- * 后台显示的默认值与服务端实际行为就会对不上（例如归属地接口、音乐 API 地址）。
- */
+/** 取这里声明的默认值（未声明返回空串）：库里「没有这一行」时兜底，没跑过种子的部署靠它对齐。 */
 export function defaultConfigValue(key: string): string {
   return DEF_BY_KEY.get(key)?.defaultValue ?? "";
 }

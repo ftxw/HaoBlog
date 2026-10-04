@@ -1,8 +1,6 @@
 /** 正文排版样式 .post-body 的唯一定义处。 */
 export const POST_BODY_STYLE = `
-  /* 正文排版：刻意不用 @tailwindcss/typography 的 .prose（其默认灰值在深色主题下几乎不可见）。
-     标记体系——h1 底色块+竖条 / h2 竖条 / h3 圆点 / 引用圆角卡+角引号 /
-     无序列表主题色圆点 / 代码块左侧色条；竖条与圆点一律用 --app-accent，与目录光点同色。 */
+  /* 正文排版：刻意不用 .prose（深色下不可见）；标记体系与目录光点同用 --app-accent。 */
   /* 一级标题：底色块 + 左侧竖条，竖条用 calc 落在首行中线。 */
   .post-body h1 {
     position: relative;
@@ -101,9 +99,7 @@ export const POST_BODY_STYLE = `
     line-height: 1.7;
   }
   .post-body li::marker { color: var(--app-ink-4); }
-  /* 无序列表自绘主题色圆点，落进 ul 的 padding-left 区间。
-     ⚠️ list-style:none 会让 Safari/VoiceOver 不再播报列表语义（已知取舍，
-     ul 由 Markdown 渲染生成，补不了 role="list"）。 */
+  /* 无序列表自绘主题色圆点；list-style:none 会让 Safari/VoiceOver 不再播报列表语义（已知取舍）。 */
   .post-body ul > li { position: relative; }
   .post-body ul > li::before {
     content: "";
@@ -115,9 +111,7 @@ export const POST_BODY_STYLE = `
     border-radius: 50%;
     background: var(--app-accent);
   }
-  /* 引用：整块圆角卡 + 左上/右下角一对实心引号。
-     角引号是 32×13 雪碧图里的两个字形，这里复刻成 data-URI SVG 再用 mask 上色，
-     颜色因此仍走本站 token（SVG 里 fill 写死白色只当 mask 用）。 */
+  /* 引用整块圆角卡 + 角引号：角引号为 data-URI SVG 复刻，用 mask 上色以走本站 token。 */
   .post-body blockquote {
     position: relative;
     margin: 1.5rem 0;

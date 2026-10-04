@@ -37,8 +37,7 @@ const SEARCH_PANEL_LIMIT = 8;
 export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchPost[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  /** 远程结果必须连同「它是哪个词的」一起存：只存数组的话，换词后到新响应到达前
-      会拿旧词的结果配新词的高亮渲染出来。 */
+  /** 远程结果连同「它是哪个词的」一起存，否则换词后会拿旧结果配新词高亮。 */
   const [remoteResults, setRemoteResults] = useState<{ query: string; items: SearchPost[] } | null>(null);
   const [finishedQuery, setFinishedQuery] = useState('');
   /** 请求失败的那个词。与「真的没搜到」分开，避免把网络故障渲染成空结果。 */
@@ -96,8 +95,7 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
 
     return () => {
       clearTimeout(timer);
-      /* 换词或卸载时取消在途请求：否则旧请求会在卸载后才 resolve 并 setState，
-         或把上一个词的结果写进当前面板。 */
+      /* 换词或卸载时取消在途请求，避免旧请求 resolve 后写入当前面板。 */
       abortRef.current?.abort();
     };
   }, [query, retryTick]);
@@ -120,12 +118,10 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
     });
   }, [query, initialPosts]);
 
-  /* 只认「这个词的结果」。换词后到新响应到达前它自然变 null，回落到本地即时匹配，
-     不会再把上一个词的结果显示出来。 */
+  /* 只认「这个词的结果」，换词后自然回落本地匹配，不会显示上一个词的结果。 */
   const remoteItems = remoteResults && remoteResults.query === query ? remoteResults.items : null;
   const searchResults = remoteItems ?? localResults;
-  /* 还没出结果（含 250ms 防抖窗口）且没失败，都算「搜索中」——
-     否则换词瞬间会先闪一下「未发现」再跳到结果。 */
+  /* 未出结果（含 250ms 防抖）且未失败都算搜索中，否则换词瞬间会闪一下「未发现」。 */
   const searching = query !== '' && finishedQuery !== query && failedQuery !== query;
   const searchFailed = query !== '' && failedQuery === query;
   const panelOpen = isOpen && query !== '';

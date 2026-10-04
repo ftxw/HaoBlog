@@ -14,10 +14,7 @@ export function likeErrorMessage(err: unknown): string {
   return err instanceof Error && err.message ? err.message : "点赞失败，请稍后重试";
 }
 
-/**
- * 点赞动作的公共外壳：busy 门控 + 把失败转成可展示的 error（绝不吞错）。
- * 服务端语义与持久化差异留在各调用方的 submit 里。
- */
+/** 点赞动作的公共外壳：busy 门控 + 把失败转成可展示的 error（不吞错）。 */
 export function useLikeAction() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

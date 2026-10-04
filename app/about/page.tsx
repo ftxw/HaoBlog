@@ -27,8 +27,7 @@ export default async function AboutPage() {
   const markdown = pickConfigValue(dbConfig, "aboutContent");
   const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
 
-  /* 封面取值链与文章封面同机制：手动设置 → 正文第一张图 → 文章默认封面 → 不显示。
-     最后一级的「文章默认封面」若被后台清空，就真的什么都不显示（同头像）。 */
+  /* 封面取值链：手动设置 → 正文首图 → 文章默认封面 → 不显示（同头像的「清空即无」）。 */
   const coverImage = resolveCoverChain(
     pickConfigValue(dbConfig, "aboutCover"),
     markdown,
@@ -69,8 +68,7 @@ export default async function AboutPage() {
               coverImage ? "" : "pt-8 md:pt-10"
             }`}
           >
-            {/* 有封面时这个圆靠负边距压在封面上，此时即便没有头像也要保留等高占位 ——
-                否则下方标题上移、压到封面。无封面时它不再压任何东西，也就无需占位。 */}
+            {/* 有封面时这个圆靠负边距压住封面，无头像也要占位，否则标题上移压封面。 */}
             {(avatarUrl || coverImage) && (
               <div
                 className={`relative z-20 h-24 w-24 md:h-32 md:w-32 ${

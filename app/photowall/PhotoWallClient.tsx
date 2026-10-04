@@ -433,9 +433,7 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
                   {matchedPhotos.map((photo, index) => (
                     <PhotoCard
-                      /* key 必须是「哪张照片」。原来用 `albumId-index`：搜索词一变，
-                         同一相册同一位置换成了另一张照片，key 却不变 → React 复用实例，
-                         PhotoCard 内部的 loaded 状态会张冠李戴。 */
+                      /* key 必须是「哪张照片」：用 albumId-index 时换搜索词会复用实例，PhotoCard 的 loaded 状态张冠李戴。 */
                       key={photo.url}
                       url={photo.url}
                       alt={photo.caption ?? ""}

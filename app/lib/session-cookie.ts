@@ -23,12 +23,7 @@ export function serializeSession(data: SessionData): string {
   return encodeURIComponent(JSON.stringify(data));
 }
 
-/**
- * 解析会话 cookie。
- * ⚠️ 读到的值要再解一层编码：`serializeSession` 编过一次，Next 的 ResponseCookies
- * 序列化时又 `encodeURIComponent` 了一次（`@edge-runtime/cookies` 的 toString），
- * 而两处读取路径都只解了外层 —— 所以不解这层就永远 parse 不出 JSON。
- */
+/** ⚠️ 会话 cookie 是双重编码的：serializeSession 编一次，Next 序列化又编一次，解析时要再解一层。 */
 export function parseSessionValue(raw: string | undefined | null): SessionData | null {
   if (!raw) return null;
 

@@ -75,8 +75,7 @@ export async function ensureUserAndBootstrapAdmin(u: AppUser) {
     });
     if (existing) return existing;
 
-    // 咨询锁已把「查 → 判 → 建」串行化，因此这里的 count 与下面的 create 之间
-    // 不会被其他事务插入，不会出现两个「第一个管理员」。
+    // 咨询锁已把「查→判→建」串行化，count 与 create 之间不会插入，不会有第二个「首个管理员」。
     const adminCount = await tx.user.count({ where: { is_admin: true } });
 
     return tx.user.create({

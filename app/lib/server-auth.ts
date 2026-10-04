@@ -6,10 +6,7 @@ import {
   parseSessionValue,
 } from "@/app/lib/session-cookie";
 
-/**
- * 同一请求内只验一次上游 token：layout 与 page 会并发渲染，各自都调它。
- * cache() 只在请求作用域内生效（无 dispatcher 时退化为普通调用），故对 CLI/脚本无副作用。
- */
+/** 同一请求内只验一次上游 token（layout 与 page 会并发渲染）。 */
 export const getServerAuth = cache(async (): Promise<{
   user: CurrentUser;
   accessToken: string;

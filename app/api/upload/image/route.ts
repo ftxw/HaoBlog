@@ -46,10 +46,7 @@ type ImageCheck =
   | { ok: true; buffer: ArrayBuffer; type: string }
   | { ok: false; message: string };
 
-/**
- * 主文件与缩略图共用的校验：类型白名单 → 体积上限 → magic bytes。
- * 客户端自报的 `file.type` 可伪造，所以最后一关必须以文件头为准。
- */
+/** 主文件与缩略图共用校验：类型白名单 → 体积上限 → magic bytes（file.type 可伪造）。 */
 async function validateImageFile(file: File, label = ""): Promise<ImageCheck> {
   const prefix = label ? `${label}：` : "";
 
@@ -86,8 +83,7 @@ export async function POST(request: Request) {
       return fail("缺少文件");
     }
 
-    // 主文件与缩略图走同一套校验，且**都跑在任何上传动作之前**：
-    // 否则缩略图不合格时主图已经传进图床，会留下一条没有数据库记录的孤儿对象。
+    // 主图与缩略图都先校验再上传，避免缩略图不合格时留下孤儿对象。
     const main = await validateImageFile(file);
     if (!main.ok) return fail(main.message);
 

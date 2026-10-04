@@ -11,8 +11,7 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const MUSIC_DEADLINE = 10_000;
 
-/* 匿名可调的参数都要设上界：不加限制时 ?ids=a,b,c,... 能一次制造 N 路并发外部请求，
-   并且每个不同的 ids 串都会成为新的 Data Cache 键（可被用来持续填充缓存）。 */
+/* ids 要设上界：否则一次可制造 N 路并发外部请求，且每个新串都会占一个新的缓存键。 */
 const MAX_SONG_IDS = 50;
 const MAX_SONG_ID_LENGTH = 64;
 const MAX_PLAYLIST_ID_LENGTH = 64;

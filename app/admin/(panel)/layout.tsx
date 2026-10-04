@@ -10,10 +10,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/**
- * 后台整体不进任何缓存：Next 会把 layout 的段配置合并进所有子页面（getStaticInfoIncludingLayouts
- * → reduceAppConfig），所以收在这里一处即可，不必每个 page 再写一遍。
- */
+/* 后台整体不进任何缓存：Next 会把 layout 段配置合并进所有子页面，收在一处即可。 */
 export const dynamic = "force-dynamic";
 
 function AuthFallback() {
@@ -35,8 +32,7 @@ async function AdminGate({ children }: { children: React.ReactNode }) {
     redirect("/admin/login");
   }
 
-  // 空串是后台「显式清空」，不回落默认值（与前台 pickConfigValue 同语义）；
-  // AdminShell 对空串自带兜底，只会显示「欢迎回来」。
+  // 空串是「显式清空」不回落默认值；AdminShell 对空串自带兜底。
   const authorName = await getDbConfigValue("authorName");
 
   return <AdminShell authorName={authorName}>{children}</AdminShell>;

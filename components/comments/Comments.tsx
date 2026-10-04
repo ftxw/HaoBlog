@@ -194,8 +194,7 @@ export default function Comments<T extends CommentItem>({
       openLogin();
       return;
     }
-    /* 在途时不再受理：否则双击会两次都读到 alreadyLiked=false → 服务端 +2；
-       快速点 A 再点 B 还会让先 resolve 的那次高亮被后一次覆盖丢失。 */
+    /* 在途时不再受理：双击会两次都读到 alreadyLiked=false → 服务端 +2；连点两条还会互相覆盖高亮。 */
     if (commentLikeBusy) return;
     const alreadyLiked = likedCommentIds.has(commentId);
     await runCommentLike(async () => {

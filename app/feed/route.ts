@@ -112,10 +112,7 @@ async function generateItem(
     </item>`;
 }
 
-/**
- * RSS 正文里的图片由阅读器独立加载：它不带 Referer，也无法把相对路径补全成绝对地址。
- * 所以这里统一改写成「本站绝对地址 + 站内代理」：相对路径得到补全，图床防盗链也不会误伤。
- */
+/** RSS 图片由阅读器独立加载（不带 Referer），统一改写成「本站绝对地址 + 站内代理」。 */
 function absolutizeFeedImages(html: string, siteUrl: string, cdnDomain: string): string {
   return html.replace(
     /(<img\b[^>]*?src=["'])([^"']+)(["'])/gi,

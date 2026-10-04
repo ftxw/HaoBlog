@@ -2,10 +2,7 @@ import { prisma } from "./prisma";
 import { resolveGeo, formatAddress } from "./geo";
 import { parseBrowser, parseOS } from "./ua";
 
-/**
- * 写一条登录日志。登录失败时 user_id 传空串（此时还不知道是谁）——
- * `listLoginLogs` 会把空 userId 的行一起查出来，所以失败记录在后台是可见的。
- */
+/** 写登录日志；失败时 user_id 传空串，listLoginLogs 会一起查出来，后台可见。 */
 export async function recordLoginLog({
   ip,
   userAgent,

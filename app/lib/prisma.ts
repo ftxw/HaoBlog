@@ -15,8 +15,7 @@ function createPrismaClient(): PrismaClient {
     connectionString: url, // 原样使用（事务池 6543 或自建 PG 均直连，不再强制降级端口）
     max: 5,
     connectionTimeoutMillis: 8000, // 8s 拿不到连接直接报错
-    // 空闲连接 120s 回收。缩短到 30s 会让「实例活着但闲置 >30s」的第一个查询
-    // 撞上已被回收的连接，白白多一次建连往返。
+    // 空闲连接 120s 回收；缩到 30s 会让闲置 >30s 后的首个查询撞上已回收的连接。
     idleTimeoutMillis: 120000,
     query_timeout: 15000, // 单条查询 15s 上限（默认行为 pg 无限制）
     statement_timeout: 15000, // 服务端语句 15s 上限，防止慢查询拖死连接

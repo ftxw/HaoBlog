@@ -33,9 +33,7 @@ export default function SafeImage({
   onLoad,
   ...rest
 }: SafeImageProps) {
-  /* 记的是「哪一个 src 失败了」而不是一个布尔值：
-     同一个实例换图后 `erroredSrc !== src` 即自动恢复，不会永久停在占位图。
-     这样也避免了用 effect 去重置状态（渲染期派生即可）。 */
+  /* 记「哪个 src 失败」而非布尔值：换图后 erroredSrc !== src 自动恢复，不必用 effect 重置。 */
   const [erroredSrc, setErroredSrc] = useState<string | null>(null);
   const errored = erroredSrc === src;
   const effectiveSrc = errored ? PLACEHOLDER_IMG : src;

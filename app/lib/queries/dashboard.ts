@@ -168,8 +168,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     created_at: Date;
   }> = [];
   try {
-    // 必须带时间窗：否则 row_number() 会对整张 visitor_log 做窗口排序，
-    // 用不上 visitor_log_created_at_idx。窗口与保留期同源。
+    // 必须带时间窗：否则 row_number() 会对整张表做窗口排序，用不上 created_at 索引。
     const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
     const rows = await prisma.$queryRaw<
       Array<{
@@ -288,8 +287,7 @@ export async function listLoginLogs(
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(50, Math.max(1, options.pageSize ?? 10));
 
-  // 失败的登录尝试没有归属用户，写库时 user_id 留空串。它们是同一账号登录历史的一部分
-  // （界面按 summary 里有没有「失败」来着色），不一起捞出来，那列红色徽标就永远不会出现。
+  // 失败登录无归属用户（user_id 留空串），不一起捞出来，那列红色徽标就永不出现。
   const where = { OR: [{ user_id: userId }, { user_id: "" }] };
 
   const [rows, total] = await Promise.all([

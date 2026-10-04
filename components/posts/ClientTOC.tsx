@@ -92,8 +92,7 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
 
   useEffect(
     () => () => {
-      /* 卸载时取消在途的平滑滚动：rAF 是自循环，不取消就会继续 window.scrollTo
-         并长期持有闭包，而且 documentElement 的 scrollBehavior 会停在 "auto"。 */
+      /* 卸载时取消在途 rAF：它是自循环，不取消会继续 scrollTo 且 scrollBehavior 停在 auto。 */
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;

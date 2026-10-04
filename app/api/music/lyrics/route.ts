@@ -4,9 +4,7 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const LYRIC_DEADLINE = 12_000;
 
-/** 歌词代理的缓存策略由本路由独占声明（成功 1h、错误/空 no-store）。
- *  缓存分两层：`Cache-Control` 面向浏览器/CDN，`Vercel-CDN-Cache-Control` 单独控 Vercel 边缘
- *  —— 与 /api/img-proxy 采用同一套写法。 */
+/** 缓存策略由本路由独占声明：Cache-Control 面向浏览器/CDN，Vercel-CDN-Cache-Control 控边缘。 */
 const ERROR_CACHE_HEADERS = {
   "Cache-Control": "no-store, must-revalidate",
   "Vercel-CDN-Cache-Control": "no-store",

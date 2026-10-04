@@ -41,14 +41,12 @@ export default function AdminAboutPage() {
   const [contentDraft, setContentDraft] = useState<string | null>(null);
 
   const initialized = Boolean(config.data);
-  /* 与前台 pickConfigValue 同语义：只有「键不存在」才回落默认值，空串是显式清空。
-     这里若用 || 兜底，后台一保存就会把默认封面 / 示例正文写回库，永远清不掉。 */
+  /* 与前台同语义：只有键不存在才回落，空串是显式清空（用 || 会把默认值写回库）。 */
   const cover = coverDraft ?? config.data?.aboutCover ?? defaultConfigValue("aboutCover");
   const content =
     contentDraft ?? config.data?.aboutContent ?? defaultConfigValue("aboutContent");
 
-  /* 前台实际会显示哪张图：手动设置 → 正文第一张图 → 文章默认封面 → 不显示。
-     只为给后台一个「所见即所得」的提示，取值走前台同一个 resolveCoverChain。 */
+  /* 后台「当前生效」提示，取值走前台同一个 resolveCoverChain。 */
   const postDefaultCover =
     config.data?.defaultPostCover ?? defaultConfigValue("defaultPostCover");
   const effective = resolveCoverChain(cover, content, postDefaultCover);

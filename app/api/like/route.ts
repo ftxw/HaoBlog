@@ -137,8 +137,7 @@ export async function POST(request: Request) {
       liked: wantLike,
     });
   } catch (err) {
-    /* 「令牌无效」由 checkAuthorizedAccessToken 返回 null 表达（其内部抛 InvalidTokenError），
-       「上游不可用」才抛 UpstreamAuthError —— 两者都不该靠比对 errMsg(err) 的文案做控制流。 */
+    /* 令牌无效由返回 null 表达、上游不可用才抛错，不要靠比对错误文案做控制流。 */
     console.error("[POST /api/like] error:", err);
     return businessFail(err, "点赞失败");
   }

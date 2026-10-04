@@ -69,9 +69,7 @@ export async function handleCommentLike(
   kind: CommentLikeKind,
   unlike: boolean
 ): Promise<Response> {
-  /* 与内容点赞（/api/like）同口径：必须登录。
-     评论点赞不落 per-user 记录（谁赞过只存在浏览器的 localStorage），
-     所以服务端只有计数器 —— 不设登录闸门时，匿名凭 IP 限流即可凭空刷计数。 */
+  /* 与内容点赞同口径：必须登录。服务端只有计数器，不设闸门时匿名可凭空刷。 */
   try {
     await getCurrentUser(request);
   } catch (err) {
