@@ -6,7 +6,6 @@ export interface ProjectItem {
   id: string;
   name: string;
   description: string;
-  /** 长正文。列表查询刻意不取，仅打开详情弹窗时由 /api/projects/[projectId] 单独取。 */
   long_description?: string;
   cover_image: string;
   images: string[];
@@ -37,7 +36,6 @@ export interface ProjectRowShape {
   updated_at: Date;
 }
 
-/** Prisma 行 → 统一项目项（时间转 ISO 字符串）。 */
 export function toProjectItem(project: ProjectRowShape): ProjectItem {
   return {
     id: project.id,
@@ -78,7 +76,6 @@ export async function listProjects(
       id: true,
       name: true,
       description: true,
-      // 不取 long_description：见 ProjectItem 上的说明
       cover_image: true,
       images: true,
       tech_stack: true,
@@ -104,12 +101,10 @@ export async function countProjects(options: { status?: string } = {}) {
   return prisma.project.count({ where });
 }
 
-/** 后台项目页「评论」标签页的徽标数（与 countChatterComments 对齐）。 */
 export async function countProjectComments() {
   return prisma.projectComment.count();
 }
 
-/** 筛选项扫描上界（与 listChatterFacets 同一思路）。 */
 const FACET_ROWS_MAX = 5000;
 
 export interface ProjectTagFacet {
@@ -117,7 +112,6 @@ export interface ProjectTagFacet {
   count: number;
 }
 
-/** /projects 标签筛选栏的选项来源。 */
 export async function listProjectFacets(): Promise<ProjectTagFacet[]> {
   const rows = await prisma.project.findMany({
     where: { status: "published" },

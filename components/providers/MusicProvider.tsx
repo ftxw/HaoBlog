@@ -68,7 +68,6 @@ interface MusicContextType {
   togglePlayMode: () => void;
 }
 
-/** 高频播放进度单独一个 Context：timeupdate 每秒触发数次，与控件同 value 会让所有消费者重渲染。 */
 interface MusicProgressType {
   progress: number;
   currentTime: number;
@@ -143,7 +142,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // 云音乐配置直接复用 SiteConfigProvider 的上下文。
   const cloudMusicPlaylistId = useConfigValue("cloudMusicPlaylistId");
   const cloudMusicIds = useConfigJson<string[]>("cloudMusicIds", NO_IDS);
 
@@ -286,7 +284,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false);
       return;
     }
-    /* play() 被自动播放策略拒绝时回滚 isPlaying，否则「暂停」会一直显示成「播放中」。 */
     audioRef.current.play().catch(() => setIsPlaying(false));
     setIsPlaying(true);
   }, [isPlaying]);
@@ -323,7 +320,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setDuration(dur);
     setProgress(dur > 0 ? (ct / dur) * 100 : 0);
     if (lyrics.length > 0) {
-      /* 从后往前单次扫描找「最后一个 time <= ct」，避免每次 timeupdate 复制+反转整个数组。 */
       for (let i = lyrics.length - 1; i >= 0; i--) {
         if (ct >= lyrics[i].time) {
           setCurrentLyric(lyrics[i].text);
@@ -360,7 +356,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setPlayMode((p) => (p === "loop" ? "single" : p === "single" ? "random" : "loop"));
   }, []);
 
-  /* 两个 value 都要 memo，否则 Provider 重渲染会给出新对象，拆 Context 也白搭。 */
   const controls = useMemo<MusicContextType>(
     () => ({
       playlist, currentIndex, currentSong: playlist[currentIndex],
@@ -408,7 +403,6 @@ export function useMusic() {
   return ctx;
 }
 
-/** 订阅高频播放进度（进度条 / 时间 / 时长）。不显示进度的组件不要用它。 */
 export function useMusicProgress() {
   const ctx = useContext(MusicProgressContext);
   if (!ctx) throw new Error("useMusicProgress must be used within MusicProvider");

@@ -16,7 +16,6 @@ import {
 } from "@/app/lib/mutations/shared";
 import { CONTENT_STATUSES, type ContentStatusValue } from "@/app/lib/content-status";
 
-/** 项目写路径的入参。 */
 export interface ProjectInput {
   name?: string;
   description?: string;
@@ -61,7 +60,6 @@ export async function createProject(input: ProjectInput) {
       status_label: String(input.status_label ?? ""),
       is_featured: Boolean(input.is_featured),
       sort,
-      // 刻意不写 likes：该列由数据库触发器 refresh_content_like_count
     },
   });
 
@@ -92,7 +90,6 @@ export async function updateProject(projectId: string, input: ProjectInput) {
     data.status_label = String(input.status_label);
   if (input.is_featured !== undefined) data.is_featured = Boolean(input.is_featured);
   if (input.sort !== undefined) data.sort = input.sort;
-  // 同 createProject：`likes` 是触发器维护的派生列，不接受调用方写入。
 
   try {
     const project = await prisma.project.update({ where: { id }, data });
@@ -108,7 +105,6 @@ export async function deleteProject(projectId: string) {
   const id = requireId(projectId, "无效的项目ID");
 
   try {
-    /* 主体与该项目的点赞记录必须一起删，放在同一事务里保证要么都成、要么都不成 */
     await prisma.$transaction(
       async (tx) => {
         await tx.project.delete({ where: { id } });

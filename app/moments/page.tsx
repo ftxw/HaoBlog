@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -15,7 +14,6 @@ export const metadata: Metadata = {
   description: "在代码之外捕捉瞬间的温度",
 };
 
-/** 首屏下发的条数；其余由列表组件按需续拉（见 MomentListClient）。 */
 const PAGE_SIZE = 60;
 
 async function fetchInitialMoments(): Promise<{
@@ -28,7 +26,6 @@ async function fetchInitialMoments(): Promise<{
     const [rows, total, facets] = await Promise.all([
       listChatters({ status: "published", page: 1, size: PAGE_SIZE }),
       countChatters({ status: "published" }),
-      // 筛选项单独兜底：它查挂了不该让整个列表也空掉
       listChatterFacets().catch(() => ({ years: [], moods: [] })),
     ]);
     return {

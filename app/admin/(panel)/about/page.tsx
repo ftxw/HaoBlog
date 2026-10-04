@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useRef, useState } from "react";
 import {
   Bold,
@@ -36,17 +35,14 @@ export default function AdminAboutPage() {
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  /* 草稿为 null 表示「用户还没改过」，此时跟随接口值；避免在渲染期 setState 去灌初值。 */
   const [coverDraft, setCoverDraft] = useState<string | null>(null);
   const [contentDraft, setContentDraft] = useState<string | null>(null);
 
   const initialized = Boolean(config.data);
-  /* 与前台同语义：只有键不存在才回落，空串是显式清空（用 || 会把默认值写回库）。 */
   const cover = coverDraft ?? config.data?.aboutCover ?? defaultConfigValue("aboutCover");
   const content =
     contentDraft ?? config.data?.aboutContent ?? defaultConfigValue("aboutContent");
 
-  /* 后台「当前生效」提示，取值走前台同一个 resolveCoverChain。 */
   const postDefaultCover =
     config.data?.defaultPostCover ?? defaultConfigValue("defaultPostCover");
   const effective = resolveCoverChain(cover, content, postDefaultCover);

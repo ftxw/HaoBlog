@@ -2,7 +2,6 @@ import { getServerAuthState } from "@/app/lib/server-auth";
 import { errorStatus, safeErrMessage } from "@/app/lib/http";
 import type { ActionResult } from "@/app/lib/action-result";
 
-/** 后台 Server Action 的统一守卫。 */
 export async function runAdminAction<T>(
   fn: () => Promise<T>
 ): Promise<ActionResult<T>> {
@@ -17,7 +16,6 @@ export async function runAdminAction<T>(
   try {
     return { ok: true, data: await fn() };
   } catch (err) {
-    /* 刻意丢弃 BusinessError.headers：Server Action 走 flight 通道，没有 HTTP 头可用。 */
     return { ok: false, status: errorStatus(err), message: safeErrMessage(err) };
   }
 }

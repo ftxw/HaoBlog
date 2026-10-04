@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useConfigImages, useConfigValue } from "@/components/providers/SiteConfigProvider";
 import SafeImage from "@/components/ui/SafeImage";
 
-/** 首页个人信息卡。 */
 export default function ProfileCard({
   postCount = 0,
   chatterCount = 0,
@@ -34,7 +33,6 @@ export default function ProfileCard({
                     alt="avatar"
                     fill
                     sizes="(min-width: 768px) 96px, (min-width: 640px) 80px, 64px"
-                    /* 首屏 hero 卡里的头像：Next 实测把它报成 LCP 元素（25s virtual-time 复跑仍如此）。 */
                     priority
                     className="object-cover bg-surface-strong"
                   />
@@ -89,4 +87,3 @@ function StatItem({ count, label, color }: { count: number, label: string, color
     </div>
   );
 }
-

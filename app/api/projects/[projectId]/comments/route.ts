@@ -24,14 +24,11 @@ export async function GET(
       return fail("项目ID不合法");
     }
 
-    /* 宿主必须存在且已发布（草稿/隐藏等同不存在），检查在缓存外。 */
     await assertCommentHostVisible("project", id, "项目不存在");
 
-    // 不带 keyParams：评论列表只由路径里的 projectId 决定，query 一律不进缓存键。
     return await cachedPublicGet(CACHE_NAMESPACE.projectComments, request, async () => {
       const flat = await prisma.projectComment.findMany({
         where: { project_id: id, status: "approved" },
-        // asc + take 是「父节点安全」的截断，见 COMMENT_TAKE 的说明
         orderBy: { created_at: "asc" },
         take: COMMENT_TAKE,
         select: PROJECT_COMMENT_PUBLIC_SELECT,

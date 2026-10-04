@@ -23,14 +23,11 @@ export async function GET(
       return fail("无效的说说ID");
     }
 
-    /* 宿主必须存在且已发布（草稿等同不存在），检查在缓存外。 */
     await assertCommentHostVisible("chatter", chatterId, "说说不存在");
 
-    // 不带 keyParams：评论列表只由路径里的 chatterId 决定，query 一律不进缓存键。
     return await cachedPublicGet(CACHE_NAMESPACE.comments, request, async () => {
       const comments = await prisma.chatterComment.findMany({
         where: { chatter_id: chatterId, status: "approved" },
-        // asc + take 是「父节点安全」的截断，见 COMMENT_TAKE 的说明
         orderBy: { created_at: "asc" },
         take: COMMENT_TAKE,
         select: CHATTER_COMMENT_PUBLIC_SELECT,

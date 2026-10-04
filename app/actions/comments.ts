@@ -12,7 +12,6 @@ export async function setCommentStatusAction(commentId: string, status: string) 
   return runAdminAction(() => setCommentStatus(commentId, status));
 }
 
-/** 删除评论（子回复级联删除；幂等，删不存在的评论不报错） */
 export async function deleteCommentAction(commentId: string) {
   return runAdminAction(async () => {
     await deleteComment(commentId);

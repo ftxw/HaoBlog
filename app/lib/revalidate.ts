@@ -1,6 +1,5 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 
-/** 缓存失效必须容忍「没有 Next 运行时」的场景。 */
 function safe(run: () => void): void {
   try {
     run();
@@ -10,7 +9,6 @@ function safe(run: () => void): void {
   }
 }
 
-/** 按 tag 即刻失效（`expire: 0` = 不阻塞下一个请求的读己之写） */
 export function purgeTag(tag: string): void {
   safe(() => revalidateTag(tag, { expire: 0 }));
 }

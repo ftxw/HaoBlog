@@ -5,7 +5,6 @@ export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ code: 0, message: "ok", data }, init);
 }
 
-/** `data` 仅在需要随失败附带机器可读信息时使用（如 401 的 canRefresh），默认 null */
 export function fail(
   message: string,
   status = 400,
@@ -36,13 +35,11 @@ export function parsePagination(
   }: { defaultSize?: number; maxSize?: number } = {}
 ): { page: number; size: number } {
   return {
-    // page 上界 10000：必须设上界，否则 ?page=1e15 会生成巨大 OFFSET
     page: toPositiveInt(searchParams.get("page"), 1, 10000),
     size: toPositiveInt(searchParams.get("size"), defaultSize, maxSize),
   };
 }
 
-/** ⚠️ 只有 BusinessError 的提示能原样回给客户端，其余原文会泄露内部结构。 */
 export function safeErrMessage(err: unknown, fallback = "服务器错误"): string {
   if (err instanceof BusinessError) return err.message || fallback;
   const raw = err instanceof Error ? err.message : "";
@@ -50,7 +47,6 @@ export function safeErrMessage(err: unknown, fallback = "服务器错误"): stri
   return fallback;
 }
 
-/** 业务错误自带语义正确的状态码（401/403/503…），其余一律 500。 */
 export function errorStatus(err: unknown): number {
   return err instanceof BusinessError ? err.status : 500;
 }

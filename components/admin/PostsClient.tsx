@@ -93,7 +93,7 @@ export default function PostsClient({
   const refresh = () => {
     posts.reload();
     count.reload();
-    badges.reload(); // 增删/置顶文章、增删评论后徽标数字要跟着变
+    badges.reload();
   };
 
   const handleTogglePinned = async (post: PostListItem) => {

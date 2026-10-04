@@ -239,7 +239,6 @@ export default function ConfigGroupsEditor({
         title={title}
         description={description}
         actions={
-          /* 「业务链接」分组由 BusinessLinksManager 自己管增删改，没有 siteConfigDefs 项，故不渲染保存按钮。 */
           activeGroup === "business-links" ? null : (
             <Button onClick={handleSave} loading={saving} disabled={loading || !activeGroup}>
               <Save className="h-4 w-4" />

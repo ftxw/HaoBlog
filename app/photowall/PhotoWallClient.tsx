@@ -43,9 +43,7 @@ export interface Album {
   cover: string;
   date: string;
   layout: "grid" | "timeline";
-  /** 卡片堆叠与封面比例用的预览照片；全量在打开相册时单独取（见 getAlbum） */
   photos: AlbumPhoto[];
-  /** 相册真实照片总数（`photos` 只是它的前几张） */
   photoCount: number;
 }
 
@@ -89,7 +87,6 @@ function getAlbumColsServerSnapshot(): number {
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-/** 预览照片 → 详情视图数据（全量取不到时的降级，以及首次渲染的兜底） */
 function previewToDetail(album: Album): AlbumDetailData {
   return {
     id: album.id,
@@ -117,7 +114,6 @@ function detailFromResponse(
     title: res.title,
     description: res.description,
     cover: res.cover,
-    // 接口不回展示用的日期字符串，沿用列表里已格式化好的那份
     date: fallback.date,
     layout: res.layout,
     photos: res.photos.map((p) => ({
@@ -130,7 +126,6 @@ function detailFromResponse(
   };
 }
 
-/** 打开相册后、全量照片到达前的占位页：保留标题与返回入口，避免闪一下空白 */
 function AlbumDetailPlaceholder({
   album,
   onBack,
@@ -176,16 +171,13 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
   const [albums] = useState<Album[]>(initialAlbums);
   const [activeAlbum, setActiveAlbum] = useState<Album | null>(null);
   const [albumPhotos, setAlbumPhotos] = useState<AlbumDetailData | null>(null);
-  /** 从搜索结果点进来时要在相册里定位到的那张 */
   const [focusUrl, setFocusUrl] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useUrlParam("q", "");
-  // 过渡期间锁定的「上一次提交查询」。activeQuery 由它 + searchQuery 派生。
   const [committedQuery, setCommittedQuery] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const listScrollRef = useRef(0);
 
-  // 非过渡态：searchQuery 变化即时反映（如浏览器前进/后退改 URL）。
   const activeQuery = isTransitioning ? committedQuery : searchQuery.toLowerCase();
 
   const handleSearchChange = (value: string) => {
@@ -198,10 +190,8 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
     if (!isTransitioning) return;
     const timer = setTimeout(() => setIsTransitioning(false), 250);
     return () => clearTimeout(timer);
-    // searchQuery 入依赖：每次输入都重置 250ms 防抖计时。
   }, [searchQuery, isTransitioning]);
 
-  // 照片描述搜索必须走服务端：首页每册只下发几张预览。
   const [photoHits, setPhotoHits] = useState<{
     q: string;
     rows: PhotoSearchHit[];
@@ -217,7 +207,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
         if (!cancelled) setPhotoHits({ q: activeQuery, rows });
       })
       .catch(() => {
-        // 搜索失败按「没有匹配的照片」处理：相关相册那一段仍照常显示
         if (!cancelled) setPhotoHits({ q: activeQuery, rows: [] });
       });
     return () => {
@@ -249,7 +238,7 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
     const n = Math.max(1, albumColsCount);
     const cols: Album[][] = Array.from({ length: n }, () => []);
     if (matchedAlbums.length === 0) return cols;
-    const gap = 32; // 列内卡片间距 gap-8 = 2rem
+    const gap = 32;
     const estimate = (a: Album) => (a.photoCount === 0 ? 280 : 520);
     const colHeights = new Array(n).fill(0);
     for (const album of matchedAlbums) {
@@ -280,7 +269,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
     if (next) setHeights(next);
   }, [matchedAlbums, albumColsCount, heights]);
 
-  // 打开相册时才去取全量照片：列表里只有几张预览。
   useEffect(() => {
     const album = activeAlbum;
     if (!album) return;
@@ -290,7 +278,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
         if (!cancelled) setAlbumPhotos(detailFromResponse(res, album));
       })
       .catch(() => {
-        // 取不到全量就退回预览的几张：比一页空白好，至少能看到相册内容
         if (!cancelled) setAlbumPhotos(previewToDetail(album));
       });
     return () => {
@@ -301,7 +288,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
   const openAlbum = (album: Album, srcPhotoUrl?: string) => {
     listScrollRef.current = window.scrollY;
     setSearchQuery("");
-    // 取消过渡态，让派生的 activeQuery 立即回到空串
     setIsTransitioning(false);
     setAlbumPhotos(null);
     setFocusUrl(srcPhotoUrl ?? null);
@@ -433,7 +419,6 @@ export default function PhotoWallClient({ initialAlbums }: { initialAlbums: Albu
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
                   {matchedPhotos.map((photo, index) => (
                     <PhotoCard
-                      /* key 必须是「哪张照片」：用 albumId-index 时换搜索词会复用实例，PhotoCard 的 loaded 状态张冠李戴。 */
                       key={photo.url}
                       url={photo.url}
                       alt={photo.caption ?? ""}

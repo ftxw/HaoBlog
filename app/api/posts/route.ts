@@ -12,12 +12,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusParam = searchParams.get("status") || undefined;
 
-    // 安全：匿名访客不得通过 ?status=draft 拉取草稿列表。
     const isAdmin = await isAdminRequest(req);
-    /* 非管理员恒定 "published"；管理员传非法值等价于「不过滤」。 */
     const effectiveStatus = parseContentStatus(isAdmin ? statusParam : "published");
 
-    // 后台带 status 的请求（或管理员请求）不走公开缓存：缓存键只按 URL。
     const bypassCache = isAdmin || Boolean(statusParam);
 
     const { page, size } = parsePagination(searchParams, { defaultSize: 10 });
@@ -35,7 +32,6 @@ export async function GET(req: NextRequest) {
     if (bypassCache) {
       return ok(await loader());
     }
-    // 缓存键只认这 5 个真正参与过滤的参数（loader 读的就是它们）。
     return await cachedPublicGet(CACHE_NAMESPACE.posts, req, loader, {
       keyParams: ["page", "size", "category", "tag", "keyword"],
     });

@@ -1,7 +1,6 @@
-/** 「哪些远程图片域名可以交给 next/image 优化」的唯一真源。 */
 const STATIC_IMAGE_HOSTS = [
-  "avatars.githubusercontent.com", // GitHub 头像
-  "api.dicebear.com", // dicebear 匿名头像
+  "avatars.githubusercontent.com",
+  "api.dicebear.com",
 ] as const;
 
 export const OPTIMIZABLE_IMAGE_HOSTS: readonly string[] = [...STATIC_IMAGE_HOSTS];

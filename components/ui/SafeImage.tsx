@@ -9,7 +9,7 @@ import { OPTIMIZABLE_IMAGE_HOSTS } from "@/app/lib/image-hosts";
 const ALLOWED_REMOTE_HOSTS = new Set(OPTIMIZABLE_IMAGE_HOSTS);
 
 function isOptimizableUrl(src: string): boolean {
-  if (src.startsWith("/")) return true; // 本地静态资源
+  if (src.startsWith("/")) return true;
   try {
     return ALLOWED_REMOTE_HOSTS.has(new URL(src).hostname.toLowerCase());
   } catch {
@@ -33,7 +33,6 @@ export default function SafeImage({
   onLoad,
   ...rest
 }: SafeImageProps) {
-  /* 记「哪个 src 失败」而非布尔值：换图后 erroredSrc !== src 自动恢复，不必用 effect 重置。 */
   const [erroredSrc, setErroredSrc] = useState<string | null>(null);
   const errored = erroredSrc === src;
   const effectiveSrc = errored ? PLACEHOLDER_IMG : src;

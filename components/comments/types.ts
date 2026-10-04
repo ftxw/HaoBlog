@@ -1,7 +1,6 @@
 import { type RefObject } from "react";
 import { type LikeTargetType } from "@/app/lib/api-client/like";
 
-/** 前台评论区（文章 / 说说 / 项目）共用的评论节点。 */
 export interface CommentItem {
   id: string;
   parent_id: string | null;

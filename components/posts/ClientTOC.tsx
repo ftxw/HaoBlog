@@ -60,7 +60,7 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
         .filter((p) => Boolean(p.id));
     };
 
-    const OFFSET = 150; // 标题进入视口顶部 150px 内即视为当前章节
+    const OFFSET = 150;
 
     const handleScroll = () => {
       if (paired.length === 0 || paired.some((p) => !p.el.isConnected)) collect();
@@ -92,7 +92,6 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
 
   useEffect(
     () => () => {
-      /* 卸载时取消在途 rAF：它是自循环，不取消会继续 scrollTo 且 scrollBehavior 停在 auto。 */
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;

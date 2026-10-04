@@ -1,4 +1,3 @@
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -9,22 +8,17 @@ import { fail } from "@/app/lib/http";
 
 const PROXY_DEADLINE = 10_000;
 
-/** 错误响应的缓存头。 */
 const ERROR_CACHE_HEADERS = {
   "Cache-Control": "no-store, must-revalidate",
   "Vercel-CDN-Cache-Control": "no-store",
 };
 
-/** 成功响应的缓存策略 —— 同样是两个头分管两层，理由见 ERROR_CACHE_HEADERS。 */
 const SUCCESS_CACHE = "public, max-age=31536000, immutable";
 
-/** 路由命名空间前缀 —— 与 `image-thumb.ts` 的 `PROXY_URL_PREFIX` 一致。 */
 const ROUTE_PREFIX = "imgs";
 
-/** 控制字符（含 NUL）—— 见 `toObjectKey` 的说明。 */
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 
-/** 把 catch-all 段拼成 S3 对象 Key，并做规范的路径校验。 */
 function toObjectKey(segments: string[]): string | null {
   if (segments.length < 2) return null;
   if (segments[0] !== ROUTE_PREFIX) return null;
@@ -72,7 +66,6 @@ export async function GET(
     if (hit === null) {
       const configured = await isS3Configured();
 
-      /* 缩略图缺失 → 回退原图。 */
       if (configured) {
         const originalKey = originalKeyOfThumb(imgPath);
         if (originalKey) {
@@ -97,7 +90,6 @@ export async function GET(
       }
     }
 
-    // 安全：不透传存储层的 Content-Type，只按扩展名放行白名单内的图片类型。
     const safeImageTypes = [
       "image/jpeg",
       "image/png",

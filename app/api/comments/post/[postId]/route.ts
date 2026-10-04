@@ -19,14 +19,11 @@ export async function GET(
       return fail("无效的文章ID");
     }
 
-    /* 宿主必须存在且已发布，检查放在缓存外以免被评论缓存遮住。 */
     await assertCommentHostVisible("post", postId, "文章不存在");
 
-    // 不带 keyParams：评论列表只由路径里的 postId 决定，query 一律不进缓存键。
     return await cachedPublicGet(CACHE_NAMESPACE.comments, request, async () => {
       const comments = await prisma.comment.findMany({
         where: { post_id: postId, status: "approved" },
-        // asc + take 是「父节点安全」的截断，见 COMMENT_TAKE 的说明
         orderBy: { created_at: "asc" },
         take: COMMENT_TAKE,
         select: COMMENT_PUBLIC_SELECT,

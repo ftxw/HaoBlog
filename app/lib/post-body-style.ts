@@ -1,14 +1,10 @@
-/** 正文排版样式 .post-body 的唯一定义处。 */
 export const POST_BODY_STYLE = `
-  /* 正文排版：刻意不用 .prose（深色下不可见）；标记体系与目录光点同用 --app-accent。 */
-  /* 一级标题：底色块 + 左侧竖条，竖条用 calc 落在首行中线。 */
   .post-body h1 {
     position: relative;
     margin: 3rem 0 1.25rem;
     padding: 0.625rem 0.75rem 0.625rem 1.25rem;
     background: var(--app-content-block);
     border-radius: 0.5rem;
-    /* 1.25rem：必须明显低于页面标题的 text-2xl(24px)。 */
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.4;
@@ -25,7 +21,6 @@ export const POST_BODY_STYLE = `
     background: var(--app-accent);
     box-shadow: 3px 0 10px -1px var(--app-accent);
   }
-  /* 二级标题：左侧竖条。高度写 1.25em 以便随字号缩放，top 对齐首行中线（故须显式定 line-height）。 */
   .post-body h2 {
     position: relative;
     margin: 2.5rem 0 1rem;
@@ -46,7 +41,6 @@ export const POST_BODY_STYLE = `
     background: var(--app-accent);
     box-shadow: 3px 0 10px -1px var(--app-accent);
   }
-  /* 三级标题：同套标记降一级 —— 5px 实心圆点。 */
   .post-body h3 {
     position: relative;
     margin: 2rem 0 0.75rem;
@@ -70,12 +64,11 @@ export const POST_BODY_STYLE = `
   .post-body p {
     margin: 1rem 0;
     line-height: 1.75;
-    text-align: justify; /* 两端对齐；末行默认保持左对齐 */
+    text-align: justify;
     color: var(--app-ink-2);
   }
   .post-body a {
     color: var(--app-accent);
-    /* 去掉下划线，但保留悬停出下划线 —— 只靠颜色区分对色觉障碍读者不友好。 */
     text-decoration: none;
     text-underline-offset: 4px;
   }
@@ -92,14 +85,12 @@ export const POST_BODY_STYLE = `
   .post-body ul { list-style: none; }
   .post-body ol { list-style: decimal; }
   .post-body li {
-    /* 每条 li 一道虚线分隔（用发丝色）。 */
     margin: 0.5rem 0;
     padding-bottom: 0.5rem;
     border-bottom: 1px dashed var(--app-hairline-soft);
     line-height: 1.7;
   }
   .post-body li::marker { color: var(--app-ink-4); }
-  /* 无序列表自绘主题色圆点；list-style:none 会让 Safari/VoiceOver 不再播报列表语义（已知取舍）。 */
   .post-body ul > li { position: relative; }
   .post-body ul > li::before {
     content: "";
@@ -111,7 +102,6 @@ export const POST_BODY_STYLE = `
     border-radius: 50%;
     background: var(--app-accent);
   }
-  /* 引用整块圆角卡 + 角引号：角引号为 data-URI SVG 复刻，用 mask 上色以走本站 token。 */
   .post-body blockquote {
     position: relative;
     margin: 1.5rem 0;
@@ -171,7 +161,6 @@ export const POST_BODY_STYLE = `
     font-size: 0.875rem;
     line-height: 1.7;
   }
-  /* 清掉 highlight.js 主题自带的 .hljs 底色，否则会在 pre 上再叠一层灰块。 */
   .post-body pre code {
     background: transparent;
     color: var(--app-stage-ink);

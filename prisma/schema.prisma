@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // 目标运行时的 Query Engine 变体。
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -30,10 +29,8 @@ enum AlbumLayout {
   timeline
 }
 
-// 应用侧账号表：本表只承载「本站的身份标识 + 权限」。
 model User {
   id         String   @id @default(ulid())
-  /// Supabase Auth 的邮箱，同时用作本站账号的唯一标识（所有查询都按它定位）
   email      String   @unique
   is_admin   Boolean  @default(false)
   created_at DateTime @default(now()) @db.Timestamptz(3)
@@ -89,9 +86,7 @@ model Post {
   @@index([status, published_at])
   @@index([category_id])
   @@index([status, is_pinned, created_at])
-  // 后台文章列表不带 status 过滤，直接 orderBy [is_pinned, created_at]。
   @@index([is_pinned, created_at])
-  // ── 关键词搜索用的 pg_trgm GIN 索引 ────────────────────────────────
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_title_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_description_trgm_idx")
   @@index([content(ops: raw("gin_trgm_ops"))], type: Gin, map: "post_content_trgm_idx")
@@ -106,7 +101,6 @@ model PostTag {
   tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
   @@id([post_id, tag_id])
-  // 主键索引是 (post_id, tag_id)，按 tag_id 单独过滤用不上它
   @@index([tag_id])
   @@map("post_tag")
 }
@@ -129,7 +123,6 @@ model Comment {
 
   @@index([post_id, status, created_at])
   @@index([status, created_at])
-  // 评论树按 parent_id 递归取子节点。
   @@index([parent_id, created_at])
   @@map("comment")
 }
@@ -137,10 +130,8 @@ model Comment {
 model Chatter {
   id         String        @id @default(ulid())
   content    String        @db.Text
-  // 配图 URL 列表。用原生数组列（PG text[]）而不是 JSON 字符串 ——
   images     String[]      @default([])
   location   String        @default("") @db.VarChar(1024)
-  // 心情文案。非空：没填就是空串 —— 可空 + 默认 "" 会同时存在 null 与 "" 两种「没填」。
   mood       String        @default("")
   likes      Int           @default(0)
   status     ContentStatus @default(draft)
@@ -149,9 +140,7 @@ model Chatter {
 
   comments ChatterComment[]
 
-  // 后台说说搜索没有 trgm 索引，这是刻意的：chatter 是个人站量级的表
   @@index([status, created_at])
-  /// 后台说说列表不带 status 过滤，直接 orderBy created_at desc
   @@index([created_at])
   @@map("chatter")
 }
@@ -174,7 +163,6 @@ model ChatterComment {
 
   @@index([chatter_id, status, created_at])
   @@index([status, created_at])
-  /// 同 comment：后台列表是 `parent_id IS NULL ORDER BY created_at DESC`
   @@index([parent_id, created_at])
   @@map("chatter_comment")
 }
@@ -184,17 +172,14 @@ model Album {
   title        String
   description  String      @default("") @db.VarChar(1024)
   cover        String      @default("") @db.VarChar(1024)
-  /// 照片列表布局方式：grid（网格瀑布流）/timeline（按拍摄日期分组的时间轴）
   layout       AlbumLayout @default(grid)
   sort         Int         @default(0)
   created_at   DateTime    @default(now()) @db.Timestamptz(3)
   updated_at   DateTime    @default(now()) @updatedAt @db.Timestamptz(3)
-  /// 手动设置的相册时间（未设置时展示回退到 updated_at）
   published_at DateTime? @db.Timestamptz(3)
 
   photos Photo[]
 
-  /// 相册列表按 sort 排序
   @@index([sort])
   @@map("album")
 }
@@ -204,11 +189,8 @@ model Photo {
   album_id   String
   url        String   @db.Text
   caption    String   @default("") @db.VarChar(1024)
-  /// 拍摄日期（用于时间轴视图分组），默认取创建时间
   taken_at   DateTime @default(now()) @db.Timestamptz(3)
-  // 原图宽（像素），用于 <img width/height> 预占位消除瀑布流 CLS。
   w          Int?
-  /// 原图高（像素），同上
   h          Int?
   sort       Int      @default(0)
   created_at DateTime @default(now()) @db.Timestamptz(3)
@@ -225,13 +207,9 @@ model Project {
   description      String        @default("") @db.VarChar(1024)
   long_description String        @default("") @db.VarChar(2048)
   cover_image      String        @default("") @db.VarChar(1024)
-  /// 详情弹窗中展示的图片幻灯片
   images           String[]      @default([])
-  /// 技术栈标签
   tech_stack       String[]      @default([])
-  /// 后台发布/隐藏：published（已发布）/draft（草稿/隐藏）
   status           ContentStatus @default(published)
-  /// 卡片角标文案（如「进行中」），留空则不显示
   status_label     String        @default("")
   is_featured      Boolean       @default(false)
   sort             Int           @default(0)
@@ -242,7 +220,6 @@ model Project {
   comments ProjectComment[]
 
   @@index([status, sort])
-  /// 后台项目列表不带 status 过滤，直接 orderBy sort asc
   @@index([sort])
   @@map("project")
 }
@@ -256,7 +233,6 @@ model ProjectComment {
   content           String        @db.Text
   ip                String        @default("")
   likes             Int           @default(0)
-  /// approved（通过）/pending（待审）/rejected（驳回）
   status            CommentStatus @default(approved)
   created_at        DateTime      @default(now()) @db.Timestamptz(3)
 
@@ -266,7 +242,6 @@ model ProjectComment {
 
   @@index([project_id, status, created_at])
   @@index([status, created_at])
-  /// 同 comment：后台列表是 `parent_id IS NULL ORDER BY created_at DESC`
   @@index([parent_id, created_at])
   @@map("project_comment")
 }
@@ -282,7 +257,6 @@ model BookmarkCategory {
 
   sites BookmarkSite[]
 
-  /// 分类列表 orderBy sort asc
   @@index([sort])
   @@map("bookmark_category")
 }
@@ -294,7 +268,6 @@ model BookmarkSite {
   url         String   @db.Text
   icon        String   @default("") @db.VarChar(1024)
   description String   @default("") @db.VarChar(1024)
-  /// 支持的平台标签（如 iOS / Web / Windows）
   platforms   String[] @default([])
   sort        Int      @default(0)
   created_at  DateTime @default(now()) @db.Timestamptz(3)
@@ -302,14 +275,11 @@ model BookmarkSite {
 
   category BookmarkCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
-  // 站点列表的两种查法。
   @@index([category_id, sort])
-  /// 不带分类时的 orderBy sort
   @@index([sort])
   @@map("bookmark_site")
 }
 
-// 站点配置：纯键值表。
 model SiteConfig {
   key         String   @id
   value       String   @default("") @db.Text
@@ -319,12 +289,9 @@ model SiteConfig {
   @@map("site_config")
 }
 
-// 图床上传记录：保存 S3 兼容存储的对象 key。
 model ImageUpload {
   id         String   @id @default(ulid())
-  /// 图床图片访问 URL（唯一，/api/img-proxy/imgs/{key}）
   url        String   @unique
-  /// S3 对象 key（删除时按 key 删；留空时从 URL 提取）
   asset_id   String   @default("")
   created_at DateTime @default(now()) @db.Timestamptz(3)
 
@@ -342,14 +309,11 @@ model LoginLog {
   operating_time DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([user_id, operating_time])
-  /// 保留期清理只按 operating_time 过滤，用不上上面那条以 user_id 打头的复合索引
   @@index([operating_time])
   @@map("login_log")
 }
 
-/// 访客统计（轻量版）：按天聚合 PV/UV，不存明细
 model DailyStat {
-  /// 日期 YYYY-MM-DD
   date String @id
   pv   Int    @default(0)
   uv   Int    @default(0)
@@ -357,9 +321,7 @@ model DailyStat {
   @@map("daily_stat")
 }
 
-/// UV 去重辅助表：当天 IP 集合（只用于去重，不展示；可定期清理旧日期）
 model DailyUv {
-  /// 日期 YYYY-MM-DD
   date String
   ip   String
 
@@ -367,23 +329,18 @@ model DailyUv {
   @@map("daily_uv")
 }
 
-/// 访客明细（后台「最近访客」用）：轻量记录，仅保留近 30 天
 model VisitorLog {
   id         String   @id @default(ulid())
   ip         String   @default("")
-  /// 归属地整串（如「陕西省 西安市 中国电信」）
   address    String   @default("") @db.VarChar(256)
-  /// 浏览器（如 Chrome / Edge / Safari）
   browser    String   @default("")
   created_at DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([created_at])
-  // 仪表盘「最近访客」按 IP 取每个访客最新一条。
   @@index([ip, created_at])
   @@map("visitor_log")
 }
 
-/// 业务链接：前台悬浮面板展示的网址集合
 model BusinessLink {
   id          String     @id @default(ulid())
   name        String
@@ -391,44 +348,32 @@ model BusinessLink {
   icon        String     @default("") @db.VarChar(1024)
   description String     @default("") @db.VarChar(1024)
   sort        Int        @default(0)
-  status      LinkStatus @default(active) // active / hidden
+  status      LinkStatus @default(active)
   created_at  DateTime   @default(now()) @db.Timestamptz(3)
   updated_at  DateTime   @default(now()) @updatedAt @db.Timestamptz(3)
 
-  /// 前台只列 status=active 且按 sort 排序
   @@index([status, sort])
-  /// 后台列表不带 status 过滤的 orderBy sort
   @@index([sort])
   @@map("business_link")
 }
 
-// 登录态点赞记录：每账号每内容（post/chatter/project）一次，跨设备同步。
 model ContentLike {
   id          String   @id @default(ulid())
-  /// Supabase Auth 用户 UUID
   user_id     String
-  /// post | chatter | project（应用层白名单校验）
   target_type String   @db.VarChar(16)
   target_id   String
   created_at  DateTime @default(now()) @db.Timestamptz(3)
 
-  /// 「同一账号对同一内容只能有一条」的唯一约束（幂等点赞的落点）
   @@unique([user_id, target_type, target_id])
-  /// 反向查询：某条内容被谁赞过 / 统计点赞数
   @@index([target_type, target_id])
   @@map("content_like")
 }
 
-// 限流计数器 —— 见 app/lib/rate-limit.ts。
 model RateLimit {
-  /// 限流维度，如 `comment-create:burst:1.2.3.4`
   key          String   @id @db.VarChar(255)
-  /// 当前窗口内已发生的次数
   count        Int      @default(0)
-  /// 当前窗口的起点（固定窗口）
   window_start DateTime @map("window_start") @db.Timestamptz(3)
 
-  /// 清理用：按窗口起点扫过期行
   @@index([window_start])
   @@map("rate_limit")
 }

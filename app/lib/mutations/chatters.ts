@@ -1,5 +1,3 @@
-/** 说说（Chatter）域的写路径唯一实现：校验 → 落库 → 失效缓存。 */
-
 import { prisma } from "@/app/lib/prisma";
 import { invalidateChatterCaches } from "@/app/lib/api-cache";
 import { CHATTER_COMMENT_PUBLIC_SELECT } from "@/app/lib/comment-tree";
@@ -45,7 +43,6 @@ function normalizeChatterStatus(
   }
   throw new BusinessError("无效的说说状态", 400);
 }
-
 
 export async function createChatter(input: ChatterInput) {
   const content =
@@ -96,7 +93,6 @@ export async function deleteChatter(chatterId: string) {
   const id = requireId(chatterId, "无效的说说ID");
 
   try {
-    /* 主体与该说说的点赞记录必须一起删，放在同一事务里保证要么都成、要么都不成 */
     await prisma.$transaction(
       async (tx) => {
         await tx.chatter.delete({ where: { id } });
@@ -112,8 +108,6 @@ export async function deleteChatter(chatterId: string) {
   invalidateChatterCaches();
 }
 
-
-/** 访客发表评论。登录后才允许，落库即为 approved。 */
 export async function createChatterComment(
   input: ChatterCommentInput,
   author: CommentAuthor,
@@ -132,7 +126,6 @@ export async function createChatterComment(
     `评论内容过长（最多 ${COMMENT_MAX_CONTENT_LENGTH} 字）`
   );
 
-  // 目标存在性、发布状态与父评论归属由 `comment-rules` 统一校验（三类评论一致）。
   assertCommentTargetVisible(
     await prisma.chatter.findUnique({
       where: { id: chatterId },
@@ -188,7 +181,6 @@ export async function setChatterCommentStatus(
   }
 }
 
-/** 删除评论。子回复随父评论级联删除（schema 里 parent 关系是 onDelete: Cascade）。 */
 export async function deleteChatterComment(commentId: string) {
   const id = requireId(commentId, "无效的评论ID");
 

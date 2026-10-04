@@ -21,7 +21,6 @@ export function imgFallback(e: SyntheticEvent<HTMLImageElement>, original: strin
   markImgBroken(e.currentTarget, original);
 }
 
-/** 把任意可识别日期字符串安全解析为 Date 对象 */
 export function parsePhotoDate(value: string | undefined | null): Date | undefined {
   if (!value) return undefined;
   const d = new Date(value);
@@ -89,7 +88,6 @@ export function PhotoCard({
             }
           : undefined
       }
-      /* 图片加载完成才挂入场类：动画的 fill-mode: both 在 delay 期间保持 from 态 */
       style={
         loaded ? { animationDelay: `${(index % 12) * 80}ms` } : undefined
       }
@@ -105,7 +103,7 @@ export function PhotoCard({
         loading="lazy"
         onLoad={() => setLoaded(true)}
         onError={(e) => {
-          markImgBroken(e.currentTarget, url); // 失败即停，不再二次请求原图
+          markImgBroken(e.currentTarget, url);
           setLoaded(true);
         }}
         className={imgClassName}
@@ -135,7 +133,6 @@ export function TimelineView({
     }
     const undated = ordered.filter((p) => !p.takenAt);
     if (undated.length) {
-      /* 固定哨兵 key，不能用 new Date()：本组件参与 SSR，跨月时 key 与标题两端不一致会 hydration mismatch。 */
       map.set("未排期", { date: null, items: undated });
     }
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));

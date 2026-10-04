@@ -13,9 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusParam = searchParams.get("status") || undefined;
 
-    // 安全：匿名不得通过 ?status=draft 探测草稿数量；管理员才允许任意 status。
     const isAdmin = await isAdminRequest(req);
-    /* 非法/缺失 status 一律退化为「不过滤」。 */
     const effectiveStatus = parseContentStatus(isAdmin ? statusParam : "published");
     const bypassCache = isAdmin || Boolean(statusParam);
 
@@ -29,7 +27,6 @@ export async function GET(req: NextRequest) {
     if (bypassCache) {
       return ok(await loader());
     }
-    /* 不带 keyParams：这里走缓存的前提就是「匿名 + 没有 status 参数」。 */
     return await cachedPublicGet(CACHE_NAMESPACE.postsCount, req, loader);
   } catch (err) {
     console.error("GET /api/posts/count error:", err);

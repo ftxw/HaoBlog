@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// highlight.js 与 KaTeX 的 CSS 按需加载（仅文章详情与关于页引入），不在此全站注入。
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { MusicProvider } from "@/components/providers/MusicProvider";
@@ -23,10 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = pickConfigValue(dbConfig, "bio");
   const avatar = pickConfigValue(dbConfig, "avatarUrl");
   const cover = avatar || pickConfigValue(dbConfig, "defaultPostCover");
-  // 社交平台抓取、浏览器取 favicon 都不一定带 Referer，图床防盗链会拦掉直链，故统一换成站内地址。
   const proxied = (url: string) =>
     absoluteUrlOf(proxyUrlOf(url, normalizeCdnDomain(dbConfig.imageCdnDomain)), base.toString());
-  // 两个键都可能被后台清空 → 无图可分享时不输出 og:image（空串会被解析成页面自身地址）
   const ogImage = cover ? proxied(cover) : undefined;
   const icon = avatar ? proxied(avatar) : undefined;
 
@@ -34,7 +31,6 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: base,
     title,
     description,
-    // 站点图标即后台设置的作者头像，不写死；后台清空头像则交给浏览器默认图标。
     icons: icon ? { icon, apple: icon } : undefined,
     alternates: {
       types: {
@@ -61,7 +57,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 必须是剔除私钥的子集：这份配置会作为 initialConfig 注入客户端 Provider。
   const dbConfig = await getPublicSiteConfig();
 
   configureCdnDomain(dbConfig.imageCdnDomain);
@@ -83,7 +78,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
-        {/* 必须包在 <style> 里。 */}
         <noscript
           dangerouslySetInnerHTML={{
             __html:

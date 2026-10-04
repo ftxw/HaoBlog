@@ -32,7 +32,6 @@ export default function AlbumDetailView({
 }: {
   data: AlbumDetailData;
   onBack?: () => void;
-  /** 从搜索结果点进来时直接打开的那张照片（按 url 定位）。相册详情页不用它。 */
   initialPhotoUrl?: string;
 }) {
   const router = useRouter();

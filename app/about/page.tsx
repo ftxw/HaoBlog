@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -23,11 +22,9 @@ export default async function AboutPage() {
   const avatarUrl = pickConfigValue(dbConfig, "avatarUrl");
   const authorName = pickConfigValue(dbConfig, "authorName");
   const authorBio = pickConfigValue(dbConfig, "bio");
-  /* 与头像 / 封面同语义：只有「键不存在」才用默认示例正文，空串是后台「显式清空」。 */
   const markdown = pickConfigValue(dbConfig, "aboutContent");
   const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
 
-  /* 封面取值链：手动设置 → 正文首图 → 文章默认封面 → 不显示（同头像的「清空即无」）。 */
   const coverImage = resolveCoverChain(
     pickConfigValue(dbConfig, "aboutCover"),
     markdown,
@@ -62,13 +59,11 @@ export default async function AboutPage() {
             </div>
           )}
 
-          {/* 无封面时内容区直接贴卡片顶端，顶部留白要自己补（有封面时由头像圆的负边距撑开） */}
           <div
             className={`relative px-5 pb-10 sm:px-8 md:px-10 ${
               coverImage ? "" : "pt-8 md:pt-10"
             }`}
           >
-            {/* 有封面时这个圆靠负边距压住封面，无头像也要占位，否则标题上移压封面。 */}
             {(avatarUrl || coverImage) && (
               <div
                 className={`relative z-20 h-24 w-24 md:h-32 md:w-32 ${

@@ -1,5 +1,3 @@
-
-/** ISR 周期：与其它前台页面取齐（app/page.tsx、app/posts/page.tsx 都是 300）。 */
 export const revalidate = 300;
 
 import { NextResponse } from "next/server";
@@ -112,7 +110,6 @@ async function generateItem(
     </item>`;
 }
 
-/** RSS 图片由阅读器独立加载（不带 Referer），统一改写成「本站绝对地址 + 站内代理」。 */
 function absolutizeFeedImages(html: string, siteUrl: string, cdnDomain: string): string {
   return html.replace(
     /(<img\b[^>]*?src=["'])([^"']+)(["'])/gi,
@@ -123,7 +120,6 @@ function absolutizeFeedImages(html: string, siteUrl: string, cdnDomain: string):
   );
 }
 
-/** 安全地放进 CDATA 段。 */
 function cdata(value: unknown): string {
   const text = value === null || value === undefined ? "" : String(value);
   return `<![CDATA[${text.replace(/\]\]>/g, "]]]]><![CDATA[>")}]]>`;

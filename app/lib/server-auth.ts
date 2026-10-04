@@ -6,7 +6,6 @@ import {
   parseSessionValue,
 } from "@/app/lib/session-cookie";
 
-/** 同一请求内只验一次上游 token（layout 与 page 会并发渲染）。 */
 export const getServerAuth = cache(async (): Promise<{
   user: CurrentUser;
   accessToken: string;
@@ -21,7 +20,6 @@ export const getServerAuth = cache(async (): Promise<{
   try {
     user = await checkAuthorizedAccessToken(session.accessToken);
   } catch (err) {
-    /* 页面渲染路径刻意降级为「未登录」，而不是把 UpstreamAuthError 抛给渲染层。 */
     console.error("[server-auth] 鉴权上游不可用，本次按未登录渲染:", err);
     return null;
   }
@@ -35,7 +33,6 @@ export async function getServerAdmin(): Promise<CurrentUser | null> {
   return auth?.user.is_admin ? auth.user : null;
 }
 
-/** 区分「没有会话」「会话有效但不是管理员」「就是管理员」三种情况。 */
 export async function getServerAuthState(): Promise<
   | { kind: "admin"; user: CurrentUser }
   | { kind: "nonAdmin"; user: CurrentUser }

@@ -170,7 +170,6 @@ export async function deleteBookmarkSite(id: string) {
   invalidateBookmarkCaches();
 }
 
-/* 站点序号是跨分类的全局序列，不是每个分类各编一套。 */
 export async function reorderBookmarkSites(input: BookmarkReorderInput) {
   const list = await prisma.bookmarkSite.findMany({
     orderBy: [...SORT_ROW_ORDER_BY],

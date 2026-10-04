@@ -1,9 +1,6 @@
-/** 把指定邮箱的账号设为管理员（is_admin=true），或列出现有管理员。 */
-
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-/** 极简 .env 解析：不引第三方依赖，避免本地没装 dotenv 时脚本跑不起来 */
 function loadEnvFile(file) {
   if (!existsSync(file)) return;
   for (const raw of readFileSync(file, "utf8").split(/\r?\n/)) {
@@ -55,7 +52,6 @@ try {
 
 const prisma = new PrismaClient();
 
-/** 主逻辑：返回退出码，不要在里面调 process.exit()。 */
 async function main() {
   if (arg === "--list") {
     const admins = await prisma.user.findMany({
@@ -82,7 +78,6 @@ async function main() {
   const row = await prisma.user.findUnique({ where: { email } });
 
   if (!row) {
-    // 账号在 Supabase Auth 里存在、本站 user 表却没有记录 —— 这正是「登录成功但不是管理员」的成因，补建即可。
     await prisma.user.create({ data: { email, is_admin: true } });
     console.log(`user 表里原本没有 ${email}，已补建记录并设为管理员。`);
     console.log("若登录时仍提示「不是管理员」，说明该邮箱在 Supabase Auth 里并不存在，请先注册。");
@@ -110,7 +105,6 @@ try {
   console.error("执行失败：", err?.message || err);
   exitCode = 1;
 } finally {
-  // 无论走哪条分支都先正常断开再退出（见 main 的注释）
   await prisma.$disconnect().catch(() => {});
 }
 

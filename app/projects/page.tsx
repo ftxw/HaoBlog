@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -16,7 +15,6 @@ export const metadata: Metadata = {
   description: "一些亲手打造的小作品",
 };
 
-/** 首屏下发的条数；其余由列表组件按需续拉（见 ProjectsListClient）。 */
 const PAGE_SIZE = 60;
 
 async function fetchInitialProjects(): Promise<{
@@ -28,7 +26,6 @@ async function fetchInitialProjects(): Promise<{
     const [projects, total, tags] = await Promise.all([
       listProjects({ status: "published", page: 1, size: PAGE_SIZE }),
       countProjects({ status: "published" }),
-      // 标签栏单独兜底：它查挂了不该让整个列表也空掉
       listProjectFacets().catch(() => []),
     ]);
     return { projects, total, tags };

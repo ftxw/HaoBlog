@@ -12,13 +12,12 @@ function createPrismaClient(): PrismaClient {
     );
   }
   const adapter = new PrismaPg({
-    connectionString: url, // 原样使用（事务池 6543 或自建 PG 均直连，不再强制降级端口）
+    connectionString: url,
     max: 5,
-    connectionTimeoutMillis: 8000, // 8s 拿不到连接直接报错
-    // 空闲连接 120s 回收；缩到 30s 会让闲置 >30s 后的首个查询撞上已回收的连接。
+    connectionTimeoutMillis: 8000,
     idleTimeoutMillis: 120000,
-    query_timeout: 15000, // 单条查询 15s 上限（默认行为 pg 无限制）
-    statement_timeout: 15000, // 服务端语句 15s 上限，防止慢查询拖死连接
+    query_timeout: 15000,
+    statement_timeout: 15000,
   });
   return new PrismaClient({
     adapter,
@@ -32,7 +31,6 @@ export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 globalForPrisma.prisma = prisma;
 
-/* 预热连接：模块首次被加载时就把 TCP + TLS 握手做掉，让本实例的第一次业务查询 */
 void prisma.$connect().catch((err) => {
   console.error(
     "[prisma] 预热连接失败（不影响后续查询按需重连）:",

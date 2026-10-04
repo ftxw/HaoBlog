@@ -2,11 +2,8 @@
 
 import { getLikeState, type LikeTargetType } from "@/app/lib/api-client/like";
 
-/** 点赞状态的共享取数层（去重 + 并发上限 + 结果缓存）。 */
-
 const MAX_CONCURRENCY = 6;
 
-/** 匿名态在缓存 key 里的占位 —— 不能与任何真实 userId 撞车。 */
 const ANONYMOUS = "anon";
 
 interface LikeState {
@@ -47,7 +44,6 @@ function release(): void {
   if (next) next();
 }
 
-/** 读缓存（同步）。用于组件首次渲染就能拿到已知状态，避免闪烁。 */
 export function peekLikeState(
   targetType: LikeTargetType,
   targetId: string,
@@ -56,7 +52,6 @@ export function peekLikeState(
   return cache.get(cacheKey(targetType, targetId, userId));
 }
 
-/** 取点赞状态（带缓存/去重/并发控制）。 */
 export function fetchLikeState(
   targetType: LikeTargetType,
   targetId: string,
@@ -91,7 +86,6 @@ export function fetchLikeState(
   return task;
 }
 
-/** 点赞/取消点赞成功后写入权威值，让所有订阅者保持一致 */
 export function primeLikeState(
   targetType: LikeTargetType,
   targetId: string,
@@ -101,7 +95,6 @@ export function primeLikeState(
   cache.set(cacheKey(targetType, targetId, userId), state);
 }
 
-/** 清空本标签页的全部点赞状态缓存。 */
 export function resetLikeStateCache(): void {
   cache.clear();
   inflight.clear();

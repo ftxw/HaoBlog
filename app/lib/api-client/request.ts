@@ -1,7 +1,6 @@
 import { jsonHeadersFor, errorText } from "@/app/lib/response";
 import { unwrapApi } from "@/app/lib/api-types";
 
-
 class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -17,8 +16,8 @@ async function request<T>(
 ): Promise<T> {
   const body = (options as { body?: unknown } | undefined)?.body;
   const res = await fetch(path, {
-    cache: "no-store", // 禁用 HTTP 缓存，保证发布后立即看到新数据
-    credentials: "same-origin", // 随同源请求自动携带 httpOnly 的 session-token cookie
+    cache: "no-store",
+    credentials: "same-origin",
     ...options,
     headers: {
       ...jsonHeadersFor(body),
@@ -38,7 +37,6 @@ export interface CommentSessionUser {
   avatar: string;
 }
 
-/** 本地会话快照的键。只在「服务端暂时答不出来」时用于兜底展示，权威来源始终是 cookie 会话。 */
 const COMMENT_USER_KEY = "comment_user";
 
 export function saveCommentSession(user: CommentSessionUser) {
@@ -61,7 +59,6 @@ export function loadCommentUser(): CommentSessionUser | null {
   }
 }
 
-/** 只清本地快照，不发起登出请求。 */
 export function dropCommentSession(): void {
   try {
     localStorage.removeItem(COMMENT_USER_KEY);

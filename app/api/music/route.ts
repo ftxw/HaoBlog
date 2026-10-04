@@ -1,4 +1,3 @@
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
@@ -11,7 +10,6 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const MUSIC_DEADLINE = 10_000;
 
-/* ids 要设上界：否则一次可制造 N 路并发外部请求，且每个新串都会占一个新的缓存键。 */
 const MAX_SONG_IDS = 50;
 const MAX_SONG_ID_LENGTH = 64;
 const MAX_PLAYLIST_ID_LENGTH = 64;
@@ -83,7 +81,6 @@ export async function GET(req: NextRequest) {
       return ok([]);
     }
 
-    /* 校验必须在进缓存之前：越界的请求既不打上游，也不占用缓存键。 */
     if (playlistId && playlistId.length > MAX_PLAYLIST_ID_LENGTH) {
       return fail("歌单 ID 不合法");
     }
@@ -107,12 +104,10 @@ export async function GET(req: NextRequest) {
             MUSIC_DEADLINE,
             "music playlist"
           ),
-        /* 歌单只由 id / ids 决定，缓存键就只认这两个参数。 */
         { keyParams: ["id", "ids"] }
       );
     } catch (upstreamErr) {
       console.error("Music playlist upstream error:", upstreamErr);
-      // businessFail：未配置音乐 API 时抛的是 BusinessError（503 + 明确文案）。
       const res = businessFail(upstreamErr, "音乐数据源不可用");
       res.headers.set("Cache-Control", "no-store");
       res.headers.set("Vercel-CDN-Cache-Control", "no-store");

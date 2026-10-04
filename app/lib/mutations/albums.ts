@@ -87,7 +87,6 @@ export async function updateAlbum(albumId: string, input: AlbumInput) {
 export async function deleteAlbum(albumId: string) {
   const id = requireId(albumId, "无效的相册ID");
 
-  /* 这两次读互不依赖，并行发出即可 —— 串行会白多一个数据库往返。 */
   const [photos, album] = await Promise.all([
     prisma.photo.findMany({
       where: { album_id: id },
@@ -207,7 +206,6 @@ export async function reorderPhotos(input: PhotoReorderInput) {
   const albumId = String(input.album_id ?? "").trim();
   if (!albumId) throw new BusinessError("参数无效", 400);
 
-  /* 只取本相册的照片，sort 序号也只在本相册内有意义，一次拖动不会波及其它相册。 */
   const list = await prisma.photo.findMany({
     where: { album_id: albumId },
     orderBy: [...SORT_ROW_ORDER_BY],

@@ -1,7 +1,5 @@
 import { getDbSiteConfig } from "./site-config-db";
 
-/** 站点对外基址的唯一解析处（不带尾斜杠）。 */
-/** 只警告一次。 */
 let warnedMissingSiteUrl = false;
 
 export async function resolveSiteBaseUrl(): Promise<string> {
@@ -13,7 +11,6 @@ export async function resolveSiteBaseUrl(): Promise<string> {
     return /^https?:\/\//i.test(value) ? value : `https://${value}`;
   }
 
-  // 未配置且不在 Vercel 上：只有本地开发能落到这里。生产环境必须填后台「网站地址」。
   if (process.env.NODE_ENV === "production" && !warnedMissingSiteUrl) {
     warnedMissingSiteUrl = true;
     console.warn(

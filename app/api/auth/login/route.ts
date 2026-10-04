@@ -4,7 +4,6 @@ import { loginUser } from "@/app/lib/mutations/auth";
 import { setSessionCookie } from "@/app/lib/session-cookie";
 
 export async function POST(request: Request) {
-  // JSON 解析单独包一层：request.json() 对非法 body 抛 SyntaxError。
   let body: { email?: unknown; password?: unknown };
   try {
     body = await request.json();

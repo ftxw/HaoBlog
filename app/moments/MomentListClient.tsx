@@ -19,7 +19,6 @@ import { thumbUrlOf, fallbackThumbImage } from "@/app/lib/image-thumb";
 import { MOOD_META } from "@/app/lib/mood-meta";
 import { useToast } from "@/components/providers/ToastProvider";
 
-/** 展示形态由 @/app/lib/moment-item 定义：首屏在服务端映射、续拉在客户端映射。 */
 export type Moment = MomentItem;
 
 function momentYear(moment: Moment): string {
@@ -30,7 +29,6 @@ function momentHasImage(moment: Moment): boolean {
   return Array.isArray(moment.images) && moment.images.length > 0;
 }
 
-/** now 为 null 表示未挂载，退回绝对日期 —— SSR 与水合首帧走这支，两边输出才一致。 */
 function timeAgo(dateStr: string, now: number | null): string {
   if (now === null) return formatDateCN(new Date(dateStr));
   return relativeTime(dateStr, {
@@ -103,22 +101,17 @@ export default function MomentListClient({
   moodOptions,
 }: {
   initialMoments: Moment[];
-  /** 服务端统计的已发布说说总数（首屏只下发前 pageSize 条） */
   total: number;
-  /** 每页条数，与页面首屏取数用的一致 */
   pageSize: number;
-  /** 筛选项由服务端按全量算好传入 —— 从已下发的这一页里派生会漏掉老数据 */
   yearOptions: string[];
   moodOptions: string[];
 }) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments);
   const [loadingMore, setLoadingMore] = useState(false);
-  /** 挂载后才取「现在」，否则服务端与水合首帧的相对时间会不一致。 */
   const [now, setNow] = useState<number | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: 相对时间门控，首帧须与 SSR 同值
   useEffect(() => setNow(Date.now()), []);
   const [hasMore, setHasMore] = useState(initialMoments.length < total);
-  // 已从服务端收到的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
   const receivedRef = useRef(initialMoments.length);
   const pageRef = useRef(1);
   const inFlightRef = useRef(false);
@@ -137,7 +130,6 @@ export default function MomentListClient({
         shouldLoadMore(rows, pageSize, receivedRef.current, total)
       );
     } catch {
-      // 续拉失败不弹错、也不置 hasMore=false：哨兵还在，滚出去再滚回来会重试。
     } finally {
       inFlightRef.current = false;
       setLoadingMore(false);
@@ -181,7 +173,6 @@ export default function MomentListClient({
   const prefetchedSet = useRef<Set<string>>(new Set());
   const aliveRef = useRef(true);
   useEffect(() => {
-    /* 重新置 true：StrictMode 下 effect 会 mount → cleanup → mount。 */
     aliveRef.current = true;
     return () => {
       aliveRef.current = false;
@@ -245,7 +236,6 @@ export default function MomentListClient({
   };
 
   useEffect(() => {
-    // 挂载后测量下拉菜单（w-max）实际宽度，作为按钮 minWidth，避免按钮被菜单撑开时抖动。
     const raf = requestAnimationFrame(() => {
       const next: Record<string, number> = {};
       for (const key of Object.keys(dropdownMenuRefs.current)) {
@@ -304,7 +294,6 @@ export default function MomentListClient({
     return result;
   }, [moments, searchQuery, sortOrder, activeYear, activeImg, activeMood]);
 
-  // 筛选/搜索都是在客户端对已下发的数组做的：只有把剩下的页也取回来。
   const filtering =
     searchQuery.trim() !== "" ||
     activeYear !== "all" ||
@@ -314,7 +303,6 @@ export default function MomentListClient({
     if (filtering && hasMore) void loadMore();
   }, [filtering, hasMore, moments.length, loadMore]);
 
-  // 双列瀑布流的列分配：一次遍历分好左右两列。
   const [leftColumn, rightColumn] = useMemo(() => {
     const left: { moment: Moment; index: number }[] = [];
     const right: { moment: Moment; index: number }[] = [];
@@ -649,7 +637,6 @@ export default function MomentListClient({
               )}
             </div>
           </div>
-          {/* 筛选/搜索在客户端对已下发数组做，命中少时列表比视口短 → 哨兵持续可见，继续取下一页。 */}
           {hasMore && (
             <div
               ref={sentinelRef}

@@ -12,7 +12,6 @@ import SegmentedFilter from "@/components/ui/SegmentedFilter";
 import Reveal from "@/components/ui/Reveal";
 import { useUrlParam } from "@/app/lib/hooks/use-url-param";
 
-/** 文章列表（客户端交互部分）。 */
 export default function PostsClient({
   initialCategories,
   initialPosts,
@@ -28,12 +27,10 @@ export default function PostsClient({
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
-  /** 请求失败要与「真的没有文章」区分开，不能把故障渲染成空列表。 */
   const [error, setError] = useState(false);
   const [retryTick, setRetryTick] = useState(0);
   const [searchQuery, setSearchQuery] = useUrlParam("q", "");
   const pageSize = 12;
-  // 首次挂载已有服务端注入的数据，跳过第一次自动请求
   const hydratedRef = useRef(false);
 
   const effectiveKeyword = searchQuery.trim();
@@ -43,7 +40,6 @@ export default function PostsClient({
       hydratedRef.current = true;
       return;
     }
-    // 请求竞态保护：搜索/切分类会连续发请求，后发的可能先返回。
     let active = true;
     setLoading(true);
     getPosts({
@@ -65,7 +61,6 @@ export default function PostsClient({
       })
       .catch(() => {
         if (!active) return;
-        /* 保留已加载的列表，只标记失败：清空会被误读成「没有文章」。 */
         setError(true);
       })
       .finally(() => {

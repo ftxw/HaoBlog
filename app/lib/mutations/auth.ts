@@ -1,4 +1,3 @@
-
 import {
   supabaseLogin,
   supabaseLogout,
@@ -19,10 +18,8 @@ export interface AuthRequestContext {
   userAgent: string;
 }
 
-// 登录锁定阈值：计数落 Postgres（进程内 Map 在 Vercel 多实例下会被绕过）。
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-// 邮箱维度之外再加一道 IP 维度（账号锁定 DoS 的兜底）。
 const LOGIN_IP_MAX_ATTEMPTS = 30;
 const LOGIN_IP_WINDOW_MS = 15 * 60 * 1000;
 
@@ -32,7 +29,6 @@ function loginLockedError(retryAfterSec: number): BusinessError {
     "Retry-After": String(retryAfterSec),
   });
 }
-
 
 export async function loginUser(
   input: { email?: unknown; password?: unknown },
@@ -47,7 +43,6 @@ export async function loginUser(
     throw new BusinessError("请输入邮箱和密码", 400);
   }
 
-  // 每次尝试先累计计数，用返回的 decision 同时完成「判定」与「计数」。
   const ipLimit = await hitRateLimit(
     `login-ip:${ctx.ip}`,
     LOGIN_IP_MAX_ATTEMPTS,
@@ -69,20 +64,17 @@ export async function loginUser(
     session = res.session;
     user = res.user;
   } catch {
-    // recordLoginLog 内部已自行 try/catch 且从不抛出（见 app/lib/login-log.ts）。
     await recordLoginLog({
       ...ctx,
       userId: "",
       summary: "登录失败：邮箱或密码错误",
     });
-    // 本次失败已在上面的 hitRateLimit 里记入计数；达到上限时按同一文案锁定。
     if (attempts.count >= LOGIN_MAX_ATTEMPTS) {
       throw loginLockedError(LOGIN_WINDOW_MS / 1000);
     }
     throw new BusinessError("邮箱或密码错误", 400);
   }
 
-  // 成功即清零邮箱维度的失败计数（IP 维度不清：否则可用自己的有效账号反向清掉 IP 配额）。
   await resetRateLimit(`login:${email}`);
   await recordLoginLog({
     ...ctx,
@@ -96,7 +88,6 @@ export async function loginUser(
     isAdmin = Boolean(row?.is_admin);
   } catch (err) {
     console.error("[auth] ensureUserAndBootstrapAdmin 失败，本次按非管理员处理:", err);
-    // 本该补上「第一个管理员」却补不上时，必须如实报错，否则会把用户锁在后台外。
     if (!(await hasAnyAdmin())) {
       throw new BusinessError("站点尚未完成初始化（管理员记录写入失败），请稍后重试", 503);
     }
@@ -105,11 +96,9 @@ export async function loginUser(
   return { session, user, isAdmin };
 }
 
-
 const REGISTER_LIMIT = 5;
 const REGISTER_WINDOW_MS = 10 * 60 * 1000;
 
-/** 密码长度上界。 */
 const PASSWORD_MAX_LENGTH = 72;
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -117,9 +106,7 @@ export interface RegisterResult {
   session: SessionData | null;
   user: AppUser;
   needsConfirm: boolean;
-  /** 权威结论：读自本站 user 表（ensureUserAndBootstrapAdmin 返回的那一行）。 */
   isAdmin: boolean;
-  /** 写本站 user 表失败（原因已落服务端日志）。 */
   adminBootstrapFailed: boolean;
 }
 
@@ -153,7 +140,6 @@ export async function registerUser(
     throw new BusinessError(`密码长度不能超过 ${PASSWORD_MAX_LENGTH} 位`, 400);
   }
   if (email.length > 254) {
-    // RFC 5321 对邮箱地址的实际上界（本地部分 64 + @ + 域名 255，取常用保守值）
     throw new BusinessError("邮箱地址过长", 400);
   }
   if (nicknameInput.length > 20) {
@@ -165,7 +151,6 @@ export async function registerUser(
   try {
     reg = await supabaseRegister(email, password, nickname);
   } catch (e) {
-    // 注册失败把 Supabase 的面向用户提示原样回给调用方（400）。
     throw new BusinessError(errMsg(e, "注册失败"), 400);
   }
 
@@ -176,7 +161,6 @@ export async function registerUser(
     isAdmin = Boolean(row?.is_admin);
   } catch (e) {
     adminBootstrapFailed = true;
-    // 不静默：失败意味着 Supabase 账号建好了、本站 user 表却没写进去。
     console.error("[auth] 引导管理员失败（Supabase 账号已创建，但本站 user 表未写入）:", e);
   }
 
@@ -193,7 +177,6 @@ export async function registerUser(
 
   return { session: reg.session, user: reg.user, needsConfirm: false, isAdmin, adminBootstrapFailed };
 }
-
 
 export async function changePassword(input: {
   token: string;
@@ -224,13 +207,11 @@ export async function changePassword(input: {
   invalidateAuthCache();
 }
 
-
 export async function refreshSession(refreshToken: string): Promise<SessionData> {
   const { session } = await supabaseRefresh(refreshToken);
   return session;
 }
 
-/** 登出：先吊销上游会话再清本地缓存；上游失败也要让本地登出成立，故只留痕不抛。 */
 export async function revokeSession(accessToken: string): Promise<void> {
   if (accessToken) {
     try {

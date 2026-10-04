@@ -23,7 +23,6 @@ export function serializeSession(data: SessionData): string {
   return encodeURIComponent(JSON.stringify(data));
 }
 
-/** ⚠️ 会话 cookie 是双重编码的：serializeSession 编一次，Next 序列化又编一次，解析时要再解一层。 */
 export function parseSessionValue(raw: string | undefined | null): SessionData | null {
   if (!raw) return null;
 
@@ -31,7 +30,6 @@ export function parseSessionValue(raw: string | undefined | null): SessionData |
   try {
     json = decodeURIComponent(raw);
   } catch {
-    /* 值里含裸 % 时解码会抛，此时按原样当成 JSON 试 */
   }
 
   try {
@@ -50,12 +48,10 @@ export function parseSessionValue(raw: string | undefined | null): SessionData |
       };
     }
   } catch {
-    /* 不是合法 JSON，按「没有会话」处理 */
   }
   return null;
 }
 
-/** 按 `;` 切分、trim、精确匹配 `name=` 前缀（正则会误匹配 `x-session-token` 之类）。 */
 export function readCookieValue(cookieHeader: string, name: string): string {
   if (!cookieHeader) return "";
   for (const part of cookieHeader.split(";")) {

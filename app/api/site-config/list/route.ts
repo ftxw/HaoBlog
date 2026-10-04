@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
       });
     return ok(configs);
   } catch (err: unknown) {
-    // 未登录 401 / 无管理员权限 403 / 其他 500；生产不回原始错误文本。
     return businessFail(err, "获取站点配置失败");
   }
 }

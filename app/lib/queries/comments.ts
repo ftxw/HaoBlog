@@ -1,11 +1,8 @@
-/** 后台三类评论列表的唯一实现：文章/说说/项目表结构一致，差异只有「用哪张表 + 哪份 select」。 */
-
 import type { CommentStatusValue } from "@/app/lib/comment-rules";
 import { parseCommentStatusFilter } from "@/app/lib/comment-rules";
 import { requireAdmin } from "@/app/lib/auth";
 import { businessFail, ok, parsePagination } from "@/app/lib/http";
 
-/** 列表与总数必须用同一个 where：列表只要顶层评论（parent_id IS NULL）。 */
 export interface AdminCommentQuery {
   where: { parent_id: null; status?: CommentStatusValue };
   orderBy: { created_at: "desc" };

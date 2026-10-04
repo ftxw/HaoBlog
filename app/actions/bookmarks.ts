@@ -17,8 +17,6 @@ import type {
   BookmarkSiteInput,
 } from "@/app/lib/mutations/bookmarks";
 
-/* 缓存失效由 mutations 层统一负责，这里不重复清。 */
-
 export async function createBookmarkCategoryAction(input: BookmarkCategoryInput) {
   return runAdminAction(async () => createBookmarkCategory(input));
 }

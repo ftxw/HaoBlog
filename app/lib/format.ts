@@ -1,5 +1,3 @@
-/** 通用展示工具：相对时间、评论树展平。 */
-
 const DISPLAY_TIME_ZONE = "Asia/Shanghai";
 
 export function pad2(n: number): string {
@@ -56,7 +54,6 @@ export function formatMonthKeyCN(d: Date): string {
   return p ? `${p.y}-${Number(p.m)}` : "";
 }
 
-/** 相对时间。不传 opts.now 就用当前时钟 —— 只在客户端渲染时安全，服务端直出须传同一个 now。 */
 export function relativeTime(
   dateStr: string,
   opts?: { dateFormat?: (d: Date) => string; now?: Date }

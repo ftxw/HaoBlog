@@ -1,4 +1,3 @@
-
 import type { Prisma } from "@prisma/client";
 import { cache } from "react";
 import { prisma } from "@/app/lib/prisma";
@@ -38,7 +37,6 @@ export interface PostListItem {
   comments_count?: number;
 }
 
-/** 列表基础字段（不含评论数）。 */
 export const POST_BASE_SELECT = {
   id: true,
   title: true,
@@ -55,7 +53,6 @@ export const POST_BASE_SELECT = {
   tags: { select: { tag: { select: { name: true } } } },
 } satisfies Prisma.PostSelect;
 
-/** 列表字段 + 已审核评论数。 */
 export const POST_LIST_SELECT = {
   ...POST_BASE_SELECT,
   _count: { select: { comments: { where: { status: "approved" } } } },
@@ -106,7 +103,6 @@ export async function listPosts(
   const statusValue = parseContentStatus(status);
   if (statusValue) where.status = statusValue;
 
-  /* 分类与标签的 slug 解析并行发出（两者互不依赖）。 */
   const [cat, tag] = await Promise.all([
     categorySlug
       ? prisma.category.findUnique({ where: { slug: categorySlug }, select: { id: true } })
@@ -116,7 +112,6 @@ export async function listPosts(
       : null,
   ]);
 
-  // slug 不存在 → 空结果。不加这个条件会让「查不到的 slug 返回全部文章」。
   if (categorySlug && !cat) return [];
   if (tagSlug && !tag) return [];
 
@@ -125,7 +120,6 @@ export async function listPosts(
 
   if (keyword?.trim()) {
     const k = escapeLike(keyword.trim());
-    // 必须带 mode: "insensitive"（生成 ILIKE），不能只用 contains（生成 LIKE）。
     where.OR = [
       { title: { contains: k, mode: "insensitive" } },
       { description: { contains: k, mode: "insensitive" } },
@@ -153,7 +147,6 @@ export async function listPosts(
 export const getPostDetail = cache(async (id: string) =>
   prisma.post.findUnique({
     where: { id },
-    // 同时带上 category：/api/posts/[postId] 复用本实现，其响应契约含 category.name。
     include: { category: true, tags: { include: { tag: true } } },
   })
 );

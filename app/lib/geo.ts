@@ -1,9 +1,9 @@
 import { getDbConfigValue } from "@/app/lib/site-config-db";
 
-const GEO_TIMEOUT = 1500; // 查询超时（收紧：统计上报是高频路径，过长会占用实例）
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 结果缓存 24h
-const FAIL_TTL = 10 * 60 * 1000; // 失败负缓存 10min
-const MAX_CONCURRENT_LOOKUPS = 3; // 同时最多发起的在线查询数，超出直接返回空（不排队）
+const GEO_TIMEOUT = 1500;
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+const FAIL_TTL = 10 * 60 * 1000;
+const MAX_CONCURRENT_LOOKUPS = 3;
 
 export interface GeoInfo {
   country: string;
@@ -27,10 +27,8 @@ const geoCache = new Map<string, { value: GeoInfo; t: number }>();
 const inflight = new Map<string, Promise<GeoInfo>>();
 let activeLookups = 0;
 
-/** 归属地缓存上界。 */
 const GEO_CACHE_MAX = 5000;
 
-/** 超限时一次淘汰到上界的这个比例，避免"写一条就淘汰一条"的抖动 */
 const GEO_CACHE_EVICT_TO = Math.floor(GEO_CACHE_MAX * 0.9);
 
 function evictGeoCacheIfNeeded(): void {
@@ -42,7 +40,6 @@ function evictGeoCacheIfNeeded(): void {
   }
   if (geoCache.size < GEO_CACHE_MAX) return;
 
-  // 按插入顺序淘汰最旧的一批；peekGeo 命中会把条目搬到末尾（LRU）。
   let toRemove = geoCache.size - GEO_CACHE_EVICT_TO;
   for (const key of geoCache.keys()) {
     if (toRemove-- <= 0) break;
@@ -55,7 +52,7 @@ export function isPrivateIp(ip: string): boolean {
   if (ip === "127.0.0.1" || ip === "::1" || ip === "localhost") return true;
   if (/^10\./.test(ip) || /^192\.168\./.test(ip)) return true;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return true;
-  if (/^fc|^fd|^fe80::/.test(ip)) return true; // IPv6 私网
+  if (/^fc|^fd|^fe80::/.test(ip)) return true;
   return false;
 }
 
@@ -65,11 +62,9 @@ export function peekGeo(ip: string): GeoInfo | null {
   if (!hit) return null;
   const ttl = isEmptyGeo(hit.value) ? FAIL_TTL : CACHE_TTL;
   if (Date.now() - hit.t >= ttl) {
-    // 过期就地删除：否则条目会一直占着容量。
     geoCache.delete(ip);
     return null;
   }
-  // LRU：命中后搬到末尾（先删再插，顺序即"最近被读"的次序）。
   geoCache.delete(ip);
   geoCache.set(ip, hit);
   return hit.value;
@@ -100,7 +95,6 @@ function text(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-/** 归属地查询接口唯一来自后台「站点配置 → 访客统计」，代码里不写死地址。 */
 async function parseGeo(ip: string): Promise<GeoInfo | null> {
   const base = (await getDbConfigValue("geoApiUrl")).trim();
   if (!base) return null;

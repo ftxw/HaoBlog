@@ -58,7 +58,6 @@ export default function ProjectsClient({
     size: number;
   }>(listUrl, initialList);
 
-  // 评论徽标数：服务端已给初值，useApi 在带 initial 时首帧不发请求。
   const commentsCount = useApi<{ items: unknown[]; total: number }>(
     "/api/projects/comments/admin?page=1&size=1",
     { items: [], total: initialCommentsTotal }
@@ -107,7 +106,6 @@ export default function ProjectsClient({
     try {
       await runAction(deleteProjectAction(p.id));
       addToast("success", "项目已删除");
-      // 项目删除会级联删掉它的评论，徽标数要跟着变。
       refresh();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "删除失败");

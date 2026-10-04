@@ -10,7 +10,6 @@ import {
   invalidateProjectCaches,
 } from "@/app/lib/api-cache";
 
-
 export type CommentLikeKind = "comment" | "chatterComment" | "projectComment";
 
 const INVALIDATORS: Record<CommentLikeKind, () => void> = {
@@ -69,7 +68,6 @@ export async function handleCommentLike(
   kind: CommentLikeKind,
   unlike: boolean
 ): Promise<Response> {
-  /* 与内容点赞同口径：必须登录。服务端只有计数器，不设闸门时匿名可凭空刷。 */
   try {
     await getCurrentUser(request);
   } catch (err) {
@@ -89,7 +87,6 @@ export async function handleCommentLike(
     const next = await bump(kind, id, unlike);
     if (!next) return fail("评论不存在", 404);
     INVALIDATORS[kind]();
-    // 必须走 ok() 信封（{ code, message, data }），不能直接 NextResponse.json。
     return ok({ likes: next.likes });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && (err as { code?: string }).code === "P2025") {

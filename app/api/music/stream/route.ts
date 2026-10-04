@@ -1,4 +1,3 @@
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -8,7 +7,6 @@ import { withTimeout } from "@/app/lib/timeout";
 
 const STREAM_DEADLINE = 12_000;
 
-/** 302 的落地是可能过期的外链音频地址，两层缓存都显式 no-store（与 /api/img-proxy 同一写法）。 */
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, must-revalidate",
   "Vercel-CDN-Cache-Control": "no-store",

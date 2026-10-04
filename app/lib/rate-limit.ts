@@ -1,5 +1,3 @@
-/* 次数上限限流（后端 = Postgres） */
-
 export interface RateLimitCheck {
   key: string;
   limit: number;
@@ -9,7 +7,6 @@ export interface RateLimitCheck {
 export interface RateLimitDecision {
   allowed: boolean;
   retryAfterSec: number;
-  /** 本次调用累加后的窗口计数。 */
   count: number;
 }
 
@@ -23,10 +20,8 @@ interface SlidingWindow {
 
 const windows = new Map<string, SlidingWindow>();
 
-/** 窗口在这段时间内没有新命中，就认为不会再被复用，可安全回收。 */
 const WINDOW_IDLE_MS = 10 * 60 * 1000;
 
-/** 进程内回落表的容量上界。 */
 const MAX_IN_PROCESS_KEYS = 5_000;
 
 function sweepStaleWindows(now: number): void {
@@ -39,7 +34,6 @@ function sweepStaleWindows(now: number): void {
 
 setInterval(() => sweepStaleWindows(Date.now()), WINDOW_IDLE_MS).unref?.();
 
-/** 表满时腾位置：先扫一遍过期窗口（正常流量下这一步就够了）。 */
 function evictForNewKey(now: number): void {
   sweepStaleWindows(now);
   if (windows.size < MAX_IN_PROCESS_KEYS) return;
@@ -108,7 +102,6 @@ const inProcessBackend: RateLimitBackend = {
   },
 };
 
-/** 单窗口「记账 + 取新计数」，一条语句原子完成。 */
 type RateLimitRow = { count: number; window_start: Date };
 
 const CLEAN_INTERVAL_MS = 10 * 60 * 1000;
@@ -125,7 +118,6 @@ const postgresBackend: RateLimitBackend = {
     const prisma = await getPrisma();
     const now = Date.now();
 
-    // 一个事务里跑完全部窗口：要么都记上，要么都不记。
     const rows = await prisma.$transaction(
       checks.map((c) => {
         const cutoff = new Date(now - c.windowMs);
@@ -194,7 +186,6 @@ export function hitRateLimit(
   return consume([{ key, limit, windowMs }]);
 }
 
-/** 删除某个限流键的计数。 */
 export async function resetRateLimit(key: string): Promise<void> {
   windows.delete(key);
   try {

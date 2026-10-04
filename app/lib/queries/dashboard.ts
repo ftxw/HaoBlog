@@ -1,4 +1,3 @@
-
 import { prisma } from "@/app/lib/prisma";
 import { unstable_cache } from "next/cache";
 import { CACHE_NAMESPACE } from "@/app/lib/api-cache";
@@ -72,7 +71,6 @@ function getLast30Days(): string[] {
   return days;
 }
 
-/* 模块级构造（而不是在函数体内每次请求新建）：unstable_cache 包出来的函数在 */
 const statsCache = unstable_cache(getDashboardStats, [STATS_CACHE_KEY], {
   revalidate: STATS_CACHE_TTL / 1000,
   tags: [CACHE_NAMESPACE.dashboardStats],
@@ -168,7 +166,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     created_at: Date;
   }> = [];
   try {
-    // 必须带时间窗：否则 row_number() 会对整张表做窗口排序，用不上 created_at 索引。
     const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
     const rows = await prisma.$queryRaw<
       Array<{
@@ -287,7 +284,6 @@ export async function listLoginLogs(
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(50, Math.max(1, options.pageSize ?? 10));
 
-  // 失败登录无归属用户（user_id 留空串），不一起捞出来，那列红色徽标就永不出现。
   const where = { OR: [{ user_id: userId }, { user_id: "" }] };
 
   const [rows, total] = await Promise.all([

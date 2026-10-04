@@ -7,7 +7,6 @@ export async function GET() {
   try {
     const decoded = await getDbSiteConfig();
 
-    // 安全：accessKey/secretKey 是 S3 私钥，绝不能下发给匿名访客。
     const publicConfig = toPublicSiteConfig(decoded);
     return ok(publicConfig, {
       headers: {

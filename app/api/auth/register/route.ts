@@ -4,7 +4,6 @@ import { registerUser } from "@/app/lib/mutations/auth";
 import { setSessionCookie } from "@/app/lib/session-cookie";
 
 export async function POST(request: Request) {
-  // 同 login：非法 JSON 应是 400，而不是被 businessFail 兜成 500。
   let body: { email?: unknown; password?: unknown; nickname?: unknown };
   try {
     body = await request.json();
@@ -29,7 +28,6 @@ export async function POST(request: Request) {
       return ok({ needsConfirm: true });
     }
 
-    // isAdmin 由服务端从 user 表读回，前端据此决定进不进后台（不再另打一次 /api/auth/me）。
     const res = ok({
       needsConfirm: false,
       isAdmin,

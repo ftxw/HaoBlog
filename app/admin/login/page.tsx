@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthCard, {
@@ -58,7 +57,6 @@ export default function AdminLoginPage() {
         await res.json().catch(() => null),
         res.status
       );
-      // 账号密码对、但不是管理员：必须在这里说清楚。
       if (!data.isAdmin) {
         return { error: "登录成功，但该账号不是管理员，无法进入后台。" };
       }
@@ -85,7 +83,6 @@ export default function AdminLoginPage() {
       };
     }
 
-    // 两种「没拿到管理员」的原因完全不同，不能合并成一句话。
     if (data.adminBootstrapFailed) {
       return {
         error:

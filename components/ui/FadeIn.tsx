@@ -1,4 +1,3 @@
-// 纯展示组件：无 state/effect/事件/浏览器 API，入场样式全靠 data-reveal 交给 CSS。
 import type { CSSProperties, ReactNode } from "react";
 
 export default function FadeIn({

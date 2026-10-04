@@ -18,7 +18,6 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const defaultCover = useConfigValue("defaultPostCover");
-  /* 与文章内页/关于页同一取值链；文章封面的「正文首图」保存时已落库，故正文位传空串。 */
   const imageSrc = resolveCoverChain(post.cover, "", defaultCover).url;
   const [thumbBroken, setThumbBroken] = useState(false);
   const [prevSrc, setPrevSrc] = useState(imageSrc);
@@ -36,7 +35,6 @@ export default function PostCard({ post }: PostCardProps) {
     <div className="h-full">
       <Link href={`/posts/${post.id}`} className="block group h-full">
         <div className="glass flex h-full flex-col overflow-hidden rounded-card transition-all duration-700 hover:scale-[1.02]">
-          {/* 与头像 / 关于页封面同一套：文章封面与默认封面都为空时不渲染封面块 */}
           {imageSrc && (
             <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
               <SafeImage

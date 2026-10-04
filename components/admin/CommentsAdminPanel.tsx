@@ -43,7 +43,6 @@ interface CommentItem {
 
 type CommentKind = "post" | "moment" | "project";
 
-/** 三类评论的「所属内容」标题：文章取 title，说说取正文摘要，项目取 name。 */
 function ownerTitle(comment: CommentItem, kind: CommentKind): string {
   const owner =
     kind === "post"
@@ -195,7 +194,6 @@ export default function CommentsAdminPanel({
     });
   };
 
-  // 三种 kind 各有一对服务端 Action，集中在这里分派，避免调用处散落三元表达式。
   const runStatusAction = (id: string, next: string) => {
     if (kind === "moment") {
       return runAction(setChatterCommentStatusAction(id, next));

@@ -1,4 +1,3 @@
-
 export const aboutContentDefault = `## 关于本站
 
 本站是基于 [Starhiro](https://github.com/Xinghongia) 的开源博客项目进行二次开发与个性化修改的个人博客。
@@ -146,7 +145,6 @@ export const siteConfigDefs: SiteConfigDef[] = [
 
 const DEF_BY_KEY = new Map(siteConfigDefs.map((def) => [def.key, def]));
 
-/** 取这里声明的默认值（未声明返回空串）：库里「没有这一行」时兜底，没跑过种子的部署靠它对齐。 */
 export function defaultConfigValue(key: string): string {
   return DEF_BY_KEY.get(key)?.defaultValue ?? "";
 }

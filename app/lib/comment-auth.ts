@@ -10,7 +10,6 @@ export async function getCommentUser(
   const token = getRequestToken(request);
   if (!token) return null;
 
-  /* 走统一鉴权入口，不裸调 verifyAccessToken。 */
   const user = await checkAuthorizedAccessToken(token);
   if (!user) return null;
 

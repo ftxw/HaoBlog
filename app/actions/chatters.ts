@@ -1,7 +1,5 @@
 "use server";
 
-/** 说说管理的 Server Actions。 */
-
 import { runAdminAction } from "@/app/lib/action-guard";
 import {
   createChatter,
@@ -40,4 +38,3 @@ export async function deleteChatterCommentAction(commentId: string) {
     return null;
   });
 }
-

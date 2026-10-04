@@ -34,7 +34,6 @@ export async function saveSiteConfigValues(body: unknown) {
     throw new BusinessError("没有可保存的配置项", 400);
   }
 
-  // ON CONFLICT 只更新 value/updated_at，刻意不动 description。
   await prisma.$executeRaw`
     INSERT INTO "site_config" ("key", "value", "description", "updated_at")
     SELECT src."key", src."value", ''::varchar(1024), now()

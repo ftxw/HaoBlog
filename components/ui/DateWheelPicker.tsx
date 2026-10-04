@@ -229,7 +229,6 @@ export default function DateWheelPicker({
               <X className="h-3 w-3" />
               清除
             </button>
-            {/* 与站点其它强调色按钮一致：文字用 text-accent-ink（深色主题下 accent 偏亮。 */}
             <button
               type="button"
               onClick={confirm}

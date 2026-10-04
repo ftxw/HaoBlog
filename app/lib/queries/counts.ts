@@ -11,7 +11,6 @@ export interface ContentCounts {
   photos: number;
 }
 
-/** 全站内容计数。 */
 type CountsRow = {
   published_posts: bigint;
   drafts: bigint;
@@ -34,7 +33,6 @@ export async function getContentCounts(): Promise<ContentCounts> {
       (SELECT count(*) FROM "photo")                                 AS photos
   `;
 
-  // count(*) 在 PG 里返回 bigint，node-postgres 会给到 BigInt（不是 number）。
   const publishedPosts = Number(row?.published_posts ?? 0);
   const drafts = Number(row?.drafts ?? 0);
 

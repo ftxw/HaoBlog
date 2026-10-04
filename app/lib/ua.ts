@@ -1,9 +1,7 @@
-/** UA 解析。顺序有约束：移动端判定必须排在桌面端之前，内核套壳浏览器必须排在 Chrome 之前。 */
 export function parseBrowser(ua: string): string {
   if (!ua) return "未知浏览器";
   if (ua.includes("EdgiOS/") || ua.includes("EdgA/") || ua.includes("Edg/")) return "Edge";
   if (ua.includes("OPR/") || ua.includes("Opera")) return "Opera";
-  // 微信 / QQ 内置浏览器：UA 里带 MicroMessenger / 独立的 QQ 标识
   if (ua.includes("MicroMessenger")) return "微信内置浏览器";
   if (ua.includes("QQBrowser")) return "QQ 浏览器";
   if (ua.includes("Quark")) return "夸克浏览器";
@@ -19,7 +17,6 @@ export function parseBrowser(ua: string): string {
 
 export function parseOS(ua: string): string {
   if (!ua) return "未知系统";
-  // 移动端 / 衍生系统排在前面（见文件头约束 1）
   if (ua.includes("iPhone") || ua.includes("iPad") || ua.includes("iPod")) return "iOS";
   if (ua.includes("HarmonyOS") || ua.includes("OpenHarmony")) return "HarmonyOS";
   if (ua.includes("Android")) return "Android";

@@ -373,7 +373,6 @@ export function PageHeader({
   );
 }
 
-/** 后台二级导航的分段控件；`action` 渲染在行尾（通常是「新建」按钮）。 */
 export function AdminTabBar<T extends string>({
   tabs,
   active,
@@ -425,4 +424,3 @@ export function Card({
     </div>
   );
 }
-

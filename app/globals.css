@@ -1,18 +1,13 @@
 @import "tailwindcss";
 
-/* Tailwind CSS 4 class-based dark mode */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 防止滚动条出现/消失导致页面抖动 — 始终显示滚动条 */
 html {
   overflow-y: scroll;
-  /* 灯箱/弹窗打开时会写内联 documentElement.style.overflow = "hidden"。 */
   scrollbar-gutter: stable;
-  /* 禁用滚动锚定：防止资源加载导致布局变化时浏览器自动调整滚动位置（表现为刷新后页面自动下滑） */
   overflow-anchor: none;
 }
 
-/* 页面主容器：所有前台页面的统一宽度与横向内边距。 */
 .container-page {
   width: 100%;
   max-width: 72rem;
@@ -28,17 +23,6 @@ html {
   }
 }
 
-/* backdrop-filter 由 Tailwind 类自行处理，不全局覆盖 */
-
-/* 毛玻璃卡一律走下方 token 体系的 .glass / .glass-strong 工具类 */
-
-/* ========== 滚动条：用浏览器原生 ========== */
-
-/* ========== 背景：.app-glow 三色光晕 ========== */
-
-/* 设计 token 层 */
-
-/* ─────────────── 主题无关 token（尺寸 / 字体 / 圆角）─────────────── */
 @theme {
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
@@ -47,32 +31,25 @@ html {
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
     monospace;
 
-  --radius-card: 1.5rem;      /* 主卡片：1.5rem → rounded-card */
-  --radius-card-sm: 1.25rem;  /* 次级卡：1.25rem → rounded-card-sm */
+  --radius-card: 1.5rem;
+  --radius-card-sm: 1.25rem;
   --radius-pill: 9999px;
 }
 
-/* ─────────────── 浅色（默认）──────────────────────────────────── */
-/* .theme-light：把这套浅色 token 再挂到一个可复用的类上。 */
 :root,
 .theme-light,
 html:has(.theme-light) {
   color-scheme: light;
 
-  /* 浅色画布：蓝白，与玻璃光晕更协调 */
   --app-canvas: #f7f9fe;
 
-  /* 玻璃卡 surface：压到能让画布光晕透过来 */
   --app-surface: rgb(255 255 255 / 0.26);
   --app-surface-strong: rgb(255 255 255 / 0.38);
   --app-surface-muted: rgb(255 255 255 / 0.24);
-  /* 不透明 surface：给 toast / 弹窗这类必须保证文字可读性的浮层用 */
   --app-surface-solid: #ffffff;
 
-  /* 四边等色发丝线：1px 的亮度差要压在 ~+25 以内，否则底边会被读成「亮带」 */
   --app-hairline: rgb(255 255 255 / 0.4);
   --app-hairline-soft: rgb(15 23 42 / 0.08);
-  /* 导航条底边专用：暗线（浅色下底色本就接近白，需要暗线才读作分隔） */
   --app-bar-hairline: rgb(15 23 42 / 0.1);
 
   --app-shadow: 0 8px 32px rgb(15 23 42 / 0.1);
@@ -83,15 +60,13 @@ html:has(.theme-light) {
   --app-ink-4: #64748b;
 
   --app-accent: #0891b2;
-  --app-accent-2: #6366f1; /* 次级强调：渐变另一端 / 头像描边 */
+  --app-accent-2: #6366f1;
   --app-accent-ink: #ffffff;
   --app-accent-soft: rgb(8 145 178 / 0.12);
   --app-accent-hairline: rgb(8 145 178 / 0.32);
 
-  /* 正文里的浅色底块：h1 的底色块与引用卡共用。 */
   --app-content-block: rgb(255 255 255 / 0.12);
 
-  /* 媒体条专用深色"舞台"：歌词栏 / 播放器时钟等，两套主题下保持一致 */
   --app-stage: #0b1020;
   --app-stage-ink: rgb(255 255 255 / 0.92);
   --app-stage-hairline: rgb(255 255 255 / 0.12);
@@ -105,22 +80,16 @@ html:has(.theme-light) {
   --app-tones-neutral: #475569;
   --app-tones-neutral-soft: rgb(71 85 105 / 0.1);
 
-  /* 三色光晕（同源特征，透明度已下调） */
-  /* 提亮：用户反馈背景光晕太淡，要求达到"透过导航条玻璃"时的浓郁度 */
-  /* 用户指定：浅色主题与深色共用同一组光晕（靛/粉/青），不再用浅色青系 */
   --app-glow-1: rgb(99 102 241 / 0.7);
   --app-glow-2: rgb(236 72 153 / 0.6);
-  /* 右上光晕 = 粉（两主题同源同色，供相册卡色条用） */
   --app-glow-2-ink: #ec4899;
   --app-glow-3: rgb(34 211 238 / 0.52);
 }
 
-/* ── 局部强制浅色（后台）──────────────────────────────────────────── */
 html:has(.theme-light) {
   color-scheme: light !important;
 }
 
-/* ─────────────── 深色 ───────────────────────────────────── */
 .dark {
   color-scheme: dark;
 
@@ -129,13 +98,10 @@ html:has(.theme-light) {
   --app-surface: rgb(255 255 255 / 0.08);
   --app-surface-strong: rgb(255 255 255 / 0.05);
   --app-surface-muted: rgb(255 255 255 / 0.04);
-  /* 不透明 surface：浮层专用，比画布抬一档 */
   --app-surface-solid: #151a2c;
 
-  /* 透明度与歌词栏一致（--app-stage-hairline = white/12） */
   --app-hairline: rgb(255 255 255 / 0.12);
   --app-hairline-soft: rgb(255 255 255 / 0.1);
-  /* 导航条底边专用：暗线（见 .glass-bar 处的亮度账） */
   --app-bar-hairline: rgb(0 0 0 / 0.35);
 
   --app-shadow: 0 8px 32px rgb(0 0 0 / 0.35);
@@ -152,7 +118,6 @@ html:has(.theme-light) {
   --app-accent-soft: rgb(34 211 238 / 0.14);
   --app-accent-hairline: rgb(34 211 238 / 0.4);
 
-  /* 正文底块（h1 底色块 / 引用卡） */
   --app-content-block: rgb(255 255 255 / 0.14);
 
   --app-tones-success: #6ee7b7;
@@ -164,15 +129,12 @@ html:has(.theme-light) {
   --app-tones-neutral: rgb(255 255 255 / 0.7);
   --app-tones-neutral-soft: rgb(255 255 255 / 0.1);
 
-  /* 三团光晕：提亮到「透过导航条玻璃」仍可辨的浓郁度 */
   --app-glow-1: rgb(99 102 241 / 0.7);
   --app-glow-2: rgb(236 72 153 / 0.6);
-  /* 右上光晕 = 粉 */
   --app-glow-2-ink: #ec4899;
   --app-glow-3: rgb(34 211 238 / 0.52);
 }
 
-/* ─────────────── 把语义 token 暴露给 Tailwind 工具类 ─────────────── */
 @theme inline {
   --color-canvas: var(--app-canvas);
 
@@ -211,70 +173,56 @@ html:has(.theme-light) {
   --color-tone-neutral-soft: var(--app-tones-neutral-soft);
 }
 
-/* ─────────────── 后台色板（恒定浅色，不参与主题切换）─────────────── */
-/* AdminShell 挂的是 .theme-light + color-scheme: light，后台永远是浅色，
-   所以这套 token 直接写常量，不做暗色分支。
-   刻意不复用上面的 --app-*：那套面是半透明玻璃（rgb(255 255 255 / .26)），
-   后台要的是不透明实底。 */
-/* static：让整层 token 始终产出 CSS 变量，不随「有没有被工具类用到」被摇掉 ——
-   后台有内联 style 直接引用 var(--color-admin-*) 的地方。 */
 @theme static {
-  /* 面 */
-  --color-admin-canvas: #f1f5f9; /* slate-100 页面底 */
-  --color-admin-surface: #ffffff; /* white 卡片 / 顶栏 / 浮层底 */
-  --color-admin-surface-muted: #f8fafc; /* slate-50 表头底 / 内层浅底 / 只读块 */
-  --color-admin-neutral: #f1f5f9; /* slate-100 中性填充：徽标底 / 头像 / 悬停底 */
-  --color-admin-row-hover: rgb(248 250 252 / 0.7); /* slate-50/70 表体行悬停（半透明，别用不透明的表头底） */
-  --color-admin-neutral-strong: #e2e8f0; /* slate-200 骨架块 */
-  --color-admin-overlay: rgb(255 255 255 / 0.9); /* 压在图片上的浮层按钮底 */
-  --color-admin-scrim: rgb(15 23 42 / 0.6); /* 模态 / 抽屉遮罩 */
+  --color-admin-canvas: #f1f5f9;
+  --color-admin-surface: #ffffff;
+  --color-admin-surface-muted: #f8fafc;
+  --color-admin-neutral: #f1f5f9;
+  --color-admin-row-hover: rgb(248 250 252 / 0.7);
+  --color-admin-neutral-strong: #e2e8f0;
+  --color-admin-overlay: rgb(255 255 255 / 0.9);
+  --color-admin-scrim: rgb(15 23 42 / 0.6);
 
-  /* 侧边栏（后台唯一的大块深色区域） */
-  --color-admin-sidebar: #0f172a; /* slate-900 */
-  --color-admin-sidebar-hover: #1e293b; /* slate-800 */
+  --color-admin-sidebar: #0f172a;
+  --color-admin-sidebar-hover: #1e293b;
   --color-admin-sidebar-ink: #ffffff;
-  --color-admin-sidebar-ink-2: #e2e8f0; /* slate-200 */
-  --color-admin-sidebar-divider: #1e293b; /* slate-800 */
-  --color-admin-sidebar-active: rgb(99 102 241 / 0.2); /* indigo-500/20 */
-  --color-admin-sidebar-active-ink: #a5b4fc; /* indigo-300 */
+  --color-admin-sidebar-ink-2: #e2e8f0;
+  --color-admin-sidebar-divider: #1e293b;
+  --color-admin-sidebar-active: rgb(99 102 241 / 0.2);
+  --color-admin-sidebar-active-ink: #a5b4fc;
 
-  /* 线 */
-  --color-admin-border: #e2e8f0; /* slate-200 容器外框 / 表头下沿 */
-  --color-admin-border-soft: #f1f5f9; /* slate-100 内部细分隔 / 表体行下沿 */
-  --color-admin-border-control: #cbd5e1; /* slate-300 输入控件描边 */
+  --color-admin-border: #e2e8f0;
+  --color-admin-border-soft: #f1f5f9;
+  --color-admin-border-control: #cbd5e1;
 
-  /* 文字：5 级 + 空值占位 */
-  --color-admin-ink: #0f172a; /* slate-900 标题 / 主文字 / 激活项 */
-  --color-admin-ink-2: #334155; /* slate-700 表单 label / 表格正文 */
-  --color-admin-ink-3: #475569; /* slate-600 浮层文案 / 中性徽标文字 */
-  --color-admin-ink-4: #64748b; /* slate-500 次要文字 / 表头 / 未激活 tab */
-  --color-admin-ink-5: #94a3b8; /* slate-400 hint / 时间戳 / 空态 */
-  --color-admin-ink-none: #cbd5e1; /* slate-300 空值占位符，比 hint 更弱 */
+  --color-admin-ink: #0f172a;
+  --color-admin-ink-2: #334155;
+  --color-admin-ink-3: #475569;
+  --color-admin-ink-4: #64748b;
+  --color-admin-ink-5: #94a3b8;
+  --color-admin-ink-none: #cbd5e1;
 
-  /* 主色：indigo 在后台同时承担实底、文字、浅底徽标、聚焦、拖拽落点 */
-  --color-admin-accent: #4f46e5; /* indigo-600 实底按钮 / 勾选框 */
-  --color-admin-accent-hover: #4338ca; /* indigo-700 实底悬停 */
-  --color-admin-accent-ink: #ffffff; /* 实底上的文字 */
-  --color-admin-accent-soft: #eef2ff; /* indigo-50 浅底徽标 */
-  --color-admin-accent-soft-ink: #4338ca; /* indigo-700 浅底徽标文字 */
-  --color-admin-accent-border: #6366f1; /* indigo-500 控件聚焦描边 */
-  --color-admin-accent-ring: #818cf8; /* indigo-400 拖拽落点 / 悬停描边 */
+  --color-admin-accent: #4f46e5;
+  --color-admin-accent-hover: #4338ca;
+  --color-admin-accent-ink: #ffffff;
+  --color-admin-accent-soft: #eef2ff;
+  --color-admin-accent-soft-ink: #4338ca;
+  --color-admin-accent-border: #6366f1;
+  --color-admin-accent-ring: #818cf8;
 
-  /* 语义色 */
-  --color-admin-danger: #dc2626; /* red-600 文字 / 图标 / 实底 */
-  --color-admin-danger-hover: #b91c1c; /* red-700 实底悬停 / 浅底文字 */
-  --color-admin-danger-soft: #fef2f2; /* red-50 浅底（含浅底悬停） */
+  --color-admin-danger: #dc2626;
+  --color-admin-danger-hover: #b91c1c;
+  --color-admin-danger-soft: #fef2f2;
 
-  --color-admin-success: #059669; /* emerald-600 实底 / 文字 */
-  --color-admin-success-strong: #047857; /* emerald-700 更深的成功文字 */
-  --color-admin-success-soft: #ecfdf5; /* emerald-50 浅底 */
+  --color-admin-success: #059669;
+  --color-admin-success-strong: #047857;
+  --color-admin-success-soft: #ecfdf5;
 
-  --color-admin-warning: #f59e0b; /* amber-500 图标 */
-  --color-admin-warning-strong: #b45309; /* amber-700 文字 */
-  --color-admin-warning-soft: #fffbeb; /* amber-50 浅底 */
+  --color-admin-warning: #f59e0b;
+  --color-admin-warning-strong: #b45309;
+  --color-admin-warning-soft: #fffbeb;
 }
 
-/* ═══════════════ 基础样式 ═══════════════ */
 @layer base {
   * {
     border-color: var(--app-hairline-soft);
@@ -295,7 +243,6 @@ html:has(.theme-light) {
     text-rendering: optimizeLegibility;
   }
 
-  /* 主题切换时的柔和过渡；用户偏好减少动效时关闭 */
   @media (prefers-reduced-motion: no-preference) {
     body,
     .glass,
@@ -319,48 +266,35 @@ html:has(.theme-light) {
   }
 }
 
-/* ═══════════════ 自定义工具类（全部走 token，无内联 hex）═══════════════ */
-
-/* 页面光晕背景：三层 radial + fixed，深浅主题共用一套结构 */
 @utility app-glow {
   background-color: var(--app-canvas);
   background-image:
-    /* 位置恢复原始布局（左上 / 右上 / 底部中间三团），亮度保留提亮后的取值。 */
     radial-gradient(60rem 40rem at 10% -10%, var(--app-glow-1), transparent 60%),
     radial-gradient(50rem 35rem at 100% 0%, var(--app-glow-2), transparent 55%),
     radial-gradient(45rem 40rem at 50% 120%, var(--app-glow-3), transparent 60%);
-  /* 不写 background-attachment: fixed —— 本元素已是 fixed inset-0，该属性冗余且会让
-     backdrop-filter 采到带裁剪边界的快照（导航条模糊忽明忽暗的成因）。 */
   background-repeat: no-repeat;
 }
 
-/* 玻璃拟态：主卡 */
 @utility glass {
   background: var(--app-surface);
-  /* 卡片不再自带 backdrop-filter（全站只保留导航条一层模糊）。 */
   border: 1px solid var(--app-hairline);
   box-shadow: var(--app-shadow), var(--app-inset);
 }
 
-/* 玻璃拟态：次级 / 弱化卡（同一个"底边发丝线"问题的同源处理） */
 @utility glass-strong {
   background: var(--app-surface-strong);
-  /* 同 .glass：去掉卡片自身的模糊层，避免与导航条形成嵌套两层模糊 */
   border: 1px solid var(--app-hairline-soft);
 }
 
-/* 需要等宽的文本（时间戳 / 编号 / ID） */
 @utility mono-num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* 歌词条文字外发光 */
 @utility text-glow-strong {
   text-shadow: 0 0 10px var(--app-accent-hairline);
 }
 
-/* 图片上方压字用的可读性遮罩，避免在标记里写内联渐变。 */
 @utility scrim-bottom {
   background-image: linear-gradient(
     to top,
@@ -370,17 +304,14 @@ html:has(.theme-light) {
   );
 }
 
-/* 强调色渐变底（头像描边 / 渐变徽章），两端都取 token */
 @utility accent-ring {
   background-image: linear-gradient(to top right, var(--app-accent), var(--app-accent-2));
 }
 
-/* 唱片封面慢速旋转（播放态由 JS 增删本类） */
 @utility spin-slow {
   animation: app-spin 6s linear infinite;
 }
 
-/* ═══════════════ 关键帧（入场 / 歌词栏 / 播放器 / 时钟）═══════════════ */
 @keyframes app-spin {
   to {
     transform: rotate(360deg);
@@ -407,7 +338,6 @@ html:has(.theme-light) {
   }
 }
 
-/* Toast 进出场关键帧。 */
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -430,7 +360,6 @@ html:has(.theme-light) {
   }
 }
 
-/* enter-* 类共用的入场关键帧（见下方对应工具类）。 */
 @keyframes enter-drop {
   from {
     opacity: 0;
@@ -451,7 +380,6 @@ html:has(.theme-light) {
   }
 }
 
-/* 位移更大的入场：照片墙卡片用（2.5rem，比 enter-drop 的 1.25rem 更明显） */
 @keyframes enter-rise-lg {
   from {
     opacity: 0;
@@ -474,7 +402,6 @@ html:has(.theme-light) {
   }
 }
 
-/* 退场关键帧：配合 app/lib/hooks/use-exit-animation.ts 使用。 */
 @keyframes exit-fade-scale {
   from {
     opacity: 1;
@@ -495,9 +422,7 @@ html:has(.theme-light) {
   }
 }
 
-/* ═══════════════ 复合组件样式 ═══════════════ */
 @layer components {
-  /* 导航条目 */
   .nav-item {
     position: relative;
     transition:
@@ -506,19 +431,12 @@ html:has(.theme-light) {
       border-color 200ms ease;
   }
 
-  /* 顶部导航条：圆角为 0；底边与 .glass 同样不画发丝线 */
   .glass-bar {
-    /* 不用 surface-strong：浅色下它是白 62%，会自己把导航条提亮。 */
     background: var(--app-surface);
-    /* blur 16 → 24：实测（无头探针，合成 2px 白线置于真实内容层）残余 */
-    /* saturate 160% → 110%：原来的 160% 会把背景色彩人为加浓。 */
-    /* 用户指定值：blur(4px) saturate(150%) */
     backdrop-filter: blur(4px) saturate(150%);
-    /* 底边改用暗线：导航条背后是页面顶部的光晕最亮处，底色被提亮到 lum≈25。 */
     border-bottom: 1px solid var(--app-bar-hairline);
   }
 
-  /* 向下滚动隐藏导航 */
   .site-nav {
     transition:
       transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
@@ -529,12 +447,10 @@ html:has(.theme-light) {
     transform: translateY(-100%);
   }
 
-  /* 文章页目录卡：吸附位置随导航栏显隐在 24px ↔ 96px 之间过渡。 */
   [data-toc-sticky] {
     transition: top 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  /* ─────────── 文章页目录圆点 ─────────── */
   .toc-dot {
     flex-shrink: 0;
     width: 6px;
@@ -556,15 +472,13 @@ html:has(.theme-light) {
     opacity: 1;
   }
 
-  /* 当前章节的文字同样点亮 —— 激活项「加粗 + 加大 + 强调色」。 */
   li.toc-active a {
     color: var(--app-accent);
     font-weight: 700;
-    font-size: 1rem; /* text-sm(14px) → text-base(16px) */
+    font-size: 1rem;
     line-height: 1.25rem;
   }
 
-  /* 主题切换按钮：按 html[data-theme] 只显示对应模式的图标 */
   .theme-icon {
     display: none;
   }
@@ -574,12 +488,10 @@ html:has(.theme-light) {
     display: inline-flex;
   }
 
-  /* JS 未执行（禁用脚本/脚本失败）时兜底显示浅色图标，避免变成空白按钮 */
   html:not([data-theme]) .theme-icon[data-mode="light"] {
     display: inline-flex;
   }
 
-  /* 移动端抽屉 */
   .nav-drawer {
     max-height: 0;
     overflow: hidden;
@@ -601,7 +513,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 滚动入场 ─────────── */
   [data-reveal] {
     opacity: 0;
     transform: translateY(var(--reveal-y, 2.5rem));
@@ -614,7 +525,6 @@ html:has(.theme-light) {
 
   [data-reveal][data-revealed="true"] {
     opacity: 1;
-    /* 归位要用 transform: none 而非 translateY(0)，并撤销 will-change 退出合成层。 */
     transform: none;
     will-change: auto;
   }
@@ -628,7 +538,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 轮播交叉淡入 ─────────── */
   .carousel-slide {
     opacity: 0;
     transition: opacity 700ms ease-in-out;
@@ -644,7 +553,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── Toast 进出场 ─────────── */
   .toast-item {
     animation: toast-in 200ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
@@ -658,13 +566,11 @@ html:has(.theme-light) {
     .toast-item[data-exiting="true"] {
       animation: none;
     }
-    /* 关掉动画后 both 不再生效，退出中的元素需自行隐形，否则会停留 200ms 才消失 */
     .toast-item[data-exiting="true"] {
       opacity: 0;
     }
   }
 
-  /* ─────────── 折叠展开 ─────────── */
   .collapse-panel {
     display: grid;
     grid-template-rows: 0fr;
@@ -692,14 +598,12 @@ html:has(.theme-light) {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    /* 只关过渡，状态本身（0fr / opacity / visibility）仍需生效 */
     .collapse-panel,
     .collapse-panel[data-open="true"] {
       transition: none;
     }
   }
 
-  /* ─────────── 挂载即播放的入场 ─────────── */
   .enter-drop {
     animation: enter-drop 480ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
@@ -712,12 +616,10 @@ html:has(.theme-light) {
     animation: enter-pop 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
 
-  /* 照片墙卡片：480ms + 40px 位移；逐个错峰由内联 animationDelay 提供 */
   .enter-rise-lg {
     animation: enter-rise-lg 500ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
 
-  /* 退场工具类：由 useExitAnimation 置 data-exiting="true" 时触发。 */
   .exit-fade-scale[data-exiting="true"] {
     animation: exit-fade-scale 200ms cubic-bezier(0.4, 0, 1, 1) both;
   }
@@ -726,7 +628,6 @@ html:has(.theme-light) {
     animation: exit-fade 200ms ease-in both;
   }
 
-  /* 弹窗根层退场：只淡出、不动位移（替代 ProjectDetailModal 根层的 motion exit）。 */
   .exit-overlay[data-exiting="true"] {
     animation: exit-fade 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
   }
@@ -739,7 +640,6 @@ html:has(.theme-light) {
       animation: none;
     }
 
-    /* 退场仍需保持「不可见」，只关过渡不关终态 */
     .exit-fade-scale[data-exiting="true"],
     .exit-fade[data-exiting="true"],
     .exit-overlay[data-exiting="true"] {
@@ -748,7 +648,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 播放器横向展开 ─────────── */
   .player-expand {
     opacity: 0;
     transform: translateX(-6px);
@@ -776,7 +675,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* ─────────── 播放器进度条（原生 range，避免内联 hex）─────────── */
   .progress-range {
     -webkit-appearance: none;
     appearance: none;
@@ -811,7 +709,6 @@ html:has(.theme-light) {
     cursor: pointer;
   }
 
-  /* ─────────── 歌词栏：光标闪烁 + 波形跳动 ─────────── */
   .lyric-cursor {
     animation: app-cursor-blink 0.8s step-end infinite;
   }
@@ -820,7 +717,6 @@ html:has(.theme-light) {
     animation: app-wave 1s ease-in-out infinite;
   }
 
-  /* 搜索命中高亮 */
   .search-mark {
     background: var(--app-tones-warn-soft);
     color: var(--app-tones-warn);
@@ -830,7 +726,6 @@ html:has(.theme-light) {
     font-weight: 700;
   }
 
-  /* ─────────── 首页主题切换块：日 / 夜两幕，纯 class 驱动 ─────────── */
   .tblock-day,
   .tblock-night,
   .tblock-emoji-day,
@@ -881,7 +776,6 @@ html:has(.theme-light) {
     }
   }
 
-  /* 标题/副标题文案随主题切换（class 驱动，不用 dark: 变体） */
   .tblock-label-night {
     display: none;
   }
@@ -895,9 +789,6 @@ html:has(.theme-light) {
   }
 }
 
-/* ========== 全局样式区 ========== */
-
-/* 隐藏滚动条（照片墙横向滚动区 / 后台局部滚动区） */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -906,7 +797,6 @@ html:has(.theme-light) {
   scrollbar-width: none;
 }
 
-/* 唱片高光：conic 渐变走 token（--app-stage-ink 为两主题同源的白色系） */
 .disc-sheen {
   background: conic-gradient(
     from 0deg,
@@ -918,7 +808,6 @@ html:has(.theme-light) {
   );
 }
 
-/* 歌单音量条：三根竖条错相跳动 */
 .eq-bar {
   height: 30%;
   animation: eq-bounce 1s ease-in-out infinite;
@@ -933,7 +822,6 @@ html:has(.theme-light) {
   }
 }
 
-/* 弹窗卡底色 */
 .project-modal-card {
   background: color-mix(in srgb, var(--app-surface-strong) 50%, var(--app-canvas) 50%);
   backdrop-filter: blur(10px);

@@ -84,7 +84,7 @@ export default function LatestPostsCarousel({ posts }: { posts: CarouselPost[] }
               key={post.id}
               type="button"
               onClick={(e) => {
-                e.stopPropagation(); // 阻止触发父级的外层跳转
+                e.stopPropagation();
                 setCurrentIndex(i);
               }}
               aria-label={`切换到第 ${i + 1} 篇文章`}

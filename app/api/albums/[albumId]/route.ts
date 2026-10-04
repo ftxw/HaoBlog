@@ -9,14 +9,12 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ albumId: string }> }
 ) {
-  // 与同目录其它路由一致：包一层 try/catch，让失败也走统一信封。
   try {
     const { albumId } = await params;
     const album = await prisma.album.findUnique({
       where: { id: albumId },
       include: {
         _count: { select: { photos: true } },
-        // 安全阀：单相册照片数远超此时前端本就该分页。
         photos: {
           orderBy: [{ sort: "asc" }, { created_at: "asc" }],
           take: PHOTO_TAKE,

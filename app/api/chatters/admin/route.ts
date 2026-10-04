@@ -12,7 +12,6 @@ export async function GET(request: Request) {
     await requireAdmin(request);
 
     const { searchParams } = new URL(request.url);
-    /* 非法/缺失 status 一律退化为「不过滤」。 */
     const statusFilter = parseContentStatus(searchParams.get("status"));
     const keyword = searchParams.get("keyword")?.trim() || undefined;
     const { page, size } = parsePagination(searchParams);

@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import HomeClient from "./HomeClient";
@@ -43,7 +42,6 @@ async function fetchHomeData() {
           photos: { take: 1, orderBy: { sort: "asc" }, select: { url: true } },
         },
       }),
-      // 刻意不复用 queries 层的 getContentCounts()：它为后台仪表盘一次跑 7 项 count。
       prisma.$transaction([
         prisma.post.count({ where: { status: "published" } }),
         prisma.chatter.count({ where: { status: "published" } }),

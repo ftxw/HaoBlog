@@ -29,9 +29,9 @@ const cache = new Map<string, CacheItem>();
 const CACHE_LIMIT = 200;
 
 const TTL = {
-  playlist: 10 * 60 * 1000, // 歌单 10 分钟
-  song: 60 * 60 * 1000, // 单曲 1 小时
-  lyric: 60 * 60 * 1000, // 歌词 1 小时
+  playlist: 10 * 60 * 1000,
+  song: 60 * 60 * 1000,
+  lyric: 60 * 60 * 1000,
 };
 
 function getCache(key: string): string | null {
@@ -236,7 +236,6 @@ class MetingApiClient implements MusicClient {
     return u.toString();
   }
 
-  /** 同一个上游重试一次（不是「换一个 API 再试」—— 上游只有一个，来自后台配置） */
   private async request<T>(fn: () => Promise<T>): Promise<T> {
     let lastErr: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -331,7 +330,6 @@ class MetingApiClient implements MusicClient {
   }
 }
 
-/** 音乐上游唯一来自后台「站点设置 → 音乐设置」，代码里不再有写死的 API 或备用源。 */
 export async function createMeting(): Promise<MusicClient> {
   const raw = (await getDbConfigValue("cloudMusicApiUrl")).trim().replace(/\/+$/, "");
   if (!raw) {

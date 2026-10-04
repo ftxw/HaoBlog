@@ -8,7 +8,6 @@ const JWKS_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 const JWKS_TIMEOUT_MS = 3000;
 const JWKS_COOLDOWN_MS = 30 * 1000;
 
-// 鉴权路径必须快失败：Supabase 卡住时不要挂到 Vercel 函数超时才回。
 const AUTH_FETCH_TIMEOUT_MS = 5000;
 
 export function isSupabaseConfigured(): boolean {
@@ -169,7 +168,6 @@ async function verifyLocally(token: string): Promise<AppUser | null> {
   }
 }
 
-/** 「鉴权上游不可用」这一类的错误标记（503，不再当 401 处理）。 */
 export class UpstreamAuthError extends BusinessError {
   constructor(message: string) {
     super(message, 503);
@@ -177,7 +175,6 @@ export class UpstreamAuthError extends BusinessError {
   }
 }
 
-/** GoTrue 对无效/过期令牌返回的原文 —— 匹配的是外部服务的文案，不是本站约定。 */
 const INVALID_TOKEN_MESSAGES = new Set([
   "invalid jwt",
   "invalid claim: missing sub claim",
@@ -205,7 +202,6 @@ export async function verifyAccessToken(token: string): Promise<AppUser> {
     if (!user) throw new InvalidTokenError();
     return user;
   } catch (e) {
-    // GoTrue 明确拒绝 → 401；其余（超时、网络失败、上游 5xx）→ 503。
     if (isDefinitelyInvalidToken(e)) throw new InvalidTokenError();
     console.error("[supabase] 校验 access token 时上游不可用:", e);
     throw new UpstreamAuthError("鉴权服务暂时不可用，请稍后重试");
@@ -245,7 +241,6 @@ export async function supabaseUpdatePassword(token: string, newPassword: string)
   return mapUser(json as never);
 }
 
-/** 吊销上游会话：让该 access/refresh token 立即失效（不只是本地忘记它）。 */
 export async function supabaseLogout(token: string): Promise<void> {
   await authFetchWithToken(token, "/logout", { method: "POST" });
 }

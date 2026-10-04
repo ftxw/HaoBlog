@@ -20,7 +20,6 @@ export default function CommentCard({
   onReply: (c: CommentItem) => void;
   onToggleReplies: (id: string) => void;
   likedCommentIds: Set<string>;
-  /** 点赞请求在途：按钮置灰。真正的并发保护在 Comments.handleCommentLike 里。 */
   likeBusy?: boolean;
   onCommentLike: (id: string) => void;
   flat?: boolean;

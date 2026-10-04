@@ -52,7 +52,6 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   const doFetch = () =>
     fetch(path, {
       ...init,
-      // 后台一律绕过浏览器 HTTP 缓存，读缓存只保留服务端那一层（见下方 apiJson 说明）。
       cache: init?.cache ?? "no-store",
       credentials: "same-origin",
       headers: {
@@ -74,11 +73,9 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   return res;
 }
 
-/** 后台读缓存策略：只保留服务端一层。 */
 const inflightGets = new Map<string, Promise<unknown>>();
 
 export function invalidateApiCache(): void {
-  // 写操作/登出时丢弃进行中的 GET 合并项，避免短暂复用旧请求。
   inflightGets.clear();
 }
 
@@ -103,7 +100,7 @@ export async function apiJson<T = unknown>(
       throw new Error(await errorText(res));
     }
     const data = unwrapApi<T>(await res.json(), res.status);
-    if (!dedupe) invalidateApiCache(); // 写操作后丢弃进行中的 GET 合并项
+    if (!dedupe) invalidateApiCache();
     return data;
   })();
 
@@ -161,7 +158,6 @@ export function useApi<T = unknown>(url: string | null, initial: T | null = null
   }, [url, tick]);
 
   const reload = useCallback(() => {
-    // 无客户端缓存层，bump tick 即触发一次 no-store 重取。
     setTick((t) => t + 1);
   }, []);
 

@@ -1,4 +1,3 @@
-
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { formatYearCN } from "../format";
@@ -59,7 +58,6 @@ function chatterWhere(options: ListChattersOptions): Prisma.ChatterWhereInput {
   const keyword = options.keyword?.trim();
   return {
     ...(status ? { status } : {}),
-    // 必须带 mode: "insensitive"（生成 ILIKE）。
     ...(keyword
       ? { content: { contains: escapeLike(keyword), mode: "insensitive" } }
       : {}),
@@ -85,7 +83,6 @@ export async function listChatters(
       status: true,
       created_at: true,
       updated_at: true,
-      // 已审核评论数随主查询一并取出（chatter_comment(chatter_id, status, created_at)
       _count: { select: { comments: { where: { status: "approved" } } } },
     },
     orderBy: { created_at: "desc" },
@@ -104,17 +101,13 @@ export async function countChatters(
   return prisma.chatter.count({ where: chatterWhere(options) });
 }
 
-/** 筛选项扫描上界。与 PHOTO_TAKE 同思路：给一个「远大于真实内容量」的界。 */
 const FACET_ROWS_MAX = 5000;
 
 export interface ChatterFacets {
-  /** 出现过的年份，倒序（下拉菜单的展示顺序） */
   years: string[];
-  /** 出现过的情绪键，按首次出现顺序 */
   moods: string[];
 }
 
-/** /moments 下拉筛选项的选项来源。 */
 export async function listChatterFacets(): Promise<ChatterFacets> {
   const rows = await prisma.chatter.findMany({
     where: { status: "published" },

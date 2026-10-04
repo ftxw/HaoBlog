@@ -17,7 +17,7 @@ function LiveClock() {
           second: "2-digit",
         })
       );
-    tick(); // 挂载后立刻填上，避免先闪一下占位
+    tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, []);

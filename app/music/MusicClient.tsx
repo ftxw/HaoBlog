@@ -86,7 +86,6 @@ export default function MusicClient() {
     );
   }, [songCover]);
 
-  // 歌单元数据里的时长：纯派生，无需 state。
   const metaDurations = useMemo(() => {
     const map: Record<string, number> = {};
     for (const s of playlist) {
@@ -95,11 +94,9 @@ export default function MusicClient() {
     return map;
   }, [playlist]);
 
-  // 播放时实测到的时长（会随播放累积、需跨歌记忆，故保留 state）；实测值优先于元数据。
   const [measuredDurations, setMeasuredDurations] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!currentSong || !duration) return;
-    // rAF 把 setState 移出 effect 同步体；对一行 mm:ss 文本而言延后一帧无感知。
     const raf = requestAnimationFrame(() => {
       setMeasuredDurations((prev) =>
         prev[currentSong.id] === duration ? prev : { ...prev, [currentSong.id]: duration }
@@ -390,7 +387,6 @@ export default function MusicClient() {
                         </div>
                       </div>
                     ) : (
-                      /* 无歌词兜底：图标 spin-slow（6s/圈）+ accent 40% 透明，文案 text-base。 */
                       <div className="h-full flex flex-col items-center justify-center gap-3">
                         <Disc className="spin-slow h-8 w-8 text-accent opacity-40" aria-hidden="true" />
                         <p className="animate-pulse text-base font-black text-accent">

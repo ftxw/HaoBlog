@@ -47,7 +47,6 @@ function ProjectTimelineNode({
   const isLeft = index % 2 === 0;
   const techStack = useMemo(() => toStringArray(project.tech_stack), [project.tech_stack]);
   const defaultCover = useConfigValue("defaultPostCover");
-  /* 与文章 / 关于页封面同一套取值链：项目图 → 项目封面图 → 文章默认封面 → 空串不渲染。 */
   const cover = resolveCoverChain(
     project.images?.[0] || project.cover_image,
     "",
@@ -82,7 +81,6 @@ function ProjectTimelineNode({
         className="group w-full text-left md:w-[calc(50%-4rem)]"
       >
         <div className="glass rounded-card transition-all duration-700 hover:scale-[1.02] overflow-hidden flex flex-col">
-          {/* 与头像 / 关于页封面同一套：项目封面与默认封面都为空时不渲染封面块 */}
           {cover && (
             <div className="w-full h-40 sm:h-48 overflow-hidden relative bg-surface-muted">
               <SafeImage
@@ -150,7 +148,6 @@ function ProjectDetailModal({
   exiting,
 }: {
   project: ProjectItem;
-  /** 列表不下发 long_description，打开弹窗时单独取；未到达为 null */
   detail: ProjectItem | null;
   detailLoading: boolean;
   onClose: () => void;
@@ -289,7 +286,6 @@ function ProjectDetailModal({
                   {longDescription}
                 </div>
               ) : detailLoading ? (
-                // 占位骨架：不占位的话正文到达时弹窗高度会跳一下
                 <div className="mt-5 space-y-2.5" aria-hidden="true">
                   <div className="h-4 w-full rounded bg-surface-strong" />
                   <div className="h-4 w-[92%] rounded bg-surface-strong" />
@@ -368,17 +364,13 @@ export default function ProjectsListClient({
   tagList,
 }: {
   initialProjects: ProjectItem[];
-  /** 服务端统计的已发布项目总数（首屏只下发前 pageSize 条） */
   total: number;
-  /** 每页条数，与页面首屏取数用的一致 */
   pageSize: number;
-  /** 标签栏选项与计数，由服务端按全量算好传入 —— 从已下发的这一页里汇总会漏标签 */
   tagList: { name: string; count: number }[];
 }) {
   const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialProjects.length < total);
-  // 已从服务端收到的条数（去重前）—— 判断是否取完用的是它，见 shouldLoadMore
   const receivedRef = useRef(initialProjects.length);
   const pageRef = useRef(1);
   const inFlightRef = useRef(false);
@@ -395,7 +387,6 @@ export default function ProjectsListClient({
       setProjects((prev) => mergeRows(prev, rows));
       setHasMore(shouldLoadMore(rows, pageSize, receivedRef.current, total));
     } catch {
-      // 续拉失败不弹错：哨兵还在，滚出去再滚回来会重试
     } finally {
       inFlightRef.current = false;
       setLoadingMore(false);
@@ -410,7 +401,6 @@ export default function ProjectsListClient({
 
   const [selected, setSelected] = useState<ProjectItem | null>(null);
   const [closingProject, setClosingProject] = useState<ProjectItem | null>(null);
-  // 打开弹窗时单独取的长正文；reqId 防止「快速连开两条」时先发的响应后到、覆盖后发的
   const [detail, setDetail] = useState<ProjectItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const detailReqRef = useRef(0);
@@ -424,7 +414,6 @@ export default function ProjectsListClient({
     );
   }, [projects, selectedTag, tagList]);
 
-  // 标签筛选是在客户端对已下发的数组做的：只有把剩下的页也取回来。
   useEffect(() => {
     if (selectedTag !== "All" && hasMore) void loadMore();
   }, [selectedTag, hasMore, projects.length, loadMore]);
@@ -440,7 +429,6 @@ export default function ProjectsListClient({
         if (detailReqRef.current === reqId) setDetail(d);
       })
       .catch(() => {
-        // 取不到就只显示短描述，弹窗其余内容照常可用
       })
       .finally(() => {
         if (detailReqRef.current === reqId) setDetailLoading(false);
@@ -508,7 +496,6 @@ export default function ProjectsListClient({
               </div>
             </div>
 
-            {/* 标签筛选在客户端对已下发数组做，「该分类下暂无项目」须取满全部页才成立。 */}
             {hasMore && (
               <div
                 ref={sentinelRef}

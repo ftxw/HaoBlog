@@ -16,8 +16,6 @@ export interface ChatterCommentItem {
   replies: ChatterCommentItem[];
 }
 
-
-/** 公开的说说列表（`/moments` 首屏之后的分页续拉用）。 */
 export function getChatters(params: { page?: number; size?: number } = {}) {
   return request<ChatterItem[]>(`/api/chatters${qs(params)}`);
 }
@@ -39,7 +37,6 @@ export function createChatterComment(data: {
   });
 }
 
-/** 同 likeComment：服务端只回新的点赞数（见 app/lib/comment-like.ts） */
 export function likeChatterComment(commentId: string, unlike = false) {
   return request<{ likes: number }>(
     `/api/chatters/comments/${commentId}/${unlike ? "unlike" : "like"}`,

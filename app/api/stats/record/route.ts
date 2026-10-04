@@ -21,9 +21,8 @@ function uvCutoffStr(): string {
   return formatDateCN(retentionCutoff(DAILY_UV_RETENTION_DAYS));
 }
 
-const CLEAN_INTERVAL = 5 * 60 * 1000; // 5 分钟最多执行一次清理
+const CLEAN_INTERVAL = 5 * 60 * 1000;
 
-/** 初始值取 Date.now() 而不是 0。 */
 let lastCleanAt = Date.now();
 
 async function cleanIfDue(): Promise<void> {
@@ -45,7 +44,6 @@ async function cleanIfDue(): Promise<void> {
   }
 }
 
-// PV 反刷：按 IP 的短窗上限。一次正常浏览只上报一次（StatsTracker 只在整页加载时触发）。
 const PV_LIMIT = 20;
 const PV_WINDOW_MS = 60_000;
 
@@ -58,7 +56,6 @@ function shouldWriteVisitor(ip: string): boolean {
   const last = visitorLogTimes.get(ip);
   if (last !== undefined && now - last < VISITOR_THROTTLE) return false;
 
-  // 定期清理过期 key，防止 Map 无限增长（冷启动后 Map 为空，天然无泄漏）
   if (visitorLogTimes.size >= VISITOR_MAP_MAX) {
     for (const [k, t] of visitorLogTimes) {
       if (now - t >= VISITOR_THROTTLE) visitorLogTimes.delete(k);
@@ -72,7 +69,6 @@ function shouldWriteVisitor(ip: string): boolean {
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
 
-  // PV 反刷：限流本身失败不阻断浏览（回落放行），超限只丢本次上报、不报错
   let pvAllowed = true;
   try {
     pvAllowed = (await hitRateLimit(`pv:${ip}`, PV_LIMIT, PV_WINDOW_MS)).allowed;
@@ -102,10 +98,9 @@ export async function POST(request: NextRequest) {
   try {
     await cleanIfDue();
 
-    /* 每次上报要落库的三件事：PV+1、UV 去重、访客明细。 */
     const uvCreated = await prisma.dailyUv.createMany({
       data: [{ date, ip }],
-      skipDuplicates: true, // 并发安全：重复时静默跳过，count=0
+      skipDuplicates: true,
     });
     const uvDelta = uvCreated.count > 0 ? 1 : 0;
 

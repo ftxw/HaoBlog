@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
-/** 错峰延迟的上界。 */
 const MAX_REVEAL_DELAY = 0.96;
 
 export default function Reveal({

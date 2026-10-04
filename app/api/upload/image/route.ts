@@ -19,7 +19,6 @@ import {
 const ALLOWED_TYPES: readonly string[] = ALLOWED_IMAGE_TYPES;
 const MAX_SIZE = MAX_UPLOAD_SIZE;
 
-/** 服务端 magic bytes 校验：客户端自报的 file.type 可伪造，必须以文件头为准。 */
 function matchesMagicBytes(head: Uint8Array, type: string): boolean {
   const starts = (...bytes: number[]) =>
     bytes.every((b, i) => head[i] === b);
@@ -46,7 +45,6 @@ type ImageCheck =
   | { ok: true; buffer: ArrayBuffer; type: string }
   | { ok: false; message: string };
 
-/** 主文件与缩略图共用校验：类型白名单 → 体积上限 → magic bytes（file.type 可伪造）。 */
 async function validateImageFile(file: File, label = ""): Promise<ImageCheck> {
   const prefix = label ? `${label}：` : "";
 
@@ -75,7 +73,6 @@ export async function POST(request: Request) {
     try {
       formData = await request.formData();
     } catch {
-      /* 非 multipart（或畸形体）会抛错，落进外层 catch 就变成 500。 */
       return fail("请求体不是合法的表单数据");
     }
     const file = formData.get("file") as File | null;
@@ -83,7 +80,6 @@ export async function POST(request: Request) {
       return fail("缺少文件");
     }
 
-    // 主图与缩略图都先校验再上传，避免缩略图不合格时留下孤儿对象。
     const main = await validateImageFile(file);
     if (!main.ok) return fail(main.message);
 

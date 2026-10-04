@@ -19,7 +19,6 @@ import {
 
 const PRESIGN_EXPIRES_SEC = 900;
 
-/** 生成浏览器直传图床用的预签名 PUT 地址（仅管理员）。 */
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin(request);
@@ -37,7 +36,6 @@ export async function POST(request: NextRequest) {
     try {
       body = (await request.json()) as typeof body;
     } catch {
-      /* 非法 JSON 会抛 SyntaxError，落进外层 catch 就变成 500（对照 auth/login 显式转 400）。 */
       return fail("请求体不是合法的 JSON");
     }
 
@@ -56,7 +54,7 @@ export async function POST(request: NextRequest) {
     const safeCategory = (UPLOAD_CATEGORIES as readonly string[]).includes(category)
       ? category
       : "system";
-    const ext = contentType.split("/")[1]; // jpeg / png / webp / gif
+    const ext = contentType.split("/")[1];
     const filename = generateFileName(ext);
     const key = folder
       ? `${safeCategory}/${folder}/${filename}`
@@ -66,7 +64,7 @@ export async function POST(request: NextRequest) {
       presignPutUrl({
         endpoint: cfg.endpoint,
         bucket: cfg.bucket,
-        region: cfg.region, // 与 AWS SDK 取值一致（空值由 presignPutUrl 兜底 us-east-1）
+        region: cfg.region,
         accessKey: cfg.accessKey,
         secretKey: cfg.secretKey,
         key: objectKey,
@@ -97,7 +95,6 @@ export async function POST(request: NextRequest) {
         expiresIn: PRESIGN_EXPIRES_SEC,
       });
   } catch (err) {
-    // 这里必须用 businessFail，不能用 fail(errMsg(err), 500)。
     console.error("[upload/presign] 生成预签名地址失败:", err);
     return businessFail(err, "生成上传地址失败");
   }

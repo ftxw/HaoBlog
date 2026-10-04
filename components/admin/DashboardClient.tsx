@@ -281,7 +281,6 @@ export default function DashboardClient({
             ) : (
               <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
                 {(loginLogs.data?.data.list ?? []).map((log) => {
-                  /* 按「失败」判定，而不是「含『成功』」。 */
                   const success = !log.summary.includes("失败");
                   return (
                     <li

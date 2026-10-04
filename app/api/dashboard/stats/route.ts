@@ -4,7 +4,6 @@ import { getCachedDashboardStats } from "@/app/lib/queries/dashboard";
 
 export async function GET(request: Request) {
   try {
-    // requireAdmin 已经在无会话/非管理员时抛错（由 businessFail 映射成 401/403）。
     await requireAdmin(request);
 
     const data = await getCachedDashboardStats();

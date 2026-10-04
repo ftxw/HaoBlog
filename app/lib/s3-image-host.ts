@@ -22,10 +22,8 @@ export interface S3ImageHostConfig {
   imageCdnDomain: string;
 }
 
-/** 图床配置的唯一来源是后台「站点配置」（SiteConfig 表）；不再支持环境变量兜底。 */
 export async function getS3ImageHostConfig(): Promise<S3ImageHostConfig> {
   const cfg = await getDbSiteConfig();
-  // 种子会把「未配置」写成空串，所以空串与缺失同义，都回落到默认值。
   const pick = (key: string) => cfg[key] || "";
   return {
     endpoint: pick("endpoint"),
@@ -46,7 +44,7 @@ function createClient(cfg: S3ImageHostConfig): S3Client {
   return new S3Client({
     region: cfg.region || DEFAULT_REGION,
     endpoint: cfg.endpoint,
-    forcePathStyle: true, // 自定义 S3 兼容端点通常需要路径样式（R2 官方要求）
+    forcePathStyle: true,
     requestChecksumCalculation: "WHEN_REQUIRED",
     maxAttempts: S3_MAX_ATTEMPTS,
     credentials: {
@@ -131,7 +129,6 @@ export async function uploadImageToS3(
   return { url: imageUrlOf(key, cfg), key };
 }
 
-/** 已报告过的读取错误签名（name:code）。 */
 const reportedReadErrors = new Set<string>();
 
 export async function getImageFromS3(key: string): Promise<{
@@ -152,7 +149,6 @@ export async function getImageFromS3(key: string): Promise<{
       contentType: obj.ContentType || "application/octet-stream",
     };
   } catch (e) {
-    /* 区分「对象不存在」与「基础设施有问题」。 */
     const err = e as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
     const status = err?.$metadata?.httpStatusCode;
     const isNotFound =

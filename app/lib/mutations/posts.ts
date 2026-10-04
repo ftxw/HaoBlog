@@ -1,4 +1,3 @@
-
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { purgePath } from "@/app/lib/revalidate";
@@ -39,7 +38,6 @@ function normalizeStatus(value: unknown, fallback: PostStatus): PostStatus {
 }
 
 function resolveCover(cover: unknown, content: string): string {
-  // 手动封面 → 正文第一张图（「文章默认封面」那一级在渲染时才兜，不落库）
   return resolveCoverChain(typeof cover === "string" ? cover : "", content).url;
 }
 
@@ -48,7 +46,6 @@ function resolveTagNames(value: unknown): string[] | undefined {
   return value.map((v) => String(v ?? ""));
 }
 
-/** 解析发布时间。 */
 function resolvePublishedAt(
   raw: unknown,
   status: PostStatus,
@@ -177,7 +174,6 @@ export async function updatePost(postId: string, input: PostInput) {
   invalidatePostCaches();
   purgePath(`/posts/${id}`);
 
-  /* 这里必须重新查一次，不能直接返回上面 tx.post.update 的结果。 */
   if (tagNames) {
     const detailed = await prisma.post.findUnique({
       where: { id },
@@ -201,7 +197,6 @@ export async function deletePost(postId: string) {
     await prisma.$transaction(
       async (tx) => {
         await tx.post.delete({ where: { id } });
-        /* 清掉这篇文章的点赞记录。 */
         await purgeContentLikes(tx, "post", id);
       },
       { timeout: 20_000 }

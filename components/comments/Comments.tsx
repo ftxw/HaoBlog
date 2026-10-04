@@ -53,7 +53,6 @@ export default function Comments<T extends CommentItem>({
     toggle: toggleEntityLike,
   } = useEntityLike(likeTargetType, targetId, initialLikes, !hideActions);
 
-  /** 评论点赞走同一套动作外壳（busy / 错误归一），差异只在 submit 里。 */
   const {
     busy: commentLikeBusy,
     error: commentLikeError,
@@ -90,7 +89,6 @@ export default function Comments<T extends CommentItem>({
     readLikedIds(likedStoreKey)
   );
   const [likedKeyState, setLikedKeyState] = useState(likedStoreKey);
-  // 账号或内容类型变了就换一份记忆（渲染期同步，不写 effect）。
   if (likedKeyState !== likedStoreKey) {
     setLikedKeyState(likedStoreKey);
     setLikedCommentIds(readLikedIds(likedStoreKey));
@@ -109,7 +107,6 @@ export default function Comments<T extends CommentItem>({
     if (!autoCompose || autoComposedRef.current) return;
     if (!user) return;
     autoComposedRef.current = true;
-    // rAF 把 setState 移出 effect 同步体（规避 react-hooks/set-state-in-effect）。
     const raf = requestAnimationFrame(() => {
       setComposing(true);
       setShowEmoji(false);
@@ -143,12 +140,10 @@ export default function Comments<T extends CommentItem>({
     return () => window.removeEventListener("keydown", onKey);
   }, [showEmoji]);
 
-  // 首屏 RSC 直出的评论：comments / commentsLoading / totalCount 的初值已在 useState 惰性初始化里给出
   const initialCommentsRef = useRef(initialComments);
   useEffect(() => {
     if (!initialCommentsRef.current) return;
     onCountChangeRef.current?.(countAll(initialCommentsRef.current as CommentItem[]));
-    // 仅挂载时上报一次
   }, []);
 
   useEffect(() => {
@@ -189,12 +184,10 @@ export default function Comments<T extends CommentItem>({
   }
 
   async function handleCommentLike(commentId: string) {
-    /* 与内容点赞同口径：未登录先去登录（服务端也校验，这里只是省一次 401 往返）。 */
     if (!user) {
       openLogin();
       return;
     }
-    /* 在途时不再受理：双击会两次都读到 alreadyLiked=false → 服务端 +2；连点两条还会互相覆盖高亮。 */
     if (commentLikeBusy) return;
     const alreadyLiked = likedCommentIds.has(commentId);
     await runCommentLike(async () => {
@@ -207,7 +200,6 @@ export default function Comments<T extends CommentItem>({
       try {
         localStorage.setItem(likedStoreKey, JSON.stringify([...next]));
       } catch {
-        /* 写不进去只影响本地记忆，本次点赞结果照常生效。 */
       }
       setComments((prev) =>
         prev.map((c) => updateCommentLikes(c, commentId, newLikes))

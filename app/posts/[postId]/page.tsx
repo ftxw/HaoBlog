@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import Link from "next/link";
@@ -61,7 +60,6 @@ export async function generateMetadata({ params }: { params: Promise<{ postId: s
   const title = post.title || "文章";
   const description = post.description || undefined;
   const cover = post.cover || pickConfigValue(dbConfig, "defaultPostCover");
-  // 社交抓取不带 Referer，图床防盗链会拦直链，故统一换站内地址；无图则不输出 images。
   const image = cover
     ? absoluteUrlOf(proxyUrlOf(cover, normalizeCdnDomain(dbConfig.imageCdnDomain)), base)
     : undefined;
@@ -110,7 +108,6 @@ export default async function PostPage({
 
   if (!post || post.status !== "published") notFound();
 
-  // 显式取图床域名再传给渲染器：不能依赖 RootLayout 渲染期设置的那个模块单例。
   const cdnDomain = normalizeCdnDomain(dbConfig.imageCdnDomain);
   const { contentHtml, toc } = await cachedRenderPost(post.content, cdnDomain);
 
@@ -127,7 +124,6 @@ export default async function PostPage({
       <ViewCounter postId={postId} />
       <FadeIn className="container-page flex flex-col lg:flex-row gap-6 pb-6 pt-6 md:gap-8 md:pt-12 relative z-10">
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card">
-          {/* 与头像 / 关于页封面同一套：文章封面与默认封面都为空时整块不渲染 */}
           {cover && (
             <div className="w-full aspect-video max-h-[300px] bg-surface-muted relative overflow-hidden">
               <SafeImage
@@ -215,4 +211,3 @@ export default async function PostPage({
     </div>
   );
 }
-

@@ -23,7 +23,6 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     return ok(toMeData(user));
   } catch (err) {
-    /* 这里的状态码是会话保活的关键，不能一句 500 兜住。 */
     const status = errorStatus(err);
     if (status === 401) {
       return fail(errMsg(err, "未登录"), 401, {

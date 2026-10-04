@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/* 后台整体不进任何缓存：Next 会把 layout 段配置合并进所有子页面，收在一处即可。 */
 export const dynamic = "force-dynamic";
 
 function AuthFallback() {
@@ -24,7 +23,6 @@ function AuthFallback() {
   );
 }
 
-/** 鉴权门：读 session-token cookie 并校验 Supabase token 与 user 表 is_admin。 */
 async function AdminGate({ children }: { children: React.ReactNode }) {
   const admin = await getServerAdmin();
 
@@ -32,7 +30,6 @@ async function AdminGate({ children }: { children: React.ReactNode }) {
     redirect("/admin/login");
   }
 
-  // 空串是「显式清空」不回落默认值；AdminShell 对空串自带兜底。
   const authorName = await getDbConfigValue("authorName");
 
   return <AdminShell authorName={authorName}>{children}</AdminShell>;

@@ -7,7 +7,6 @@ import {
 } from "@/app/lib/session-cookie";
 import { refreshSession } from "@/app/lib/mutations/auth";
 
-/** 解析回跳目标，只允许站内绝对路径。 */
 function resolveNext(raw: string | null, origin: string): string {
   if (!raw) return "/admin";
   try {
@@ -19,7 +18,6 @@ function resolveNext(raw: string | null, origin: string): string {
   }
 }
 
-/** GET：供 proxy.ts 在 access token 过期时 307 过来做静默续期。 */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const next = resolveNext(url.searchParams.get("next"), url.origin);
@@ -42,7 +40,6 @@ export async function GET(request: Request) {
   }
 }
 
-/** POST：前端在拿到 401 + canRefresh 时就地续期，无需跳转。 */
 export async function POST(request: Request) {
   try {
     const refreshToken = readRefreshTokenFromCookieHeader(

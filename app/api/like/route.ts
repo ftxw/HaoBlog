@@ -21,12 +21,10 @@ const uniqueWhere = (userId: string, targetType: LikeTargetType, targetId: strin
   user_id_target_type_target_id: { user_id: userId, target_type: targetType, target_id: targetId },
 });
 
-/** 校验 targetType 是不是白名单里的三个字面量之一。 */
 function isLikeTargetType(value: unknown): value is LikeTargetType {
   return typeof value === "string" && Object.hasOwn(TARGETS, value);
 }
 
-/** 一次读取出「目标是否存在 + 是否已发布 + 当前点赞数」。 */
 async function readLikes(
   targetType: LikeTargetType,
   targetId: string
@@ -59,7 +57,6 @@ export async function GET(request: Request) {
     let liked = false;
     const token = getRequestToken(request);
     if (token) {
-      /* 走统一鉴权入口（app/lib/auth.ts，带 60s 内存缓存 + singleFlight）。 */
       const user = await checkAuthorizedAccessToken(token);
       if (user) {
         const rec = await prisma.contentLike.findUnique({
@@ -72,13 +69,11 @@ export async function GET(request: Request) {
 
     return ok({ likes, liked });
   } catch (err) {
-    // 匿名可高频调用，出错必须留痕。
     console.error("[GET /api/like] error:", err);
     return businessFail(err, "获取点赞失败");
   }
 }
 
-/* 登录态写操作按账号限流：用 user.id 比 IP 更准（同一 NAT 下多个账号互不影响）。 */
 const LIKE_LIMIT = 60;
 const LIKE_WINDOW_MS = 60_000;
 
@@ -113,12 +108,10 @@ export async function POST(request: Request) {
     const targetType = rawType;
     const t = TARGETS[targetType];
     const before = await readLikes(targetType, targetId);
-    /* 草稿/隐藏内容对公开通道等同于不存在：知道 ID 也不能给它点赞（与 posts/[postId] 的 404 口径一致）。 */
     if (!before || before.status !== "published") {
       return fail("目标不存在", 404);
     }
 
-    // 点赞计数由 content_like 表上的数据库触发器重算（见 prisma/migrations 的 init 迁移）。
     if (wantLike) {
       await prisma.contentLike.createMany({
         data: [{ user_id: user.id, target_type: targetType, target_id: targetId }],
@@ -137,7 +130,6 @@ export async function POST(request: Request) {
       liked: wantLike,
     });
   } catch (err) {
-    /* 令牌无效由返回 null 表达、上游不可用才抛错，不要靠比对错误文案做控制流。 */
     console.error("[POST /api/like] error:", err);
     return businessFail(err, "点赞失败");
   }

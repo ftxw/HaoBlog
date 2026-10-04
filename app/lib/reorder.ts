@@ -58,7 +58,6 @@ export function resolveReorderIds(
   return ordered;
 }
 
-/** 重排需要读出来的两列。sort 必须一起读 —— 见 computeSortChanges 的等价性论证。 */
 export interface SortRow {
   id: string;
   sort: number;
@@ -69,10 +68,8 @@ export interface SortChange {
   sort: number;
 }
 
-/** 重排列表的统一取数顺序。 */
 export const SORT_ROW_ORDER_BY = [{ sort: "asc" }, { id: "asc" }] as const;
 
-/** 算出真正需要写库的行。 */
 export function computeSortChanges(
   list: SortRow[],
   orderedIds: string[]

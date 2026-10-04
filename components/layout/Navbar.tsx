@@ -72,7 +72,6 @@ export default function Navbar() {
         aria-hidden="true"
       />
       <span>
-        {/* navTitle 默认值就是空串，这个 || 落到作者名正是它的默认值；三段各自独立。 */}
         {navTitle || authorName}
         <span className="mx-1">{navSuffix}</span>
         {navAfter}

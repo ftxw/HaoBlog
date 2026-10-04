@@ -28,12 +28,9 @@ export function createComment(data: {
   });
 }
 
-/** 点赞 / 取消点赞。 */
 export function likeComment(commentId: string, unlike = false) {
   return request<{ likes: number }>(
     `/api/comments/${commentId}/${unlike ? "unlike" : "like"}`,
     { method: "POST" }
   );
 }
-
-

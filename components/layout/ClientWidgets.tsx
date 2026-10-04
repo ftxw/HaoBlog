@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 const FloatingPlayer = dynamic(() => import("@/components/music/FloatingPlayer"), { ssr: false });
 const BusinessLinkPanel = dynamic(() => import("@/components/widgets/BusinessLinkPanel"), { ssr: false });
 
-/** 前台悬浮挂件容器（音乐播放器 + 业务链接面板）。 */
 export default function ClientWidgets() {
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: 挂载门控，让首帧与 SSR 一致（见上）

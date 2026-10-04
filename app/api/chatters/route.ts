@@ -3,7 +3,6 @@ import { fail, parsePagination } from "@/app/lib/http";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { listChatters } from "@/app/lib/queries/chatters";
 
-/** 公开的说说列表（前台 /moments 滚动续拉用）。 */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -12,7 +11,6 @@ export async function GET(req: NextRequest) {
       CACHE_NAMESPACE.chatters,
       req,
       () => listChatters({ status: "published", page, size }),
-      // 本路由只读 page / size 两个参数（status 是写死的）。
       { keyParams: ["page", "size"] }
     );
   } catch (err) {

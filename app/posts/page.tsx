@@ -1,4 +1,3 @@
-
 export const revalidate = 300;
 
 import type { Metadata } from "next";
@@ -25,7 +24,6 @@ async function fetchInitialData() {
   try {
     const [categories, posts, total] = await Promise.all([
       listCategories(),
-      // 刻意不复用 queries 层的 listPosts()：它还会带上本页不需要的 comments_count。
       prisma.post.findMany({
         where: { status: "published" },
         orderBy: [{ is_pinned: "desc" }, { created_at: "desc" }],

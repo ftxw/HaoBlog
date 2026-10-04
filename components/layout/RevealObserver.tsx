@@ -3,12 +3,10 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-/** 全站滚动入场观察器：进入视口的 [data-reveal] 元素置为已显形并广播 reveal 事件。 */
 export default function RevealObserver() {
   const pathname = usePathname();
 
   useEffect(() => {
-    /** 置为已显形并广播 "reveal"（幂等） */
     const mark = (el: HTMLElement) => {
       if (el.dataset.revealed === "true") return;
       el.dataset.revealed = "true";

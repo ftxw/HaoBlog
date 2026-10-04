@@ -1,11 +1,6 @@
-/** 全站导航条目 —— components/layout/Navbar.tsx（顶栏展开与移动端菜单） */
-
 export interface NavLink {
-  /** 路由路径，必须与 app/ 下的真实路由一致 */
   href: string;
-  /** 显示名 */
   label: string;
-  /** 悬停说明 / 站点地图里的一句话描述 */
   hint: string;
 }
 

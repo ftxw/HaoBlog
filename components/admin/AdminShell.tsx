@@ -63,7 +63,6 @@ export default function AdminShell({
   authorName,
   children,
 }: {
-  /** 站点作者名（信息设置 → 作者信息）。由后台 layout 服务端读取后注入，避免多打一次接口 */
   authorName?: string;
   children: React.ReactNode;
 }) {

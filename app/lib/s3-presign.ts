@@ -3,7 +3,6 @@ import { createHash, createHmac } from "node:crypto";
 const ALGORITHM = "AWS4-HMAC-SHA256";
 const UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
 const OPERATION_ID = "PutObject";
-/** 默认有效期 15 分钟：足够慢网络下的单张上传，又不至于把 URL 泄露风险放太久 */
 const DEFAULT_EXPIRES_SEC = 900;
 const DEFAULT_REGION = "us-east-1";
 

@@ -1,4 +1,3 @@
-/** 评论点赞的本地记忆键。服务端不记谁赞过，localStorage 是唯一凭据，故必须按内容类型 + 账号隔离。 */
 export function likedStorageKey(kind: string, userId?: string): string {
   return `liked_${kind}_comments:${userId || "anonymous"}`;
 }

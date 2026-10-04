@@ -1,5 +1,3 @@
-/** 评论公开字段白名单与树构建（帖子 / 说说 / 项目三类评论共用）。 */
-
 export const COMMENT_PUBLIC_SELECT = {
   id: true,
   post_id: true,
@@ -38,7 +36,6 @@ export const PROJECT_COMMENT_PUBLIC_SELECT = {
 
 export type CommentNode<T> = T & { replies: CommentNode<T>[] };
 
-/** 公开评论接口的安全阀：单个目标最多回这么多条。 */
 export const COMMENT_TAKE = 1000;
 
 export function buildCommentTree<T extends { id: string; parent_id: string | null }>(
@@ -55,7 +52,6 @@ export function buildCommentTree<T extends { id: string; parent_id: string | nul
     else roots.push(node);
   }
 
-  /* 防环：parent_id 若被改成互指会渲染无限递归，把走不到根的节点提升为根。 */
   const reachable = new Set<string>();
   const stack = [...roots];
   while (stack.length > 0) {
@@ -109,7 +105,6 @@ export const CHATTER_COMMENT_ADMIN_SELECT = {
 export const PROJECT_COMMENT_ADMIN_SELECT = {
   ...PROJECT_COMMENT_PUBLIC_SELECT,
   ip: true,
-  // Project 的展示名是 name（不是 Post 的 title）。
   project: { select: { id: true, name: true } },
   replies: {
     select: {

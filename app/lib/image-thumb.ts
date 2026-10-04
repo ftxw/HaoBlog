@@ -1,5 +1,3 @@
-/** 约定式缩略图 URL 推导（纯函数，可被服务端/客户端任意引用）。 */
-
 export const PLACEHOLDER_IMG = (() => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150"><rect width="200" height="150" fill="#e8edf2"/><g fill="none" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"><rect x="56" y="34" width="88" height="82" rx="8"/><path d="M72 92 L92 72 L110 92"/><circle cx="130" cy="58" r="7"/></g><path d="M58 118 L142 32" stroke="#f87171" stroke-width="9" stroke-linecap="round"/></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -17,19 +15,17 @@ export const PROXY_URL_PREFIX = "/api/img-proxy/imgs/";
 export function normalizeCdnDomain(raw?: string | null): string {
   const v = (raw || "").trim().replace(/\/+$/, "");
   if (!v) return "";
-  if (v.startsWith("//")) return `https:${v}`; // 协议相对 //img.x.com
+  if (v.startsWith("//")) return `https:${v}`;
   if (!/^https?:\/\//i.test(v)) return `https://${v}`;
   return v;
 }
 
 let cdnDomain = "";
 
-/** 由 SiteConfigProvider 在拿到站点配置后调用（站点配置全站一致，单站点安全） */
 export function configureCdnDomain(domain?: string | null): void {
   cdnDomain = normalizeCdnDomain(domain);
 }
 
-/** 解析图片 URL。 */
 export function resolveImageUrl(url: string, cdnDomainArg?: string): string {
   const domain = cdnDomainArg ?? cdnDomain;
   if (!url) return url;
@@ -39,7 +35,6 @@ export function resolveImageUrl(url: string, cdnDomainArg?: string): string {
   return url;
 }
 
-/** resolveImageUrl 的逆运算：把图床直链换回站内代理路径，供 RSS / og:image 等不带 Referer 的场景。 */
 export function proxyUrlOf(url: string, cdnDomainArg?: string): string {
   const domain = cdnDomainArg ?? cdnDomain;
   if (!url || !domain) return url;
@@ -49,7 +44,6 @@ export function proxyUrlOf(url: string, cdnDomainArg?: string): string {
   return url;
 }
 
-/** 把可能是相对路径的图片地址补成绝对地址（已是绝对地址则原样返回）。 */
 export function absoluteUrlOf(url: string, base: string): string {
   if (!url) return url;
   if (/^https?:\/\//i.test(url)) return url;
@@ -98,4 +92,3 @@ export function fallbackThumbToOriginal(
   }
   img.src = original;
 }
-

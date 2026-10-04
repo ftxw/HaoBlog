@@ -25,7 +25,6 @@ import { resetLikeStateCache } from "@/app/lib/like-state-cache";
 import { unwrapApi } from "@/app/lib/api-types";
 import { errorText } from "@/app/lib/response";
 
-
 interface CommentAuthValue {
   user: CommentSessionUser | null;
   login: (email: string, password: string) => Promise<void>;
@@ -51,7 +50,6 @@ interface MeData {
   avatar?: string;
 }
 
-/** 会话探测的结果。 */
 type SessionProbe =
   | { kind: "user"; user: CommentSessionUser }
   | { kind: "anonymous" }
@@ -70,7 +68,6 @@ async function probeSession(): Promise<SessionProbe> {
         cache: "no-store",
       });
     } catch {
-      // 网络层就失败了（离线、连接被中断）—— 同样属于「暂时答不出来」
       return { k: "transient" };
     }
     if (res.status === 401) {
@@ -79,7 +76,6 @@ async function probeSession(): Promise<SessionProbe> {
       } | null;
       return { k: "unauthorized", canRefresh: Boolean(body?.data?.canRefresh) };
     }
-    // 5xx = 服务端故障（含鉴权上游不可用）。不能据此判断会话失效。
     if (res.status >= 500) return { k: "transient" };
 
     const data = res.ok
@@ -96,7 +92,7 @@ async function probeSession(): Promise<SessionProbe> {
     })
       .then((x) => x.ok)
       .catch(() => false);
-    if (refreshed) r = await load(); // 只重试一次
+    if (refreshed) r = await load();
   }
 
   if (r.k === "transient") return { kind: "transient" };
@@ -130,7 +126,6 @@ export default function CommentAuthProvider({
       .then((r) => {
         if (!active) return;
         if (r.kind === "transient") {
-          // 服务端暂时答不出来 → 保留现状：继续用 loadCommentUser() 那个本地快照。
           return;
         }
         if (r.kind === "user") {
@@ -150,10 +145,8 @@ export default function CommentAuthProvider({
 
   const applySession = useCallback(async () => {
     const r = await probeSession();
-    // transient / anonymous 都不动现状：前者是服务端故障（保持本地快照）。
     if (r.kind !== "user") return;
     saveCommentSession(r.user);
-    /* 登录/注册成功后清一次点赞状态缓存。 */
     resetLikeStateCache();
     setUser(r.user);
   }, []);
@@ -184,7 +177,7 @@ export default function CommentAuthProvider({
         await res.json().catch(() => null),
         res.status
       );
-      if (data.needsConfirm) return true; // 需邮箱确认
+      if (data.needsConfirm) return true;
       await applySession();
       setLoginOpen(false);
       return false;
@@ -194,7 +187,6 @@ export default function CommentAuthProvider({
 
   const logout = useCallback(() => {
     clearCommentSession();
-    // 登出后必须丢掉本标签页缓存的点赞状态，否则当前页面会残留上一个账号的点赞高亮。
     resetLikeStateCache();
     setUser(null);
   }, []);
