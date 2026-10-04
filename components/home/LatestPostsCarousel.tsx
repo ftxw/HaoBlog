@@ -56,7 +56,7 @@ export default function LatestPostsCarousel({ posts }: { posts: CarouselPost[] }
                   priority={i === 0}
                   sizes={COVER_SIZES}
                   alt={post.title}
-                  className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
+                  className="object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
                 />
                 <div className="scrim-bottom absolute inset-0 transition-transform duration-1000 group-hover:scale-105" />
               </>
