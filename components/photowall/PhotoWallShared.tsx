@@ -125,7 +125,7 @@ export function TimelineView({
 }) {
   const ordered = useMemoOrdered(photos);
   const groups = (() => {
-    const map = new Map<string, { date: Date; items: Photo[] }>();
+    const map = new Map<string, { date: Date | null; items: Photo[] }>();
     for (const p of ordered) {
       if (!p.takenAt) continue;
       const k = monthKey(p.takenAt);
@@ -135,11 +135,10 @@ export function TimelineView({
     }
     const undated = ordered.filter((p) => !p.takenAt);
     if (undated.length) {
-      const today = new Date();
-      map.set(`未排期-${monthKey(today)}`, {
-        date: today,
-        items: undated,
-      });
+      /* 用固定哨兵 key，不能依赖 `new Date()`：本组件会被服务端组件直接渲染（参与 SSR），
+         而当 SSR 与客户端首帧跨月时（月末/月初，或命中 ISR 缓存），
+         按「当前月」拼出的 key 与标题在两端会不一致 → hydration mismatch。 */
+      map.set("未排期", { date: null, items: undated });
     }
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));
   })();
@@ -160,7 +159,7 @@ export function TimelineView({
           <span className="absolute left-3 sm:left-5 top-2 -translate-x-1/2 w-3 h-3 rounded-full bg-canvas border-2 border-accent shadow-[0_0_0_4px_var(--app-accent-soft)]" />
           <header className="mb-5">
             <h3 className="text-base sm:text-lg font-black text-ink tracking-wide">
-              {group.key.startsWith("未排期-") ? "未排期" : formatTimelineMonth(group.date)}
+              {group.date ? formatTimelineMonth(group.date) : "未排期"}
             </h3>
             <p className="text-xs text-ink-4 mt-0.5 font-medium">
               {group.items.length} 张照片
@@ -171,7 +170,7 @@ export function TimelineView({
               const caption = photo.caption;
               return (
                 <PhotoCard
-                  key={`${photo.url}-${idx}`}
+                  key={photo.url}
                   url={photo.url}
                   alt={caption || "照片"}
                   index={idx}

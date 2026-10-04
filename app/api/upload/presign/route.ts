@@ -28,12 +28,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = (await request.json()) as {
+    let body: {
       category?: string;
       folder?: string;
       contentType?: string;
       withThumb?: boolean;
     };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      /* 非法 JSON 会抛 SyntaxError，落进外层 catch 就变成 500（对照 auth/login 显式转 400）。 */
+      return fail("请求体不是合法的 JSON");
+    }
 
     const contentType = (body.contentType || "").trim();
     if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(contentType)) {

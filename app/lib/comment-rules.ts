@@ -1,6 +1,7 @@
 /** 评论域的共用规则：状态白名单、正文长度、父评论归属、防刷。 */
 
 import { BusinessError } from "@/app/lib/business-error";
+import { prisma } from "@/app/lib/prisma";
 import { hitCommentCreateLimit } from "@/app/lib/rate-limit";
 
 /** 与 `schema.prisma` 的 `CommentStatus` 枚举一致。 */
@@ -42,12 +43,47 @@ export function assertCommentContentLength(
   if (content.length > max) throw new BusinessError(message, 400);
 }
 
-/** 目标（文章 / 说说 / 项目）必须存在。统一 404，不让外键的 P2003 冒成 500。 */
-export function assertCommentTargetExists(
-  found: { id: string } | null,
+/**
+ * 目标（文章 / 说说 / 项目）必须存在**且已发布**。统一 404，不让外键的 P2003 冒成 500。
+ * 草稿/隐藏内容对公开评论通道等同于不存在 —— 否则知道 ID 的人就能给未发布的文章/说说/项目
+ * 留言、点赞、翻它的评论，与 `posts/[postId]` 对草稿一律 404 的口径不一致。
+ */
+export function assertCommentTargetVisible(
+  found: { status: string } | null,
   message: string
 ): void {
-  if (!found) throw new BusinessError(message, 404);
+  if (!found || found.status !== "published") {
+    throw new BusinessError(message, 404);
+  }
+}
+
+/** 评论宿主类型。三张表的 `status` 都是同一个 ContentStatus 枚举，语义一致。 */
+export type CommentHostKind = "post" | "chatter" | "project";
+
+/** 只取 status：判断可见性不需要其它列。 */
+async function findHostStatus(
+  kind: CommentHostKind,
+  id: string
+): Promise<{ status: string } | null> {
+  if (kind === "post") {
+    return prisma.post.findUnique({ where: { id }, select: { status: true } });
+  }
+  if (kind === "chatter") {
+    return prisma.chatter.findUnique({ where: { id }, select: { status: true } });
+  }
+  return prisma.project.findUnique({ where: { id }, select: { status: true } });
+}
+
+/**
+ * 公开评论通道（读列表 / 发评论 / 点赞）判断「宿主是否可见」的唯一实现。
+ * 传进来的 id 是否合法由调用方先过 `parseId`。
+ */
+export async function assertCommentHostVisible(
+  kind: CommentHostKind,
+  id: string,
+  message: string
+): Promise<void> {
+  assertCommentTargetVisible(await findHostStatus(kind, id), message);
 }
 
 /** 父评论必须存在、且属于同一个目标。 */

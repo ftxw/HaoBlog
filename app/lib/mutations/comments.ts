@@ -12,7 +12,7 @@ import {
 import {
   assertCommentContentLength,
   assertCommentCreateAllowed,
-  assertCommentTargetExists,
+  assertCommentTargetVisible,
   assertReplyParent,
   COMMENT_MAX_CONTENT_LENGTH,
   parseCommentStatus,
@@ -51,9 +51,9 @@ export async function createComment(
     `评论内容过长（最多 ${COMMENT_MAX_CONTENT_LENGTH} 字）`
   );
 
-  /* 目标存在性与父评论归属都由 comment-rules 统一校验（三类评论一致）。 */
-  assertCommentTargetExists(
-    await prisma.post.findUnique({ where: { id: postId }, select: { id: true } }),
+  /* 目标存在性、发布状态与父评论归属都由 comment-rules 统一校验（三类评论一致）。 */
+  assertCommentTargetVisible(
+    await prisma.post.findUnique({ where: { id: postId }, select: { status: true } }),
     "文章不存在"
   );
 
@@ -149,10 +149,10 @@ export async function createProjectComment(
     `评论内容过长（最长 ${PROJECT_COMMENT_MAX_CONTENT_LENGTH} 字）`
   );
 
-  assertCommentTargetExists(
+  assertCommentTargetVisible(
     await prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true },
+      select: { status: true },
     }),
     "项目不存在"
   );

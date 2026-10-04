@@ -1,10 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { fail } from "@/app/lib/http";
+import { businessFail, fail } from "@/app/lib/http";
 import { parseId } from "@/app/lib/comment-auth";
 import { prisma } from "@/app/lib/prisma";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { buildCommentTree, COMMENT_PUBLIC_SELECT, COMMENT_TAKE } from "@/app/lib/comment-tree";
+import { assertCommentHostVisible } from "@/app/lib/comment-rules";
+import { BusinessError } from "@/app/lib/business-error";
 
 export async function GET(
   request: Request,
@@ -16,6 +18,10 @@ export async function GET(
     if (postId === null) {
       return fail("无效的文章ID");
     }
+
+    /* 宿主必须存在且已发布（草稿等同不存在）。这条检查刻意放在缓存外 ——
+       它是可见性判断，不该被评论列表的缓存遮住；单条主键查询，代价可忽略。 */
+    await assertCommentHostVisible("post", postId, "文章不存在");
 
     // 不带 keyParams：评论列表只由路径里的 postId 决定，query 一律不进缓存键。
     return await cachedPublicGet(CACHE_NAMESPACE.comments, request, async () => {
@@ -30,6 +36,7 @@ export async function GET(
       return buildCommentTree(comments);
     });
   } catch (err) {
+    if (err instanceof BusinessError) return businessFail(err);
     console.error("[comments/post] 获取评论失败:", err);
     return fail("获取评论失败", 500);
   }

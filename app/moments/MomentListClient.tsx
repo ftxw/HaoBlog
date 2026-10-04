@@ -182,12 +182,20 @@ export default function MomentListClient({
   const [commentCountMap, setCommentCountMap] = useState<Record<string, number>>({});
   const [commentCache, setCommentCache] = useState<Record<string, ChatterCommentItem[]>>({});
   const prefetchedSet = useRef<Set<string>>(new Set());
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    /* 重新置 true：StrictMode 下 effect 会 mount → cleanup → mount。 */
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
   const prefetchComments = (momentId: string) => {
     if (prefetchedSet.current.has(momentId)) return;
     prefetchedSet.current.add(momentId);
     getChatterComments(momentId)
       .then((data) => {
-        if (!Array.isArray(data)) return;
+        if (!aliveRef.current || !Array.isArray(data)) return;
         setCommentCache((m) => ({ ...m, [momentId]: data as ChatterCommentItem[] }));
       })
       .catch(() => {

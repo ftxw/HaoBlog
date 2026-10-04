@@ -5,20 +5,21 @@ import {
   Play, Pause, SkipBack, SkipForward, Repeat, RefreshCcw, Shuffle,
   Disc, Search, Volume2, VolumeX,
 } from "lucide-react";
-import { useMusic } from "@/components/providers/MusicProvider";
+import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
 import PageHeader from "@/components/ui/PageHeader";
 import InlineSearch from "@/components/ui/InlineSearch";
 import Reveal from "@/components/ui/Reveal";
 
 export default function MusicClient() {
   const {
-    playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric,
+    playlist, currentSong, isPlaying, currentLyric,
     allLyrics,
     isLoading, togglePlay, nextSong, prevSong, handleSeek,
     playSong,
     playMode, togglePlayMode,
     volume, setVolume, isMuted, toggleMute,
   } = useMusic();
+  const { progress, currentTime, duration } = useMusicProgress();
 
   const lyricContainerRef = useRef<HTMLDivElement>(null);
   const activeLyricRef = useRef<HTMLDivElement>(null);

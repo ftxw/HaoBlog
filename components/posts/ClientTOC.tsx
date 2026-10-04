@@ -14,6 +14,10 @@ function setPageSmoothScroll(enabled: boolean) {
   document.documentElement.style.scrollBehavior = enabled ? "" : "auto";
 }
 
+function restoreScrollBehavior() {
+  setPageSmoothScroll(true);
+}
+
 export default function ClientTOC({ toc }: { toc: TocItem[] }) {
   const [activeId, setActiveId] = useState<string>("");
   const tocRef = useRef<HTMLElement>(null);
@@ -86,11 +90,18 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
 
   const rafRef = useRef<number | null>(null);
 
-  const restoreScrollBehavior = () => {
-    setPageSmoothScroll(true);
-  };
-
-  useEffect(() => restoreScrollBehavior, []);
+  useEffect(
+    () => () => {
+      /* 卸载时取消在途的平滑滚动：rAF 是自循环，不取消就会继续 window.scrollTo
+         并长期持有闭包，而且 documentElement 的 scrollBehavior 会停在 "auto"。 */
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      restoreScrollBehavior();
+    },
+    []
+  );
 
   const scrollToHeading = (e: React.MouseEvent, id: string) => {
     const targetElement = document.getElementById(id);

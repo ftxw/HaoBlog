@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useConfigJson, useConfigValue } from "@/components/providers/SiteConfigProvider";
 import { unwrapApi } from "@/app/lib/api-types";
@@ -51,9 +51,6 @@ interface MusicContextType {
   currentIndex: number;
   currentSong: Song | undefined;
   isPlaying: boolean;
-  progress: number;
-  currentTime: number;
-  duration: number;
   currentLyric: string;
   allLyrics: { time: number; text: string }[];
   isLoading: boolean;
@@ -71,7 +68,19 @@ interface MusicContextType {
   togglePlayMode: () => void;
 }
 
+/**
+ * 高频播放进度。必须与上面那组低频状态分开两个 Context：
+ * `<audio onTimeUpdate>` 每秒触发数次，把它和控件放在同一个 value 里，
+ * 每次 timeupdate 都会让**所有** `useMusic()` 消费者（悬浮播放器、歌词条…）重渲染。
+ */
+interface MusicProgressType {
+  progress: number;
+  currentTime: number;
+  duration: number;
+}
+
 const MusicContext = createContext<MusicContextType | null>(null);
+const MusicProgressContext = createContext<MusicProgressType | null>(null);
 
 const NO_IDS: string[] = [];
 
@@ -226,7 +235,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       void fetchMusicData({ silent: true });
     }, 800);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只按歌单来源重跑；fetchMusicData 由同样这两个值派生，写进依赖只是噪音
   }, [cloudMusicPlaylistId, cloudMusicIds]);
 
   useEffect(() => {
@@ -277,9 +286,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const togglePlay = useCallback(() => {
     if (!audioRef.current) return;
-    if (isPlaying) audioRef.current.pause();
-    else audioRef.current.play().catch(() => {});
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+    /* 浏览器自动播放策略会拒绝 play()：必须把状态回滚，否则「暂停」会一直显示成「播放中」
+       （唱片旋转、波形动画、切歌时的自动播放判断全都会跟着错）。 */
+    audioRef.current.play().catch(() => setIsPlaying(false));
+    setIsPlaying(true);
   }, [isPlaying]);
 
   const nextSong = useCallback(() => {
@@ -314,8 +329,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setDuration(dur);
     setProgress(dur > 0 ? (ct / dur) * 100 : 0);
     if (lyrics.length > 0) {
-      const active = [...lyrics].reverse().find((l) => ct >= l.time);
-      if (active) setCurrentLyric(active.text);
+      /* 从后往前单次扫描找「最后一个 time <= ct」。
+         （原实现是 [...lyrics].reverse().find(...)：每次 timeupdate 都复制+反转整个数组。） */
+      for (let i = lyrics.length - 1; i >= 0; i--) {
+        if (ct >= lyrics[i].time) {
+          setCurrentLyric(lyrics[i].text);
+          break;
+        }
+      }
     }
   }, [lyrics]);
 
@@ -346,29 +367,45 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setPlayMode((p) => (p === "loop" ? "single" : p === "single" ? "random" : "loop"));
   }, []);
 
+  /* 两个 value 都要 memo：否则 Provider 每次重渲染都会给出新对象，
+     拆成两个 Context 也白搭。低频组只在真正切换歌单/歌曲/播放态时才变。 */
+  const controls = useMemo<MusicContextType>(
+    () => ({
+      playlist, currentIndex, currentSong: playlist[currentIndex],
+      isPlaying, currentLyric, allLyrics: lyrics, isLoading,
+      volume, isMuted, playMode, refreshPlaylist,
+      togglePlay, nextSong, prevSong, handleSeek, playSong,
+      setVolume, toggleMute, togglePlayMode,
+    }),
+    [
+      playlist, currentIndex, isPlaying, currentLyric, lyrics, isLoading,
+      volume, isMuted, playMode, refreshPlaylist,
+      togglePlay, nextSong, prevSong, handleSeek, playSong,
+      setVolume, toggleMute, togglePlayMode,
+    ]
+  );
+
+  const playbackProgress = useMemo<MusicProgressType>(
+    () => ({ progress, currentTime, duration }),
+    [progress, currentTime, duration]
+  );
+
   return (
-    <MusicContext.Provider
-      value={{
-        playlist, currentIndex, currentSong: playlist[currentIndex],
-        isPlaying, progress, currentTime, duration,
-        currentLyric, allLyrics: lyrics, isLoading,
-        volume, isMuted, playMode, refreshPlaylist,
-        togglePlay, nextSong, prevSong, handleSeek, playSong,
-        setVolume, toggleMute, togglePlayMode,
-      }}
-    >
-      {children}
-      {playlist[currentIndex] && (
-        <audio
-          key={playlist[currentIndex].id}
-          ref={audioRef}
-          src={playlist[currentIndex].src}
-          preload="none"
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleEnded}
-          onLoadedMetadata={handleTimeUpdate}
-        />
-      )}
+    <MusicContext.Provider value={controls}>
+      <MusicProgressContext.Provider value={playbackProgress}>
+        {children}
+        {playlist[currentIndex] && (
+          <audio
+            key={playlist[currentIndex].id}
+            ref={audioRef}
+            src={playlist[currentIndex].src}
+            preload="none"
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={handleEnded}
+            onLoadedMetadata={handleTimeUpdate}
+          />
+        )}
+      </MusicProgressContext.Provider>
     </MusicContext.Provider>
   );
 }
@@ -376,5 +413,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 export function useMusic() {
   const ctx = useContext(MusicContext);
   if (!ctx) throw new Error("useMusic must be used within MusicProvider");
+  return ctx;
+}
+
+/** 订阅高频播放进度（进度条 / 时间 / 时长）。不显示进度的组件不要用它。 */
+export function useMusicProgress() {
+  const ctx = useContext(MusicProgressContext);
+  if (!ctx) throw new Error("useMusicProgress must be used within MusicProvider");
   return ctx;
 }

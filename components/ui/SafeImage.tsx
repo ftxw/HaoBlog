@@ -33,7 +33,11 @@ export default function SafeImage({
   onLoad,
   ...rest
 }: SafeImageProps) {
-  const [errored, setErrored] = useState(false);
+  /* 记的是「哪一个 src 失败了」而不是一个布尔值：
+     同一个实例换图后 `erroredSrc !== src` 即自动恢复，不会永久停在占位图。
+     这样也避免了用 effect 去重置状态（渲染期派生即可）。 */
+  const [erroredSrc, setErroredSrc] = useState<string | null>(null);
+  const errored = erroredSrc === src;
   const effectiveSrc = errored ? PLACEHOLDER_IMG : src;
 
   if (isOptimizableUrl(effectiveSrc)) {
@@ -47,7 +51,7 @@ export default function SafeImage({
         priority={priority}
         quality={quality}
         placeholder="empty"
-        onError={() => setErrored(true)}
+        onError={() => setErroredSrc(src)}
         onLoad={onLoad}
         {...rest}
       />
@@ -81,7 +85,7 @@ export default function SafeImage({
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : undefined}
       onLoad={onLoad as React.ReactEventHandler<HTMLImageElement>}
-      onError={() => setErrored(true)}
+      onError={() => setErroredSrc(src)}
     />
   );
 }

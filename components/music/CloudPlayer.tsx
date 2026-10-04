@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { useMusic } from "@/components/providers/MusicProvider";
+import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
 
 const formatTime = (time: number) => {
   if (!time || isNaN(time)) return "00:00";
@@ -14,9 +14,10 @@ const formatTime = (time: number) => {
 export default function CloudPlayer() {
   const router = useRouter();
   const {
-    currentSong, isPlaying, progress, currentTime, duration, currentLyric,
+    currentSong, isPlaying, currentLyric,
     togglePlay, nextSong, prevSong, handleSeek, isLoading,
   } = useMusic();
+  const { progress, currentTime, duration } = useMusicProgress();
 
   if (isLoading) {
     return (

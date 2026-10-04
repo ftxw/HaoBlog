@@ -26,19 +26,22 @@ function isLikeTargetType(value: unknown): value is LikeTargetType {
   return typeof value === "string" && Object.hasOwn(TARGETS, value);
 }
 
-/** 一次读取出「目标是否存在 + 当前点赞数」。 */
+/** 一次读取出「目标是否存在 + 是否已发布 + 当前点赞数」。 */
 async function readLikes(
   targetType: LikeTargetType,
   targetId: string
-): Promise<{ likes: number } | null> {
+): Promise<{ likes: number; status: string } | null> {
   const t = TARGETS[targetType];
   const row = (prisma[t.field] as unknown as {
     findUnique: (a: {
       where: { id: string };
-      select: { likes: true };
-    }) => Promise<{ likes: number } | null>;
+      select: { likes: true; status: true };
+    }) => Promise<{ likes: number; status: string } | null>;
   });
-  return row.findUnique({ where: { id: targetId }, select: { likes: true } });
+  return row.findUnique({
+    where: { id: targetId },
+    select: { likes: true, status: true },
+  });
 }
 
 export async function GET(request: Request) {
@@ -110,7 +113,8 @@ export async function POST(request: Request) {
     const targetType = rawType;
     const t = TARGETS[targetType];
     const before = await readLikes(targetType, targetId);
-    if (!before) {
+    /* 草稿/隐藏内容对公开通道等同于不存在：知道 ID 也不能给它点赞（与 posts/[postId] 的 404 口径一致）。 */
+    if (!before || before.status !== "published") {
       return fail("目标不存在", 404);
     }
 

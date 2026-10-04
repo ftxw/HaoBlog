@@ -142,7 +142,7 @@ export default function AlbumDetailView({
           <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
             {visiblePhotos.map((photo, index) => (
               <PhotoCard
-                key={`${photo.url}-${index}`}
+                key={photo.url}
                 url={photo.url}
                 alt={photo.caption || "照片"}
                 index={index}

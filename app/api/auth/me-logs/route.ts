@@ -1,15 +1,16 @@
 import { NextRequest } from "next/server";
-import { getCurrentUser } from "@/app/lib/auth";
-import { businessFail, fail, ok, parsePagination } from "@/app/lib/http";
+import { requireAdmin } from "@/app/lib/auth";
+import { businessFail, ok, parsePagination } from "@/app/lib/http";
 import { listLoginLogs } from "@/app/lib/queries/dashboard";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
+    /* 必须管理员：listLoginLogs 的 where 是
+       `OR: [{ user_id: userId }, { user_id: "" }]`，而失败登录记录写的正是 user_id=""，
+       且 login_log 表没有 email 列 —— 用 getCurrentUser 会让任何注册用户分页拉走
+       全站所有人的失败登录 IP / 归属地 / UA。唯一消费方（后台仪表盘）本就在 /admin 之后。 */
+    const user = await requireAdmin(request);
     const userId = String(user.id || "");
-    if (!userId) {
-      return fail("未登录", 401);
-    }
     const { searchParams } = new URL(request.url);
     const { page, size } = parsePagination(searchParams, {
       defaultSize: 10,

@@ -1,5 +1,6 @@
 import { parseId } from "@/app/lib/comment-auth";
-import { fail, ok } from "@/app/lib/http";
+import { getCurrentUser } from "@/app/lib/auth";
+import { businessFail, fail, ok } from "@/app/lib/http";
 import { prisma } from "@/app/lib/prisma";
 import { getClientIp } from "@/app/lib/utils";
 import { hitRateLimit } from "@/app/lib/rate-limit";
@@ -68,6 +69,15 @@ export async function handleCommentLike(
   kind: CommentLikeKind,
   unlike: boolean
 ): Promise<Response> {
+  /* 与内容点赞（/api/like）同口径：必须登录。
+     评论点赞不落 per-user 记录（谁赞过只存在浏览器的 localStorage），
+     所以服务端只有计数器 —— 不设登录闸门时，匿名凭 IP 限流即可凭空刷计数。 */
+  try {
+    await getCurrentUser(request);
+  } catch (err) {
+    return businessFail(err, "未登录");
+  }
+
   const id = parseId(rawId);
   if (id === null) return fail("无效的评论ID");
 

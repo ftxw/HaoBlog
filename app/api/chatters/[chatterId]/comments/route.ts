@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { fail } from "@/app/lib/http";
+import { businessFail, fail } from "@/app/lib/http";
 import { parseId } from "@/app/lib/comment-auth";
 import { prisma } from "@/app/lib/prisma";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
@@ -9,6 +9,8 @@ import {
   CHATTER_COMMENT_PUBLIC_SELECT,
   COMMENT_TAKE,
 } from "@/app/lib/comment-tree";
+import { assertCommentHostVisible } from "@/app/lib/comment-rules";
+import { BusinessError } from "@/app/lib/business-error";
 
 export async function GET(
   request: Request,
@@ -20,6 +22,9 @@ export async function GET(
     if (chatterId === null) {
       return fail("无效的说说ID");
     }
+
+    /* 宿主必须存在且已发布（草稿等同不存在），检查在缓存外。 */
+    await assertCommentHostVisible("chatter", chatterId, "说说不存在");
 
     // 不带 keyParams：评论列表只由路径里的 chatterId 决定，query 一律不进缓存键。
     return await cachedPublicGet(CACHE_NAMESPACE.comments, request, async () => {
@@ -34,6 +39,7 @@ export async function GET(
       return buildCommentTree(comments);
     });
   } catch (err) {
+    if (err instanceof BusinessError) return businessFail(err);
     console.error("[chatters/comments] 获取评论失败:", err);
     return fail("获取评论失败", 500);
   }

@@ -54,7 +54,11 @@ export default function Comments<T extends CommentItem>({
   } = useEntityLike(likeTargetType, targetId, initialLikes, !hideActions);
 
   /** 评论点赞走同一套动作外壳（busy / 错误归一），差异只在 submit 里。 */
-  const { error: commentLikeError, run: runCommentLike } = useLikeAction();
+  const {
+    busy: commentLikeBusy,
+    error: commentLikeError,
+    run: runCommentLike,
+  } = useLikeAction();
 
   useEffect(() => {
     if (entityLikeError) addToast("error", entityLikeError);
@@ -185,6 +189,14 @@ export default function Comments<T extends CommentItem>({
   }
 
   async function handleCommentLike(commentId: string) {
+    /* 与内容点赞同口径：未登录先去登录（服务端也校验，这里只是省一次 401 往返）。 */
+    if (!user) {
+      openLogin();
+      return;
+    }
+    /* 在途时不再受理：否则双击会两次都读到 alreadyLiked=false → 服务端 +2；
+       快速点 A 再点 B 还会让先 resolve 的那次高亮被后一次覆盖丢失。 */
+    if (commentLikeBusy) return;
     const alreadyLiked = likedCommentIds.has(commentId);
     await runCommentLike(async () => {
       const data = await likeComment(commentId, alreadyLiked);
@@ -379,6 +391,7 @@ export default function Comments<T extends CommentItem>({
                       })
                     }
                     likedCommentIds={likedCommentIds}
+                    likeBusy={commentLikeBusy}
                     onCommentLike={handleCommentLike}
                   />
                 ))}

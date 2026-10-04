@@ -74,7 +74,13 @@ export async function POST(request: Request) {
   try {
     await requireAdmin(request);
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      /* 非 multipart（或畸形体）会抛错，落进外层 catch 就变成 500。 */
+      return fail("请求体不是合法的表单数据");
+    }
     const file = formData.get("file") as File | null;
     if (!file) {
       return fail("缺少文件");

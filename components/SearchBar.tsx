@@ -37,8 +37,9 @@ const SEARCH_PANEL_LIMIT = 8;
 export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchPost[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [remoteResults, setRemoteResults] = useState<SearchPost[] | null>(null);
-  const [pendingQuery, setPendingQuery] = useState('');
+  /** 远程结果必须连同「它是哪个词的」一起存：只存数组的话，换词后到新响应到达前
+      会拿旧词的结果配新词的高亮渲染出来。 */
+  const [remoteResults, setRemoteResults] = useState<{ query: string; items: SearchPost[] } | null>(null);
   const [finishedQuery, setFinishedQuery] = useState('');
   /** 请求失败的那个词。与「真的没搜到」分开，避免把网络故障渲染成空结果。 */
   const [failedQuery, setFailedQuery] = useState('');
@@ -68,20 +69,20 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      setPendingQuery(query);
 
       getPosts({ status: "published", keyword: query, page: 1, size: SEARCH_PANEL_LIMIT }, controller.signal)
         .then((data) => {
           setFailedQuery('');
-          setRemoteResults(
-            data.map((p) => ({
+          setRemoteResults({
+            query,
+            items: data.map((p) => ({
               id: p.id,
               title: p.title,
               description: p.description,
               tags: p.tags,
               date: (p.published_at || p.created_at || "").replace("T", " "),
-            }))
-          );
+            })),
+          });
         })
         .catch((err: unknown) => {
           // 换词/清空会 abort 掉上一个请求，这不是故障，不能提示。
@@ -93,7 +94,12 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
         });
     }, SEARCH_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      /* 换词或卸载时取消在途请求：否则旧请求会在卸载后才 resolve 并 setState，
+         或把上一个词的结果写进当前面板。 */
+      abortRef.current?.abort();
+    };
   }, [query, retryTick]);
 
   const retrySearch = () => {
@@ -114,8 +120,13 @@ export default function SearchBar({ posts: initialPosts = [] }: { posts: SearchP
     });
   }, [query, initialPosts]);
 
-  const searchResults = remoteResults ?? localResults;
-  const searching = query !== '' && pendingQuery === query && finishedQuery !== query;
+  /* 只认「这个词的结果」。换词后到新响应到达前它自然变 null，回落到本地即时匹配，
+     不会再把上一个词的结果显示出来。 */
+  const remoteItems = remoteResults && remoteResults.query === query ? remoteResults.items : null;
+  const searchResults = remoteItems ?? localResults;
+  /* 还没出结果（含 250ms 防抖窗口）且没失败，都算「搜索中」——
+     否则换词瞬间会先闪一下「未发现」再跳到结果。 */
+  const searching = query !== '' && finishedQuery !== query && failedQuery !== query;
   const searchFailed = query !== '' && failedQuery === query;
   const panelOpen = isOpen && query !== '';
 

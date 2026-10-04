@@ -8,12 +8,15 @@ export default function ReplyCard({
   reply,
   onReply,
   likedCommentIds,
+  likeBusy = false,
   onCommentLike,
   flat = false,
 }: {
   reply: CommentItem & { replyToUser?: string };
   onReply: (c: CommentItem) => void;
   likedCommentIds: Set<string>;
+  /** 点赞请求在途：按钮置灰。真正的并发保护在 Comments.handleCommentLike 里。 */
+  likeBusy?: boolean;
   onCommentLike: (id: string) => void;
   flat?: boolean;
 }) {
@@ -47,7 +50,8 @@ export default function ReplyCard({
               <button
                 type="button"
                 onClick={() => onCommentLike(reply.id)}
-                className={`flex items-center gap-1 transition-colors cursor-pointer ${
+                disabled={likeBusy}
+                className={`flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
                   likedCommentIds.has(reply.id)
                     ? "text-glow-2-ink"
                     : "hover:text-glow-2-ink"
@@ -102,7 +106,8 @@ export default function ReplyCard({
             <button
               type="button"
               onClick={() => onCommentLike(reply.id)}
-              className={`flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs transition-colors ${
+              disabled={likeBusy}
+              className={`flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                 likedCommentIds.has(reply.id)
                   ? "text-glow-2-ink"
                   : "text-ink-4 hover:text-glow-2-ink"

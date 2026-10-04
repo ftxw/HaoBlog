@@ -6,7 +6,7 @@ import { CHATTER_COMMENT_PUBLIC_SELECT } from "@/app/lib/comment-tree";
 import {
   assertCommentContentLength,
   assertCommentCreateAllowed,
-  assertCommentTargetExists,
+  assertCommentTargetVisible,
   assertReplyParent,
   COMMENT_MAX_CONTENT_LENGTH,
   parseCommentStatus,
@@ -132,11 +132,11 @@ export async function createChatterComment(
     `评论内容过长（最多 ${COMMENT_MAX_CONTENT_LENGTH} 字）`
   );
 
-  // 目标存在性与父评论归属由 `comment-rules` 统一校验（三类评论一致）。
-  assertCommentTargetExists(
+  // 目标存在性、发布状态与父评论归属由 `comment-rules` 统一校验（三类评论一致）。
+  assertCommentTargetVisible(
     await prisma.chatter.findUnique({
       where: { id: chatterId },
-      select: { id: true },
+      select: { status: true },
     }),
     "说说不存在"
   );

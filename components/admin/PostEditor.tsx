@@ -80,15 +80,25 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
     apiJson<CategoryItem[]>("/api/categories")
-      .then((list) => setCategories(list))
-      .catch(() => addToast("error", "获取分类列表失败"));
+      .then((list) => {
+        if (!cancelled) setCategories(list);
+      })
+      .catch(() => {
+        if (!cancelled) addToast("error", "获取分类列表失败");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [addToast]);
 
   useEffect(() => {
     if (!postId) return;
+    let cancelled = false;
     apiJson<PostDetail>(`/api/posts/${postId}`)
       .then((post) => {
+        if (cancelled) return;
         setTitle(post.title);
         setDescription(post.description || "");
         setCover(post.cover || "");
@@ -100,10 +110,16 @@ export default function PostEditor({ postId }: { postId?: string }) {
         setCategoryId(post.category_id || "");
       })
       .catch((e: Error) => {
+        if (cancelled) return;
         addToast("error", e.message);
         router.replace("/admin/posts");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [postId, addToast, router]);
 
   const parsedTags = useMemo(
