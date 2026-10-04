@@ -145,10 +145,6 @@ export function SiteConfigProvider({
   );
 }
 
-export function useSiteConfig() {
-  return useContext(SiteConfigContext);
-}
-
 export function useConfigValue(key: string): string {
   const { config } = useContext(SiteConfigContext);
   const value = config[key];

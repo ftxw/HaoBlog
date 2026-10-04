@@ -15,6 +15,17 @@ const securityHeaders: { key: string; value: string }[] = [
   },
   // CSP 保持 Report-Only：图床域名与音乐 API 都是后台运行时配置，转强制会连带拦掉图片和歌词。
   // connect-src 必须留 https: —— 浏览器直传 S3 的 endpoint 来自运行时配置。
+  //
+  // 但 Report-Only 是「不拦截」且此处又没配 report-uri / report-to，等于一行都不生效。
+  // 所以把**不依赖运行时配置**的三条单独转成强制（零误伤风险）：
+  //   object-src 'none'     禁 <object>/<embed> 插件执行
+  //   base-uri 'self'       防注入 <base> 劫持全站相对链接
+  //   frame-ancestors 'none' 防被 iframe 嵌套（与 X-Frame-Options: DENY 互为补充，后者旧浏览器用）
+  // 两条头可同时存在，浏览器按「同为强制」的策略集合并执行；Report-Only 那条继续只上报。
+  {
+    key: "Content-Security-Policy",
+    value: "object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+  },
   {
     key: "Content-Security-Policy-Report-Only",
     value: [

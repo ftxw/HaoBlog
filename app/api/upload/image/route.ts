@@ -42,6 +42,34 @@ function matchesMagicBytes(head: Uint8Array, type: string): boolean {
 
 const CATEGORIES: readonly string[] = UPLOAD_CATEGORIES;
 
+type ImageCheck =
+  | { ok: true; buffer: ArrayBuffer; type: string }
+  | { ok: false; message: string };
+
+/**
+ * 主文件与缩略图共用的校验：类型白名单 → 体积上限 → magic bytes。
+ * 客户端自报的 `file.type` 可伪造，所以最后一关必须以文件头为准。
+ */
+async function validateImageFile(file: File, label = ""): Promise<ImageCheck> {
+  const prefix = label ? `${label}：` : "";
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { ok: false, message: `${prefix}不支持的文件类型` };
+  }
+
+  if (file.size > MAX_SIZE) {
+    return { ok: false, message: `${prefix}文件大小超过 10MB 限制` };
+  }
+
+  const buffer = await file.arrayBuffer();
+
+  if (!matchesMagicBytes(new Uint8Array(buffer.slice(0, 32)), file.type)) {
+    return { ok: false, message: `${prefix}文件内容与声明类型不符` };
+  }
+
+  return { ok: true, buffer, type: file.type };
+}
+
 export async function POST(request: Request) {
   try {
     await requireAdmin(request);
@@ -52,21 +80,19 @@ export async function POST(request: Request) {
       return fail("缺少文件");
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return fail("不支持的文件类型");
-    }
+    // 主文件与缩略图走同一套校验，且**都跑在任何上传动作之前**：
+    // 否则缩略图不合格时主图已经传进图床，会留下一条没有数据库记录的孤儿对象。
+    const main = await validateImageFile(file);
+    if (!main.ok) return fail(main.message);
 
-    if (file.size > MAX_SIZE) {
-      return fail("文件大小超过 10MB 限制");
-    }
+    const thumbFile = formData.get("thumb") as File | null;
+    const thumb =
+      thumbFile && thumbFile.size > 0
+        ? await validateImageFile(thumbFile, "缩略图")
+        : null;
+    if (thumb && !thumb.ok) return fail(thumb.message);
 
-    const buffer = await file.arrayBuffer();
-
-    if (!matchesMagicBytes(new Uint8Array(buffer.slice(0, 32)), file.type)) {
-      return fail("文件内容与声明类型不符");
-    }
-
-    const ext = file.type.split("/")[1];
+    const ext = main.type.split("/")[1];
     const filename = generateFileName(ext);
 
     const category = (formData.get("category") as string | null || "system").trim();
@@ -79,19 +105,17 @@ export async function POST(request: Request) {
       : `${safeCategory}/${filename}`;
 
     const { url: imageUrl, key } = await uploadImageToS3(
-      buffer,
+      main.buffer,
       objectKey,
-      file.type
+      main.type
     );
 
     let thumbUrl = "";
-    const thumbFile = formData.get("thumb") as File | null;
-    if (thumbFile && thumbFile.size > 0) {
-      const thumbBuffer = await thumbFile.arrayBuffer();
+    if (thumb) {
       const { url } = await uploadImageToS3(
-        thumbBuffer,
+        thumb.buffer,
         thumbKeyOf(key),
-        thumbFile.type
+        thumb.type
       );
       thumbUrl = url;
     }
@@ -110,8 +134,8 @@ export async function POST(request: Request) {
     let imgWidth: number | null = null;
     let imgHeight: number | null = null;
     try {
-      if (file.type !== "image/svg+xml") {
-        const dim = imageSize(new Uint8Array(buffer)) as {
+      if (main.type !== "image/svg+xml") {
+        const dim = imageSize(new Uint8Array(main.buffer)) as {
           width?: number;
           height?: number;
           orientation?: number;
