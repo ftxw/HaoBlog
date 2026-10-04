@@ -71,6 +71,9 @@ dev-test.db
 # IDE agent workspace data
 .codebuddy/
 
+# 本地审计/复现脚本（CDP 抓包工具等，方法与脚本已归档进 skill nextjs-payload-audit）
+.audit/
+
 # build leftovers
 _tmp_*
 

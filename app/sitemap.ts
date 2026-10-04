@@ -56,7 +56,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const statics: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${base}${r.path}`,
-    lastModified: new Date(),
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));
