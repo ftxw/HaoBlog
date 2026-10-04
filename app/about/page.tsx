@@ -79,6 +79,7 @@ export default async function AboutPage() {
                   <img
                     src={avatarUrl}
                     alt="avatar"
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 )}
