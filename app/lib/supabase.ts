@@ -175,17 +175,32 @@ export class UpstreamAuthError extends BusinessError {
   }
 }
 
-const INVALID_TOKEN_MESSAGES = new Set([
+/**
+ * 判断「这个 token 本身无效」，而不是「上游不可用」。
+ *
+ * ⚠️ 必须用**子串包含**而非全等匹配：Supabase 实际返回的是完整句子，例如
+ *   "invalid JWT: unable to parse or verify signature, token has invalid claims: token is expired"
+ * 用 Set.has() 全等比对会漏判，把「token 过期」误报成「上游故障」并返回 503 ——
+ * 前端因此不会去刷新 token，用户会卡在登出状态。
+ */
+const INVALID_TOKEN_MARKERS = [
   "invalid jwt",
-  "invalid claim: missing sub claim",
-  "jwt expired",
   "invalid token",
+  "jwt expired",
   "token is expired",
-]);
+  "token has expired",
+  "missing sub claim",
+  "claim timestamp check failed",
+  "signature verification failed",
+  "unable to parse or verify signature",
+  "invalid claims",
+];
 
 function isDefinitelyInvalidToken(e: unknown): boolean {
   if (e instanceof InvalidTokenError) return true;
-  return e instanceof Error && INVALID_TOKEN_MESSAGES.has(e.message.toLowerCase());
+  if (!(e instanceof Error)) return false;
+  const msg = e.message.toLowerCase();
+  return INVALID_TOKEN_MARKERS.some((marker) => msg.includes(marker));
 }
 
 export async function verifyAccessToken(token: string): Promise<AppUser> {
@@ -202,6 +217,8 @@ export async function verifyAccessToken(token: string): Promise<AppUser> {
     if (!user) throw new InvalidTokenError();
     return user;
   } catch (e) {
+    // token 无效/过期是「预期内的业务结果」，不是故障 —— 不打 error 日志，
+    // 否则每次带过期 token 的请求都会刷一条，把真实故障淹没。
     if (isDefinitelyInvalidToken(e)) throw new InvalidTokenError();
     console.error("[supabase] 校验 access token 时上游不可用:", e);
     throw new UpstreamAuthError("鉴权服务暂时不可用，请稍后重试");
