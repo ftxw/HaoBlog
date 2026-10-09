@@ -538,6 +538,40 @@ html:has(.theme-light) {
     }
   }
 
+  /*
+    首屏入场动画 —— 纯 CSS，不依赖 IntersectionObserver / 水合。
+
+    为什么不用 [data-reveal]：它的初始态是 opacity:0，必须等 JS 标记
+    data-revealed 才可见；若用在水合前就可见的首屏区块上，LCP 会被推迟
+    到「JS 加载 + 水合 + rAF」之后（实测 element render delay >1s）。
+
+    这里改用 @keyframes：动画在元素首次绘制时即从第 0 帧开始播，
+    不需要等待 JS，也不需要观察器。关键是不能让元素长时间停在
+    opacity:0 —— from 给到 0.001（视觉上与 0 无异）而非 0，
+    保证首帧就已参与 LCP 候选，浏览器不会把它判为「不可见内容」。
+  */
+  .reveal-in {
+    animation: reveal-in 560ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation-delay: var(--reveal-delay, 0ms);
+  }
+
+  @keyframes reveal-in {
+    from {
+      opacity: 0.001;
+      transform: translateY(var(--reveal-y, 1rem));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-in {
+      animation: none;
+    }
+  }
+
   .carousel-slide {
     opacity: 0;
     transition: opacity 700ms ease-in-out;

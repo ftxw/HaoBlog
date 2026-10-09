@@ -125,32 +125,39 @@ export default function HomeClient({
   return (
     <div className="container-page pb-6 pt-6 md:pt-12">
       {/*
-        首屏可见的区块一律不加 data-reveal。
-        [data-reveal] 的初始态是 opacity:0，而显示它必须等水合 + rAF + 500ms 过渡，
-        首屏内容因此长时间不可见，LCP 的 element render delay 被拉到 1s 以上。
-        动画只保留给首屏之外的 SiteDashboard。见 reports/pagespeed-audit.html 的 P1 条目。
+        首屏区块用 .reveal-in（纯 CSS 关键帧动画），**不用** [data-reveal]。
+        [data-reveal] 的初始态是 opacity:0 且必须等水合后 JS 写 data-revealed 才显示，
+        用在这里会把 LCP 的 element render delay 拉到 1s 以上。
+        .reveal-in 在元素首次绘制时即开始播放，不需要 JS，也不阻塞 LCP。
+        见 reports/pagespeed-audit.html 的 P1 条目。
       */}
-      <div style={{ "--reveal-y": "-1.25rem" } as CSSProperties}>
+      <div className="reveal-in" style={{ "--reveal-y": "-1.25rem" } as CSSProperties}>
         <SearchBar posts={searchPosts} />
       </div>
 
       <div className="mt-6 flex w-full flex-col gap-6">
         <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="col-span-1 flex flex-col lg:col-span-7">
+          <div className="reveal-in col-span-1 flex flex-col lg:col-span-7">
             <ProfileCard postCount={postCount} chatterCount={chatterCount} photoCount={photoCount} />
           </div>
-          <div className="col-span-1 flex flex-col lg:col-span-5">
+          <div
+            className="reveal-in col-span-1 flex flex-col lg:col-span-5"
+            style={{ "--reveal-delay": "80ms" } as CSSProperties}
+          >
             {/* 水合前留同高占位，避免内容落下时布局跳动（CLS） */}
             {showPlayer ? <CloudPlayer /> : <div className="glass h-full min-h-[280px] rounded-card" aria-hidden="true" />}
           </div>
         </div>
 
-        <div className="w-full">
+        <div
+          className="reveal-in w-full"
+          style={{ "--reveal-delay": "140ms" } as CSSProperties}
+        >
           {showPlayer ? <LyricBar /> : <div className="h-14 rounded-pill" aria-hidden="true" />}
         </div>
 
         <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="col-span-1 lg:col-span-4 flex flex-col min-h-[300px]">
+            <div className="reveal-in col-span-1 lg:col-span-4 flex flex-col min-h-[300px]">
               <Link
                 href="/photowall"
                 className="glass group relative h-full w-full flex-shrink-0 overflow-hidden rounded-card no-underline transition-all duration-700 hover:scale-[1.02]"
@@ -183,7 +190,10 @@ export default function HomeClient({
               </Link>
             </div>
 
-            <div className="col-span-1 lg:col-span-8 flex flex-col gap-6">
+            <div
+              className="reveal-in col-span-1 lg:col-span-8 flex flex-col gap-6"
+              style={{ "--reveal-delay": "80ms" } as CSSProperties}
+            >
               <div className="glass group relative min-h-[200px] w-full flex-shrink-0 overflow-hidden rounded-card transition-all duration-700 hover:scale-[1.02] sm:min-h-[220px]">
                 <LatestPostsCarousel posts={latestPosts} />
               </div>
@@ -199,6 +209,10 @@ export default function HomeClient({
             </div>
           </div>
 
+          {/*
+            SiteDashboard 在首屏之外，继续用 [data-reveal]：
+            滚动到位才播放，此时 JS 早已就绪，不影响 LCP。
+          */}
           <div
             data-reveal
             className="w-full"
