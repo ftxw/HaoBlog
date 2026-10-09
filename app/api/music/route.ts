@@ -81,12 +81,17 @@ async function getNeteaseSongs(playlistId: string | null, songIds: string | null
 
   const songs: SongData[] = tracks.map((track) => {
     const urlId = String(track.url_id || track.id || "");
+    // 音频直连上游：上游实时 302 到带时效签名的 CDN 直链，字节流不经过本站。
+    // 上游不是公网 https（自建内网 / http）时回退本站中转。
+    const src = urlId
+      ? (meting.audioEntryUrl(urlId) ?? `/api/music/stream?url_id=${encodeURIComponent(urlId)}`)
+      : "";
     return {
       id: urlId,
       title: track.name || "未知歌曲",
       artist: Array.isArray(track.artist) ? track.artist.join(", ") : String(track.artist || "未知歌手"),
       cover: (track.picUrl || "").replace(/^http:\/\//, "https://"),
-      src: urlId ? `/api/music/stream?url_id=${encodeURIComponent(urlId)}` : "",
+      src,
       lrcUrl: track.lyric_id ? `/api/music/lyrics?lyric_id=${encodeURIComponent(track.lyric_id)}` : "",
       type: "netease" as const,
       url_id: urlId,

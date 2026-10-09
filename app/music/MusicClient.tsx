@@ -155,7 +155,9 @@ export default function MusicClient() {
         <div className="flex flex-col md:grid md:grid-cols-12 gap-6 md:gap-8 w-full md:items-stretch md:h-[calc(100vh-320px)] md:min-h-[600px] md:max-h-[720px]">
           <Reveal className="md:col-span-5 min-w-0">
             <section className="glass relative flex h-full min-h-[460px] flex-col overflow-hidden rounded-card p-6 sm:min-h-[500px] md:min-h-0 md:p-8">
-              <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full overflow-hidden py-4 md:py-0">
+              {/* 不能加 overflow-hidden：播放光晕（110% + blur 35px）会在这里被硬边裁掉，
+                  溢出防护交给外层卡片的 rounded-card overflow-hidden 即可 */}
+              <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full py-4 md:py-0">
                 <div className="relative mb-6 md:mb-10 flex aspect-square h-40 w-40 flex-shrink-0 items-center justify-center sm:h-48 sm:w-48 lg:h-56 lg:w-56 xl:h-64 xl:w-64">
                   <div
                     className={`pointer-events-none absolute left-1/2 top-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/25 blur-[35px] transition-all duration-1000 z-0 ${

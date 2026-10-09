@@ -20,6 +20,8 @@ export interface MusicClient {
   song(id: string): Promise<string>;
   url(id: string, br?: number): Promise<string>;
   lyric(id: string): Promise<string>;
+  /** 上游音频解析入口（供浏览器直连；非公网 https 时为 null，调用方回退本站中转）。 */
+  audioEntryUrl(id: string, br?: number): string | null;
 }
 
 interface CacheItem {
@@ -246,7 +248,18 @@ async function resolveLyricText(url: string): Promise<string> {
   return text;
 }
 
-class MetingApiClient implements MusicClient {
+/**
+ * 浏览器要直连的上游必须是公网 https：http 会被 https 页面按 mixed content 拦掉，
+ * 内网/回环地址客户端根本不可达 —— 这两种情况都要回退到本站中转。
+ */
+function isPublicHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "localhost" || h === "0.0.0.0" || h === "::1" || h === "[::1]") return false;
+  if (h.endsWith(".local") || h.endsWith(".internal")) return false;
+  return !/^(?:127\.|10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(h);
+}
+
+export class MetingApiClient implements MusicClient {
   private readonly apiUrl: string;
 
   private readonly host: string;
@@ -284,6 +297,27 @@ class MetingApiClient implements MusicClient {
 
   private cacheKey(type: string, id: string): string {
     return `${this.host}:${type}:${id}`;
+  }
+
+  /**
+   * 上游音频解析入口的原地址。交给 <audio> 直连后：
+   * - 上游实时 302 到带时效签名的 CDN 直链，永远新鲜（本站不缓存直链就没有时效问题）；
+   * - 音频字节完全不经过本站部署环境，零函数调用、零出网流量；
+   * - 省掉「本站 302 → 上游」这一跳，实测首播出声时间约减半。
+   */
+  audioEntryUrl(id: string, br = 320): string | null {
+    let u: URL;
+    try {
+      u = new URL(this.apiUrl);
+    } catch {
+      return null;
+    }
+    if (u.protocol !== "https:" || !isPublicHostname(u.hostname)) return null;
+    u.searchParams.set("server", "netease");
+    u.searchParams.set("type", "url");
+    u.searchParams.set("id", String(id));
+    u.searchParams.set("br", String(br));
+    return u.toString();
   }
 
   private static run<T>(p: Promise<T>, label: string): Promise<T> {

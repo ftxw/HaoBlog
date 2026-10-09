@@ -91,9 +91,9 @@ function isAutoplayBlocked(err: unknown): boolean {
   return err instanceof DOMException && err.name === "NotAllowedError";
 }
 
-// v2：封面 URL 由「聚合接口 90×90 中转」改为「网易图床直链 + 尺寸参数」，
-// 旧缓存里存的是会 302 到 90×90 小图的 URL，必须换 key 让客户端重新拉一次。
-const PLAYLIST_CACHE_PREFIX = "music-playlist:v2:";
+// v3：src 由「本站 /api/music/stream 中转」改为「上游解析地址直连」，
+// 旧缓存里存的是中转 URL，必须换 key 让客户端重新拉一次歌单。
+const PLAYLIST_CACHE_PREFIX = "music-playlist:v3:";
 
 function playlistFingerprint(playlistId: string, ids: readonly string[]): string {
   return `${playlistId}|${ids.join(",")}`;
@@ -152,6 +152,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const audioFailStreakRef = useRef(0);
   const playlistRef = useRef<Song[]>([]);
   useEffect(() => { playlistRef.current = playlist; }, [playlist]);
+  const currentIndexRef = useRef(0);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   const isPlayingRef = useRef(false);
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
   const pathname = usePathname();
@@ -342,8 +344,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [playMode, playlist.length]);
 
   const playSong = useCallback((index: number) => {
+    // 点的是「当前已选中」的歌（含默认的第一首）时 currentIndex 不会变，
+    // 依赖它的自动播放 effect 也就不会跑 —— 必须在这里自己发起播放，
+    // 否则表现为「第一首点了没反应，换一首才开唱」。
+    const same = index === currentIndexRef.current;
     setCurrentIndex(index);
     setIsPlaying(true);
+    if (same) {
+      audioFailStreakRef.current = 0;
+      setPlaybackFailed(false);
+      audioRef.current?.play().catch((err: unknown) => {
+        if (isAutoplayBlocked(err)) setIsPlaying(false);
+      });
+    }
   }, []);
 
   const handleTimeUpdate = useCallback(() => {
