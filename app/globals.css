@@ -675,9 +675,21 @@ html:has(.theme-light) {
     }
   }
 
+  /*
+    进度条：元素自身高度 24px（WCAG 2.5.5 触摸目标），但视觉上是 6px 的细轨道。
+    容器宽度不变，所以布局只增高 4px，不影响卡片比例。
+  */
   .progress-range {
     -webkit-appearance: none;
     appearance: none;
+    background: transparent;
+    height: 24px;
+    cursor: pointer;
+  }
+
+  .progress-range::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
     background-image: linear-gradient(
       to right,
       var(--app-accent) var(--progress, 0%),
@@ -690,6 +702,8 @@ html:has(.theme-light) {
     appearance: none;
     width: 12px;
     height: 12px;
+    /* 12px 滑块在 6px 轨道上垂直居中 */
+    margin-top: -3px;
     border-radius: 50%;
     background: var(--app-accent);
     cursor: pointer;
@@ -698,6 +712,16 @@ html:has(.theme-light) {
 
   .progress-range::-webkit-slider-thumb:hover {
     transform: scale(1.3);
+  }
+
+  .progress-range::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background-image: linear-gradient(
+      to right,
+      var(--app-accent) var(--progress, 0%),
+      var(--app-hairline-soft) var(--progress, 0%)
+    );
   }
 
   .progress-range::-moz-range-thumb {

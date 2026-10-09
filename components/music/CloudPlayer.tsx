@@ -32,7 +32,6 @@ export default function CloudPlayer() {
       <button
         type="button"
         onClick={() => router.push("/music")}
-        aria-label="前往音乐页面"
         className="glass h-full w-full appearance-none rounded-card p-6 flex flex-col items-center justify-center gap-4 min-h-[220px] md:min-h-[300px] cursor-pointer transition-all duration-700 hover:scale-[1.02] group"
       >
         <svg className="w-10 h-10 text-accent opacity-60" viewBox="0 0 24 24" fill="currentColor">
@@ -73,7 +72,9 @@ export default function CloudPlayer() {
       <div
         role="button"
         tabIndex={0}
-        aria-label="前往音乐页面"
+        // 不写 aria-label / aria-labelledby：卡片内有歌名、歌手、歌词、时间等可见文字，
+        // 固定标签无法与全部可见文字构成包含关系（WCAG 2.5.3 会判失败），
+        // 交给内容自身计算无障碍名即可。
         onClick={() => router.push("/music")}
         onKeyDown={(e) => {
           if (e.target !== e.currentTarget) return;
@@ -110,9 +111,9 @@ export default function CloudPlayer() {
             <span className="rounded-card-sm bg-surface-strong px-2 py-0.5 text-[10px] font-black text-accent tracking-widest uppercase shadow-sm">
               Cloud Music
             </span>
-            <h3 className="text-base md:text-xl font-bold text-ink truncate drop-shadow-sm mt-1">
+            <h2 className="text-base md:text-xl font-bold text-ink truncate drop-shadow-sm mt-1">
               {currentSong.title}
-            </h3>
+            </h2>
             <p className="text-xs md:text-sm text-ink-2 font-medium truncate drop-shadow-sm">
               {currentSong.artist}
             </p>
@@ -137,7 +138,9 @@ export default function CloudPlayer() {
               type="range" min="0" max="100" value={progress} onChange={safeHandleSeek}
               title="播放进度"
               aria-label="播放进度"
-              className="progress-range h-1.5 flex-1 cursor-pointer appearance-none rounded-pill shadow-inner outline-none"
+              // 自身高度放到 24px 以满足 WCAG 触摸目标 ≥24px 的要求；
+              // 视觉上 6px 的轨道由 .progress-range 的 ::-webkit-slider-runnable-track 绘制。
+              className="progress-range h-6 flex-1 cursor-pointer appearance-none outline-none"
               style={{ "--progress": `${progress || 0}%` } as CSSProperties}
             />
             <span className="mono-num w-12 text-right">{formatTime(duration)}</span>

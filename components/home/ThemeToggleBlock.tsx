@@ -9,7 +9,9 @@ export default function ThemeToggleBlock() {
     <div
       role="button"
       tabIndex={0}
-      aria-label="切换夜间 / 日间模式"
+      // 不写 aria-label：无障碍名交给内部可见文字计算。
+      // 之前固定写「切换夜间 / 日间模式」，与可见的「夜间模式 / 流萤飞舞的深空」不是包含关系，
+      // 会被 label-content-name-mismatch 判失败（WCAG 2.5.3）。
       title="切换夜间 / 日间模式"
       onClick={toggleTheme}
       onKeyDown={(e) => {
@@ -33,10 +35,10 @@ export default function ThemeToggleBlock() {
       </div>
 
       <div className="z-10 mt-auto text-center">
-        <h3 className="text-xl font-bold text-ink transition-colors duration-500">
+        <h2 className="text-xl font-bold text-ink transition-colors duration-500">
           <span className="tblock-label-night">夜间模式</span>
           <span className="tblock-label-day">日间模式</span>
-        </h3>
+        </h2>
         <p className="mt-1 text-sm font-medium text-ink-3 transition-colors duration-500">
           <span className="tblock-label-night">流萤飞舞的深空</span>
           <span className="tblock-label-day">落樱漫舞的清晨</span>

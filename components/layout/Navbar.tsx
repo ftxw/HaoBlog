@@ -13,11 +13,23 @@ function isActive(href: string, pathname: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
+/**
+ * 归一化 usePathname() 的返回值。
+ * 静态预渲染与客户端水合时该值可能出现 null / 空串 / 结尾多一个斜杠等差异，
+ * 统一成同一种形态，避免服务端与客户端得出不同的激活态。
+ */
+function normalizePathname(raw: string | null | undefined): string {
+  if (!raw) return "/";
+  const clean = raw.split("?")[0].split("#")[0].replace(/\/+$/, "");
+  if (clean === "" || clean === "/index") return "/";
+  return clean.startsWith("/") ? clean : `/${clean}`;
+}
+
 const brandClass =
   "flex shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight text-ink no-underline select-none";
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const pathname = normalizePathname(usePathname());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { toggleTheme } = useTheme();
   const navTitle = useConfigValue("navTitle");
@@ -88,13 +100,19 @@ export default function Navbar() {
       >
         <div className="glass-bar">
           <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-5 sm:px-8">
-            {isActive("/", pathname) ? (
-              <div className={`${brandClass} cursor-pointer`}>{brandText}</div>
-            ) : (
-              <Link href="/" className={brandClass}>
-                {brandText}
-              </Link>
-            )}
+            {/*
+              品牌位始终渲染为同一个元素（Link → <a>）。
+              之前按激活态在 <a> / <div> 之间切换，服务端与客户端一旦对 pathname 的判断不一致，
+              元素类型就会不同，React 无法打补丁，只能整树重渲染并抛 error #418。
+              激活态现在只体现在 class / aria-current 上（属性差异 React 会自行修正）。
+            */}
+            <Link
+              href="/"
+              className={`${brandClass} ${isActive("/", pathname) ? "cursor-pointer" : ""}`}
+              aria-current={isActive("/", pathname) ? "page" : undefined}
+            >
+              {brandText}
+            </Link>
 
             <nav className="ml-2 hidden items-center gap-1 lg:flex" aria-label="主导航">
               {NAV_LINKS.map((link) => {
@@ -110,9 +128,15 @@ export default function Navbar() {
                         : "border-transparent text-ink-3 hover:bg-surface hover:text-ink"
                     }`}
                   >
-                    {active && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
-                    )}
+                    {/*
+                      激活圆点必须始终存在于 DOM 中，只用 CSS 控制显隐。
+                      之前写成 {active && <span/>}，服务端与客户端的子节点数量会不同 ——
+                      而导航在 layout 里、不在任何 Suspense 边界内，任何结构差异都会升级成根节点级 #418。
+                    */}
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full bg-accent ${active ? "" : "hidden"}`}
+                      aria-hidden="true"
+                    />
                     {link.label}
                   </Link>
                 );

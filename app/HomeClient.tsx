@@ -2,16 +2,22 @@
 
 import { useEffect, type CSSProperties } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { thumbUrlOf } from "@/app/lib/image-thumb";
 import SearchBar from "@/components/SearchBar";
 import ProfileCard from "@/components/home/ProfileCard";
 import SafeImage from "@/components/ui/SafeImage";
-import CloudPlayer from "@/components/music/CloudPlayer";
-import LyricBar from "@/components/music/LyricBar";
 import LatestPostsCarousel from "@/components/home/LatestPostsCarousel";
 import LatestChatterCarousel from "@/components/home/LatestChatterCarousel";
-import SiteDashboard from "@/components/widgets/SiteDashboard";
 import ThemeToggleBlock from "@/components/home/ThemeToggleBlock";
+
+// 首屏之外 / 非关键的客户端组件改为懒加载：
+// 播放器与时钟不在首屏必现，拆出去可让首屏 bundle 明显变小。
+const CloudPlayer = dynamic(() => import("@/components/music/CloudPlayer"));
+const LyricBar = dynamic(() => import("@/components/music/LyricBar"));
+const SiteDashboard = dynamic(() => import("@/components/widgets/SiteDashboard"), {
+  ssr: false,
+});
 
 let didInitialReset = false;
 
@@ -109,12 +115,18 @@ export default function HomeClient({
 
   return (
     <div className="container-page pb-6 pt-6 md:pt-12">
-      <div data-reveal style={{ "--reveal-y": "-1.25rem" } as CSSProperties}>
+      {/*
+        首屏可见的区块一律不加 data-reveal。
+        [data-reveal] 的初始态是 opacity:0，而显示它必须等水合 + rAF + 500ms 过渡，
+        首屏内容因此长时间不可见，LCP 的 element render delay 被拉到 1s 以上。
+        动画只保留给首屏之外的 SiteDashboard。见 reports/pagespeed-audit.html 的 P1 条目。
+      */}
+      <div style={{ "--reveal-y": "-1.25rem" } as CSSProperties}>
         <SearchBar posts={searchPosts} />
       </div>
 
       <div className="mt-6 flex w-full flex-col gap-6">
-        <div data-reveal className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="col-span-1 flex flex-col lg:col-span-7">
             <ProfileCard postCount={postCount} chatterCount={chatterCount} photoCount={photoCount} />
           </div>
@@ -123,15 +135,11 @@ export default function HomeClient({
           </div>
         </div>
 
-        <div data-reveal className="w-full" style={{ "--reveal-delay": "80ms" } as CSSProperties}>
+        <div className="w-full">
           <LyricBar />
         </div>
 
-        <div
-          data-reveal
-          className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12"
-          style={{ "--reveal-delay": "160ms" } as CSSProperties}
-        >
+        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="col-span-1 lg:col-span-4 flex flex-col min-h-[300px]">
               <Link
                 href="/photowall"
@@ -142,7 +150,6 @@ export default function HomeClient({
                     <SafeImage
                       src={thumbUrlOf(photoWall.cover)}
                       fill
-                      priority
                       alt={photoWall.title}
                       sizes="(min-width:1024px) 345px, 100vw"
                       className="object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
@@ -153,9 +160,9 @@ export default function HomeClient({
                   <div className="absolute inset-0 bg-surface transition-colors duration-500" />
                 )}
                 <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 right-6">
-                  <h3 className={`text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 underline decoration-4 decoration-glow-2-ink ${
+                  <h2 className={`text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 underline decoration-4 decoration-glow-2-ink ${
                     photoWallHasCover ? "text-stage-ink" : "text-ink"
-                  }`}>{photoWall.title}</h3>
+                  }`}>{photoWall.title}</h2>
                   <p className={`text-sm line-clamp-1 ${
                     photoWallHasCover ? "text-stage-ink/90" : "text-ink-3"
                   }`}>{photoWall.description}</p>

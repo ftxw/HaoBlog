@@ -51,7 +51,6 @@ export default function LatestChatterCarousel({ chatters }: { chatters: Carousel
                 <SafeImage
                   src={thumbUrlOf(chatter.cover)}
                   fill
-                  priority={i === 0}
                   sizes={COVER_SIZES}
                   alt={chatter.title || 'Chatter Cover'}
                   className="object-cover opacity-80 transition-transform duration-1000 group-hover:scale-105"
@@ -69,9 +68,9 @@ export default function LatestChatterCarousel({ chatters }: { chatters: Carousel
                 </span>
               </div>
 
-              <h3 className="line-clamp-2 text-2xl font-bold text-stage-ink drop-shadow-md transition-colors group-hover:text-accent-2">
+              <h2 className="line-clamp-2 text-2xl font-bold text-stage-ink drop-shadow-md transition-colors group-hover:text-accent-2">
                 {chatter.title}
-              </h3>
+              </h2>
             </div>
           </div>
         );

@@ -6,7 +6,10 @@ import { configureCdnDomain } from "@/app/lib/image-thumb";
 import { unwrapApi } from "@/app/lib/api-types";
 import { defaultConfigValue } from "@/app/lib/site-config-defs";
 
-const POLL_INTERVAL = 60_000;
+// 兜底轮询间隔。原先 60s 一次 /api/site-config 属于纯噪音：
+// 页面重新可见 / 获得焦点 / bfcache 恢复时本来就会各拉一次，
+// 后台改完配置也会主动调用 refreshConfig()。这里只保留一个低频兜底。
+const POLL_INTERVAL = 300_000;
 
 type SiteConfigContextType = {
   config: Record<string, string>;
