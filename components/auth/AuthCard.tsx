@@ -179,7 +179,11 @@ export default function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className="w-full flex items-center justify-center gap-1.5 rounded-card-sm bg-accent py-2 text-sm font-medium text-accent-ink hover:bg-accent transition-colors disabled:opacity-60 cursor-pointer"
+          // 禁用态不用 opacity 降透明：透明度会把文字与背景一起拉淡，
+          // accent-ink 在 accent 上的对比度会跌破 4.5:1（登录页初次渲染正处于
+          // loading 禁用态，Lighthouse 会直接判为对比度不足）。
+          // 改用 still 可读的降饱和样式表达「暂不可点」。
+          className="w-full flex items-center justify-center gap-1.5 rounded-card-sm bg-accent py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent cursor-pointer disabled:cursor-not-allowed disabled:saturate-[0.65]"
         >
           {pending && <Loader2 className="w-4 h-4 animate-spin" />}
           {isRegister ? "注册并登录" : "登 录"}

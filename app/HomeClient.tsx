@@ -162,6 +162,9 @@ export default function HomeClient({
                       fill
                       alt={photoWall.title}
                       sizes="(min-width:1024px) 345px, 100vw"
+                      // 单列（移动端）布局下照片墙落在首屏，它就是 LCP 元素 ——
+                      // 不加 priority 会被标记为 loading=lazy，LCP 被推迟到 3.7s。
+                      priority
                       className="object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
                     />
                     <div className="scrim-bottom absolute inset-0 transition-transform duration-1000 group-hover:scale-105"></div>

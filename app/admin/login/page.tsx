@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
   const noAdmin = stage === "register";
 
   return (
-    <div className="theme-light relative flex min-h-dvh flex-col items-center justify-center px-4">
+    <main className="theme-light relative flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="app-glow pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
       <div className="relative z-10 w-full max-w-sm">
         <AuthCard
@@ -122,6 +122,6 @@ export default function AdminLoginPage() {
           }
         />
       </div>
-    </div>
+    </main>
   );
 }
