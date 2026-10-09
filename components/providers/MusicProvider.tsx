@@ -79,7 +79,9 @@ const MusicProgressContext = createContext<MusicProgressType | null>(null);
 
 const NO_IDS: string[] = [];
 
-const PLAYLIST_CACHE_PREFIX = "music-playlist:v1:";
+// v2：封面 URL 由「聚合接口 90×90 中转」改为「网易图床直链 + 尺寸参数」，
+// 旧缓存里存的是会 302 到 90×90 小图的 URL，必须换 key 让客户端重新拉一次。
+const PLAYLIST_CACHE_PREFIX = "music-playlist:v2:";
 
 function playlistFingerprint(playlistId: string, ids: readonly string[]): string {
   return `${playlistId}|${ids.join(",")}`;

@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
+import { BusinessError } from "@/app/lib/business-error";
+import { errorStatus } from "@/app/lib/http";
 import { createMeting } from "@/app/lib/meting";
 import { withTimeout } from "@/app/lib/timeout";
 
-const LYRIC_DEADLINE = 12_000;
+const LYRIC_DEADLINE = 7_000;
 
 const ERROR_CACHE_HEADERS = {
   "Cache-Control": "no-store, must-revalidate",
@@ -45,9 +47,11 @@ export async function GET(req: NextRequest) {
       headers: SUCCESS_CACHE_HEADERS,
     });
   } catch (err) {
-    console.error("Lyric proxy error:", err);
+    if (!(err instanceof BusinessError)) {
+      console.error("Lyric proxy error:", err);
+    }
     return new Response("歌词获取失败", {
-      status: 500,
+      status: errorStatus(err),
       headers: ERROR_CACHE_HEADERS,
     });
   }

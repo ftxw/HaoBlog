@@ -3,6 +3,7 @@
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { useState } from "react";
 import { useMusic } from "@/components/providers/MusicProvider";
+import { coverAtSize } from "@/app/lib/cover-url";
 
 export default function FloatingPlayer() {
   const { currentSong, isPlaying, togglePlay, nextSong, prevSong } = useMusic();
@@ -28,7 +29,7 @@ export default function FloatingPlayer() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链动态 URL */}
           <img
-            src={currentSong.cover}
+            src={coverAtSize(currentSong.cover, 96)}
             alt="cover"
             className="w-full h-full object-cover"
             draggable={false}

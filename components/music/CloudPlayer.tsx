@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
+import { coverAtSize } from "@/app/lib/cover-url";
 
 const formatTime = (time: number) => {
   if (!time || isNaN(time)) return "00:00";
@@ -94,7 +95,7 @@ export default function CloudPlayer() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链动态 URL，onError 切默认图 */}
             <img
-              src={currentSong.cover || "/images/default-cover.webp"}
+              src={coverAtSize(currentSong.cover || "/images/default-cover.webp", 160)}
               alt="cover"
               className="w-full h-full object-cover"
               onError={(e) => {

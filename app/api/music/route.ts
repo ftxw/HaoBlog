@@ -4,11 +4,13 @@ export const runtime = "nodejs";
 
 import { NextRequest } from "next/server";
 import { businessFail, fail, ok } from "@/app/lib/http";
+import { BusinessError } from "@/app/lib/business-error";
 import { createMeting, type NormalizedTrack } from "@/app/lib/meting";
 import { cachedPublicGet, CACHE_NAMESPACE } from "@/app/lib/api-cache";
 import { withTimeout } from "@/app/lib/timeout";
 
-const MUSIC_DEADLINE = 10_000;
+// 略大于 meting 内部的 METING_DEADLINE(6s)：上游不可达时快速失败，不再干等 10s。
+const MUSIC_DEADLINE = 6_500;
 
 const MAX_SONG_IDS = 50;
 const MAX_SONG_ID_LENGTH = 64;
@@ -107,7 +109,10 @@ export async function GET(req: NextRequest) {
         { keyParams: ["id", "ids"] }
       );
     } catch (upstreamErr) {
-      console.error("Music playlist upstream error:", upstreamErr);
+      // BusinessError 属于「已预期」的失败（含上游熔断快速失败），不刷错误日志。
+      if (!(upstreamErr instanceof BusinessError)) {
+        console.error("Music playlist upstream error:", upstreamErr);
+      }
       const res = businessFail(upstreamErr, "音乐数据源不可用");
       res.headers.set("Cache-Control", "no-store");
       res.headers.set("Vercel-CDN-Cache-Control", "no-store");

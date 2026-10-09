@@ -6,6 +6,7 @@ import {
   Disc, Search, Volume2, VolumeX,
 } from "lucide-react";
 import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
+import { coverAtSize, coverSrcSet } from "@/app/lib/cover-url";
 import PageHeader from "@/components/ui/PageHeader";
 import InlineSearch from "@/components/ui/InlineSearch";
 import Reveal from "@/components/ui/Reveal";
@@ -72,19 +73,24 @@ export default function MusicClient() {
     );
   }, [playlist, searchQuery]);
 
+  // 封面按展示位取不同尺寸：圆盘最大 256 CSS px（高分屏需 512），
+  // 铺满视口的模糊底图则取小图即可 —— blur(50px) 之后细节全无。
   const songCover = currentSong?.cover || "/images/default-cover.webp";
+  const discCover = coverAtSize(songCover, 512);
+  const discCoverSrcSet = coverSrcSet(songCover, 256);
+  const bgCover = coverAtSize(songCover, 96);
 
-  const [bgLayers, setBgLayers] = useState({ a: songCover, b: songCover, activeA: true });
+  const [bgLayers, setBgLayers] = useState({ a: bgCover, b: bgCover, activeA: true });
   const prevCoverRef = useRef(songCover);
   useEffect(() => {
     if (prevCoverRef.current === songCover) return;
     prevCoverRef.current = songCover;
     setBgLayers((prev) =>
       prev.activeA
-        ? { a: prev.a, b: songCover, activeA: false }
-        : { a: songCover, b: prev.b, activeA: true }
+        ? { a: prev.a, b: bgCover, activeA: false }
+        : { a: bgCover, b: prev.b, activeA: true }
     );
-  }, [songCover]);
+  }, [songCover, bgCover]);
 
   const metaDurations = useMemo(() => {
     const map: Record<string, number> = {};
@@ -167,7 +173,8 @@ export default function MusicClient() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面是外链动态 URL（音乐 API），需 referrerPolicy=no-referrer + onError 兜底 */}
                       <img
-                        src={songCover}
+                        src={discCover}
+                        srcSet={discCoverSrcSet}
                         alt="cover"
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
@@ -435,7 +442,7 @@ export default function MusicClient() {
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm md:h-12 md:w-12 md:rounded-xl">
                                 {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链/本地兜底，onError 切默认图 */}
                                 <img
-                                  src={song.cover || "/images/default-cover.webp"}
+                                  src={coverAtSize(song.cover || "/images/default-cover.webp", 96)}
                                   alt=""
                                   className="w-full h-full object-cover"
                                   onError={(e) => {

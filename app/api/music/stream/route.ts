@@ -2,10 +2,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
+import { BusinessError } from "@/app/lib/business-error";
+import { errorStatus } from "@/app/lib/http";
 import { createMeting } from "@/app/lib/meting";
 import { withTimeout } from "@/app/lib/timeout";
 
-const STREAM_DEADLINE = 12_000;
+const STREAM_DEADLINE = 7_000;
 
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, must-revalidate",
@@ -36,7 +38,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(src, { status: 302, headers: NO_STORE_HEADERS });
   } catch (err) {
-    console.error("Music stream error:", err);
-    return new Response("流媒体解析失败", { status: 500, headers: NO_STORE_HEADERS });
+    if (!(err instanceof BusinessError)) {
+      console.error("Music stream error:", err);
+    }
+    return new Response("流媒体解析失败", {
+      status: errorStatus(err),
+      headers: NO_STORE_HEADERS,
+    });
   }
 }

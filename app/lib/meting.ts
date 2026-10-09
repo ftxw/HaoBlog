@@ -1,6 +1,8 @@
 import { BusinessError } from "@/app/lib/business-error";
 import { getDbConfigValue } from "@/app/lib/site-config-db";
 import { withTimeout } from "@/app/lib/timeout";
+import { UpstreamBreaker } from "@/app/lib/circuit-breaker";
+import { COVER_SIZE, upgradeNeteaseCover } from "@/app/lib/netease-cover";
 
 export interface NormalizedTrack {
   id: string;
@@ -70,6 +72,20 @@ function isDirectImageUrl(url: string): boolean {
   }
 }
 
+/**
+ * 封面归一化：优先把聚合接口的 pic 中转 URL 还原成「网易图床直链 + 合适尺寸」。
+ * 上游 302 到的是 `?param=90y90`（90×90），直接拿去铺 256px 的圆盘会糊成一片；
+ * 还原成直链后尺寸可控、少一次跳转，且带一年期的强缓存。
+ * 非网易来源（本地兜底图、别的图床）保持原样。
+ */
+function normalizeCoverUrl(raw: string): string {
+  const url = raw.trim();
+  if (!url || !/^https?:\/\//i.test(url)) return "";
+  const upgraded = upgradeNeteaseCover(url, COVER_SIZE);
+  if (upgraded) return upgraded;
+  return isDirectImageUrl(url) ? url : "";
+}
+
 function normalizeTrack(raw: unknown): NormalizedTrack | null {
   if (!raw || typeof raw !== "object") return null;
   const track = raw as Record<string, unknown>;
@@ -85,12 +101,9 @@ function normalizeTrack(raw: unknown): NormalizedTrack | null {
 
   let urlId = String(track.url_id ?? track.id ?? track.song_id ?? "");
   let lyricId = String(track.lyric_id ?? track.id ?? "");
-  let picUrl = "";
 
   const rawPic = typeof track.pic === "string" ? track.pic : "";
-  if (rawPic && /^https?:\/\//i.test(rawPic) && isDirectImageUrl(rawPic)) {
-    picUrl = rawPic;
-  }
+  const picUrl = normalizeCoverUrl(rawPic);
   if (typeof track.url === "string") {
     urlId = urlId || extractQueryId(track.url) || "";
   }
@@ -124,10 +137,21 @@ function toTrackList(data: unknown): unknown[] {
   return [];
 }
 
-const REQUEST_TIMEOUT = 5_000;
-const METING_DEADLINE = 12_000;
+const REQUEST_TIMEOUT = 2_500;
+const METING_DEADLINE = 6_000;
 const SNIFF_BYTES = 1024;
 const MAX_TEXT_BYTES = 64 * 1024;
+
+/** 上游整站不可达时的止损：连续失败 3 次后 30s 内直接快速失败。 */
+const upstreamBreaker = new UpstreamBreaker({ threshold: 3, cooldownMs: 30_000 });
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
 
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT) });
@@ -223,8 +247,11 @@ async function resolveLyricText(url: string): Promise<string> {
 class MetingApiClient implements MusicClient {
   private readonly apiUrl: string;
 
+  private readonly host: string;
+
   constructor(apiUrl: string) {
     this.apiUrl = apiUrl;
+    this.host = safeHost(apiUrl);
   }
 
   private buildUrl(type: string, id: string, extra: Record<string, string> = {}): string {
@@ -237,25 +264,24 @@ class MetingApiClient implements MusicClient {
   }
 
   private async request<T>(fn: () => Promise<T>): Promise<T> {
+    upstreamBreaker.assertClosed(this.host);
     let lastErr: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        return await fn();
+        const result = await fn();
+        upstreamBreaker.recordSuccess(this.host);
+        return result;
       } catch (e) {
         lastErr = e;
         if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
       }
     }
+    upstreamBreaker.recordFailure(this.host);
     throw lastErr instanceof Error ? lastErr : new Error("meting request failed");
   }
 
   private cacheKey(type: string, id: string): string {
-    let host = "default";
-    try {
-      host = new URL(this.apiUrl).host;
-    } catch {
-    }
-    return `${host}:${type}:${id}`;
+    return `${this.host}:${type}:${id}`;
   }
 
   private static run<T>(p: Promise<T>, label: string): Promise<T> {
