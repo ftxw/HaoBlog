@@ -3,7 +3,7 @@
 import { useEffect, useRef, useMemo, useState, type CSSProperties } from "react";
 import {
   Play, Pause, SkipBack, SkipForward, Repeat, RefreshCcw, Shuffle,
-  Disc, Search, Volume2, VolumeX,
+  Disc, Search, Volume2, VolumeX, CloudOff,
 } from "lucide-react";
 import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
 import { coverAtSize, coverSrcSet } from "@/app/lib/cover-url";
@@ -15,7 +15,8 @@ export default function MusicClient() {
   const {
     playlist, currentSong, isPlaying, currentLyric,
     allLyrics,
-    isLoading, togglePlay, nextSong, prevSong, handleSeek,
+    isLoading, playlistError, playbackFailed,
+    togglePlay, nextSong, prevSong, handleSeek,
     playSong,
     playMode, togglePlayMode,
     volume, setVolume, isMuted, toggleMute,
@@ -213,6 +214,14 @@ export default function MusicClient() {
               </div>
 
               <div className="w-full mt-auto relative z-20">
+                {playbackFailed && (
+                  <p
+                    role="status"
+                    className="mb-2 px-1 text-center text-xs font-bold text-tone-warn md:text-sm"
+                  >
+                    当前音轨无法播放，已暂停 —— 换一首试试
+                  </p>
+                )}
                 <div className="w-full flex flex-col gap-1.5 mb-6 md:mb-8 px-1 md:px-3">
                   <input
                     type="range"
@@ -397,7 +406,10 @@ export default function MusicClient() {
                       <div className="h-full flex flex-col items-center justify-center gap-3">
                         <Disc className="spin-slow h-8 w-8 text-accent opacity-40" aria-hidden="true" />
                         <p className="animate-pulse text-base font-black text-accent">
-                          {currentLyric || "正在捕获灵魂旋律..."}
+                          {currentLyric ||
+                            (!currentSong && playlistError
+                              ? "音乐源暂时不可用"
+                              : "正在捕获灵魂旋律...")}
                         </p>
                       </div>
                     )}
@@ -484,8 +496,21 @@ export default function MusicClient() {
                     </div>
                     {!isLoading && filteredPlaylist.length === 0 && (
                       <div className="flex flex-1 flex-col items-center justify-center text-ink-4">
-                        <Search className="mb-3 h-10 w-10 opacity-40" strokeWidth={1.5} aria-hidden="true" />
-                        <p className="text-sm font-bold">没找到相关音轨</p>
+                        {playlistError && playlist.length === 0 ? (
+                          // 一条歌都没有 + 数据源异常 ≠ 搜索无结果，别让用户以为歌单是空的
+                          <>
+                            <CloudOff className="mb-3 h-10 w-10 opacity-40" strokeWidth={1.5} aria-hidden="true" />
+                            <p className="text-sm font-bold text-tone-warn">音乐源暂时不可用</p>
+                            <p className="mt-1 px-6 text-center text-xs opacity-70">
+                              稍后会自动重试，或到「站点设置」检查音乐 API 地址
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Search className="mb-3 h-10 w-10 opacity-40" strokeWidth={1.5} aria-hidden="true" />
+                            <p className="text-sm font-bold">没找到相关音轨</p>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

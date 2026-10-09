@@ -15,6 +15,32 @@ const MUSIC_DEADLINE = 6_500;
 const MAX_SONG_IDS = 50;
 const MAX_SONG_ID_LENGTH = 64;
 const MAX_PLAYLIST_ID_LENGTH = 64;
+const SONG_FETCH_CONCURRENCY = 6;
+
+/**
+ * 带并发上限的 map。上游多是单机部署的 Meting 实例，
+ * 一次把 50 首歌全并发打过去容易被限流甚至打挂，这里限制在飞请求数。
+ */
+async function mapLimit<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  let cursor = 0;
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const index = cursor;
+      if (index >= items.length) return;
+      cursor += 1;
+      results[index] = await fn(items[index], index);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  );
+  return results;
+}
 
 interface SongData {
   id: string;
@@ -40,17 +66,16 @@ async function getNeteaseSongs(playlistId: string | null, songIds: string | null
     tracks = Array.isArray(parsed) ? parsed : [];
   } else if (songIds) {
     const ids = songIds.split(",").map((s) => s.trim()).filter(Boolean);
-    const results = await Promise.all(
-      ids.map(async (id) => {
-        try {
-          const raw = await meting.song(id);
-          const parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [parsed];
-        } catch {
-          return [];
-        }
-      })
-    );
+    const results = await mapLimit(ids, SONG_FETCH_CONCURRENCY, async (id) => {
+      try {
+        const raw = await meting.song(id);
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        // 单首取不到不该拖垮整批
+        return [];
+      }
+    });
     tracks = results.flat();
   }
 

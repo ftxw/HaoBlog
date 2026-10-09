@@ -34,6 +34,8 @@ const TTL = {
   playlist: 10 * 60 * 1000,
   song: 60 * 60 * 1000,
   lyric: 60 * 60 * 1000,
+  // 音频直链只短缓存：拿到一次就够播很多遍，但上游签名有时效，别存太久。
+  audioUrl: 10 * 60 * 1000,
 };
 
 function getCache(key: string): string | null {
@@ -325,12 +327,18 @@ class MetingApiClient implements MusicClient {
   }
 
   async url(id: string, br = 320): Promise<string> {
+    const key = this.cacheKey("url", `${id}:${br}`);
+    const cached = getCache(key);
+    if (cached) return cached;
     return MetingApiClient.run(
       (async () => {
         const realUrl = await this.request(() =>
           resolveUrlLike(this.buildUrl("url", id, { br: String(br) }))
         );
-        return JSON.stringify({ url: realUrl, size: 0, br });
+        const result = JSON.stringify({ url: realUrl, size: 0, br });
+        // 只缓存解析成功的直链；空结果（版权受限）不落缓存，免得把「取不到」固化住。
+        if (realUrl) setCache(key, result, TTL.audioUrl);
+        return result;
       })(),
       "url"
     );
@@ -342,11 +350,12 @@ class MetingApiClient implements MusicClient {
     if (cached) return cached;
     return MetingApiClient.run(
       (async () => {
-        const lrc = await this.request(async () => {
-          const t = await resolveLyricText(this.buildUrl("lrc", id));
-          if (!t.trim()) throw new Error("empty lyric");
-          return t;
-        });
+        // 上游偶尔返回空体，所以重试一次；但「这首歌没有歌词」（纯音乐 / 无版权）是
+        // 合法结果，绝不能当成上游故障 —— 否则几首无词歌就能把熔断器打开。
+        let lrc = await this.request(() => resolveLyricText(this.buildUrl("lrc", id)));
+        if (!lrc.trim()) {
+          lrc = await this.request(() => resolveLyricText(this.buildUrl("lrc", id)));
+        }
         const result = JSON.stringify({ lyric: lrc, tlyric: "" });
         setCache(key, result, TTL.lyric);
         return result;

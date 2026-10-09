@@ -54,6 +54,10 @@ interface MusicContextType {
   currentLyric: string;
   allLyrics: { time: number; text: string }[];
   isLoading: boolean;
+  /** 歌单数据源当前不可用（区别于「确实没有歌」）。 */
+  playlistError: boolean;
+  /** 当前音轨连续播放失败到上限，已停止自动重试。 */
+  playbackFailed: boolean;
   volume: number;
   isMuted: boolean;
   playMode: PlayMode;
@@ -78,6 +82,14 @@ const MusicContext = createContext<MusicContextType | null>(null);
 const MusicProgressContext = createContext<MusicProgressType | null>(null);
 
 const NO_IDS: string[] = [];
+
+/** 连续多少首播不出来就停手（整个歌单源挂掉时避免疯狂跳歌）。 */
+const MAX_AUDIO_FAIL_STREAK = 3;
+
+/** 浏览器自动播放策略拦下的那次拒绝，只该退回暂停态，不该算作「音轨坏了」。 */
+function isAutoplayBlocked(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "NotAllowedError";
+}
 
 // v2：封面 URL 由「聚合接口 90×90 中转」改为「网易图床直链 + 尺寸参数」，
 // 旧缓存里存的是会 302 到 90×90 小图的 URL，必须换 key 让客户端重新拉一次。
@@ -128,6 +140,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [currentLyric, setCurrentLyric] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [playlistError, setPlaylistError] = useState(false);
+  const [playbackFailed, setPlaybackFailed] = useState(false);
   const [volume, setVolumeState] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("loop");
@@ -135,8 +149,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const playModeRef = useRef(playMode);
   const nextSongRef = useRef<() => void>(() => {});
   const fetchIdRef = useRef(0);
+  const audioFailStreakRef = useRef(0);
   const playlistRef = useRef<Song[]>([]);
   useEffect(() => { playlistRef.current = playlist; }, [playlist]);
+  const isPlayingRef = useRef(false);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
   const pathname = usePathname();
 
   const pathnameRef = useRef(pathname);
@@ -163,6 +180,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           if (myId === fetchIdRef.current) {
             setPlaylist([]);
             setCurrentIndex(0);
+            setPlaylistError(false);
           }
           return;
         }
@@ -202,15 +220,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         if (songs.length > 0) {
           setPlaylist(songs);
           writeCachedPlaylist(cloudMusicPlaylistId, cloudMusicIds, songs);
+          setPlaylistError(false);
           setCurrentIndex((prev) => {
             const stillExists = songs.findIndex((s) => s.id === playlistRef.current[prev]?.id);
             return stillExists >= 0 ? stillExists : 0;
           });
+        } else if (playlistRef.current.length > 0) {
+          // 上游返回空但本地已有歌单（多半是上一次成功的结果）：
+          // 保留旧列表、只标记异常，别让界面在用户眼前突然清空。
+          setPlaylistError(true);
         } else {
           setPlaylist([]);
           setCurrentIndex(0);
         }
       } catch {
+        // 拉取失败同理：已有歌单继续用，仅标记数据源异常
+        if (myId === fetchIdRef.current) setPlaylistError(true);
       } finally {
         if (safetyTimer) clearTimeout(safetyTimer);
         if (myId === fetchIdRef.current) setIsLoading(false);
@@ -269,7 +294,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
 
     if (isPlaying && audioRef.current) {
-      audioRef.current.play().catch(() => setIsPlaying(false));
+      audioRef.current.play().catch((err: unknown) => {
+        if (isAutoplayBlocked(err)) setIsPlaying(false);
+      });
     }
     return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- isPlaying only used for auto-play, lyrics should not re-fetch
@@ -286,7 +313,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false);
       return;
     }
-    audioRef.current.play().catch(() => setIsPlaying(false));
+    // 用户主动点了播放：清掉上一轮的失败计数，重新给一次机会
+    audioFailStreakRef.current = 0;
+    setPlaybackFailed(false);
+    audioRef.current.play().catch((err: unknown) => {
+      if (isAutoplayBlocked(err)) setIsPlaying(false);
+    });
     setIsPlaying(true);
   }, [isPlaying]);
 
@@ -340,6 +372,28 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * 音轨加载/解码失败。别静默 —— 自动跳下一首继续试；
+   * 但连续失败到上限就停手并置失败态，免得整个歌单源挂掉时疯狂跳歌。
+   */
+  const handleAudioError = useCallback(() => {
+    // 只有正在播放时才值得「换一首再试」；暂停状态下的加载失败静默忽略，
+    // 否则用户什么都没点，歌却自己跳了。
+    if (!isPlayingRef.current) return;
+    audioFailStreakRef.current += 1;
+    if (audioFailStreakRef.current >= MAX_AUDIO_FAIL_STREAK) {
+      setIsPlaying(false);
+      setPlaybackFailed(true);
+      return;
+    }
+    nextSongRef.current();
+  }, []);
+
+  const handleAudioPlaying = useCallback(() => {
+    audioFailStreakRef.current = 0;
+    setPlaybackFailed(false);
+  }, []);
+
   const handleSeek = useCallback((value: number) => {
     setProgress(value);
     if (audioRef.current?.duration) {
@@ -362,12 +416,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     () => ({
       playlist, currentIndex, currentSong: playlist[currentIndex],
       isPlaying, currentLyric, allLyrics: lyrics, isLoading,
+      playlistError, playbackFailed,
       volume, isMuted, playMode, refreshPlaylist,
       togglePlay, nextSong, prevSong, handleSeek, playSong,
       setVolume, toggleMute, togglePlayMode,
     }),
     [
       playlist, currentIndex, isPlaying, currentLyric, lyrics, isLoading,
+      playlistError, playbackFailed,
       volume, isMuted, playMode, refreshPlaylist,
       togglePlay, nextSong, prevSong, handleSeek, playSong,
       setVolume, toggleMute, togglePlayMode,
@@ -392,6 +448,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleEnded}
             onLoadedMetadata={handleTimeUpdate}
+            onError={handleAudioError}
+            onPlaying={handleAudioPlaying}
           />
         )}
       </MusicProgressContext.Provider>
