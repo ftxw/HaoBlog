@@ -48,6 +48,9 @@ export default function SafeImage({
         priority={priority}
         quality={quality}
         placeholder="empty"
+        // next/image 的 priority 只生成 preload 链接、不写 fetchpriority 属性，
+        // 而 Lighthouse「LCP 请求发现」明确要求 LCP 图带 fetchpriority=high —— 显式补上。
+        fetchPriority={priority ? "high" : undefined}
         onError={() => setErroredSrc(src)}
         onLoad={onLoad}
         {...rest}

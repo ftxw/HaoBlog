@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { thumbUrlOf } from "@/app/lib/image-thumb";
@@ -61,6 +61,15 @@ export default function HomeClient({
   photoCount: number;
 }) {
   const photoWallHasCover = !!photoWall.cover;
+
+  // 播放器与歌词条都在首屏之下、且非关键 —— 水合前不渲染，
+  // 让它们的 chunk 不进入首屏的预取范围（Lighthouse「减少未使用的 JavaScript」）。
+  // 用 rAF 而非直接 setState：避免在 effect 体内同步 setState 造成的级联渲染。
+  const [showPlayer, setShowPlayer] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setShowPlayer(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => {
     if (didInitialReset) return;
@@ -131,12 +140,13 @@ export default function HomeClient({
             <ProfileCard postCount={postCount} chatterCount={chatterCount} photoCount={photoCount} />
           </div>
           <div className="col-span-1 flex flex-col lg:col-span-5">
-            <CloudPlayer />
+            {/* 水合前留同高占位，避免内容落下时布局跳动（CLS） */}
+            {showPlayer ? <CloudPlayer /> : <div className="glass h-full min-h-[280px] rounded-card" aria-hidden="true" />}
           </div>
         </div>
 
         <div className="w-full">
-          <LyricBar />
+          {showPlayer ? <LyricBar /> : <div className="h-14 rounded-pill" aria-hidden="true" />}
         </div>
 
         <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
