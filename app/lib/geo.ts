@@ -1,6 +1,9 @@
 import { getDbConfigValue } from "@/app/lib/site-config-db";
 
-const GEO_TIMEOUT = 1500;
+// 上游 ip258.cn 实测很慢：机房 IP 多节点 1.3~2.6s（本国各地都如此），
+// 原先的 1500ms 比它的正常响应时间还短，导致绝大多数查询被 AbortSignal 掐断、
+// 归属地被静默丢弃。放宽到 4s 覆盖实测 p100（2.61s）并留余量。
+const GEO_TIMEOUT = 4000;
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 const FAIL_TTL = 10 * 60 * 1000;
 const MAX_CONCURRENT_LOOKUPS = 3;
