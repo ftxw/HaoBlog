@@ -454,6 +454,11 @@ export default function MusicClient() {
                               }`}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm md:h-12 md:w-12 md:rounded-xl">
+                                {/*
+                                  保持固定 96y96：网易图床体积不随尺寸单调
+                                  （96y96 仅 3.7KB，更小的 80y80 反而 12KB），
+                                  按 DPR 分档在移动端会把它抬高，属倒退。
+                                */}
                                 {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链/本地兜底，onError 切默认图 */}
                                 <img
                                   src={coverAtSize(song.cover || "/images/default-cover.webp", 96)}

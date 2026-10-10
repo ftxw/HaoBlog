@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { useMusic, useMusicProgress } from "@/components/providers/MusicProvider";
-import { coverAtSize } from "@/app/lib/cover-url";
+import { coverAtSize, coverSrcSetWidths } from "@/app/lib/cover-url";
 
 const formatTime = (time: number) => {
   if (!time || isNaN(time)) return "00:00";
@@ -47,6 +47,11 @@ export default function CloudPlayer() {
       </button>
     );
   }
+
+  // 封面槽位是 w-14（移动 56px）/ md:w-20（桌面 80px）。
+  // 用宽度描述符让浏览器按「槽位宽 × DPR」取图：DPR=1 的桌面端拿 80w 即可，
+  // 不必再吃下为 2x 准备的 param=160y160（实测 43KB → 80w 约 5KB）。
+  const coverSrc = currentSong.cover || "/images/default-cover.webp";
 
   const safeTogglePlay = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,12 +100,17 @@ export default function CloudPlayer() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链动态 URL，onError 切默认图 */}
             <img
-              src={coverAtSize(currentSong.cover || "/images/default-cover.webp", 160)}
+              src={coverAtSize(coverSrc, 160)}
+              srcSet={coverSrcSetWidths(coverSrc, [56, 80, 112, 160])}
+              sizes="(min-width: 768px) 80px, 56px"
               alt="cover"
               className="w-full h-full object-cover"
               onError={(e) => {
                 const t = e.currentTarget;
                 if (t.src !== window.location.origin + "/images/default-cover.webp") {
+                  // srcSet 还在时，单改 src 浏览器仍会从 srcSet 里取图 —— 必须一起清掉，
+                  // 否则源图 404 会陷入 onError 循环。
+                  t.removeAttribute("srcset");
                   t.src = "/images/default-cover.webp";
                 }
               }}

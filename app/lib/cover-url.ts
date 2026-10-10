@@ -52,12 +52,40 @@ export function coverAtSize(url: string, px: number): string {
 /**
  * 生成 `srcSet`：同一张封面按 1x / 2x 各出一个尺寸，避免高分屏被拉伸。
  * 非网易图床（或本地兜底图）返回 undefined，让调用方继续用单张 src。
+ *
+ * 适用于「CSS 尺寸固定」的场景（如 FloatingPlayer 的 40px 圆盘）。
+ * 若同一元素在断点间尺寸会变，改用下面的 coverSrcSetWidths。
  */
 export function coverSrcSet(url: string, cssPx: number): string | undefined {
   if (!url || !isNeteaseCdnUrl(url)) return undefined;
   const dpr2 = clampSize(cssPx * 2);
   const dpr1 = clampSize(cssPx);
   return `${coverAtSize(url, dpr1)} 1x, ${coverAtSize(url, dpr2)} 2x`;
+}
+
+/**
+ * 生成「宽度描述符」形式的 `srcSet`（`…?param=80y80 80w, …`），配合调用方的
+ * `sizes` 使用。与 coverSrcSet 的区别见下 —— 这不是风格偏好，是正确性问题：
+ *
+ * coverSrcSet 用的是 DPR 描述符（1x/2x），只能表达「固定 CSS 尺寸 × 设备像素比」。
+ * 当同一元素在移动端与桌面端占据不同槽位宽时（如 CloudPlayer：移动 56px、
+ * 桌面 80px），DPR 描述符无法表达，浏览器只能按基准值取图 —— 于是 DPR=1 的
+ * 桌面端会拿到为 2x 准备的大图。实测：渲染 76px 却拉 `param=160y160`，
+ * 43KB；换成 80y80 只要约 5KB。
+ *
+ * 宽度描述符 + sizes 让浏览器自己算「槽位宽 × DPR」再挑最小的够用尺寸。
+ *
+ * 非网易图床（或本地兜底图）返回 undefined，让调用方继续用单张 src。
+ */
+export function coverSrcSetWidths(
+  url: string,
+  widths: number[]
+): string | undefined {
+  if (!url || !isNeteaseCdnUrl(url)) return undefined;
+  const uniq = [...new Set(widths.map((w) => clampSize(w)))].sort(
+    (a, b) => a - b
+  );
+  return uniq.map((w) => `${coverAtSize(url, w)} ${w}w`).join(", ");
 }
 
 function clampSize(px: number): number {

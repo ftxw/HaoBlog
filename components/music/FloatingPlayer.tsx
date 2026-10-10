@@ -27,6 +27,11 @@ export default function FloatingPlayer() {
           className="w-10 h-10 rounded-full border border-hairline shadow-sm flex-shrink-0 overflow-hidden relative cursor-pointer hover:scale-105 transition-transform"
           style={{ animation: isPlaying ? "app-spin 6s linear infinite" : "none" }}
         >
+          {/*
+            这里刻意保持固定的 96y96，不做 srcSet 分档 —— 反直觉但实测如此：
+            网易图床的体积不随尺寸单调（96y96 仅 3.7KB，而更小的 80y80 反而要 12KB），
+            换成按 DPR 分档会把 DPR=2 的请求从 3.7KB 抬到 12KB，属于倒退。
+          */}
           {/* eslint-disable-next-line @next/next/no-img-element -- 歌曲封面外链动态 URL */}
           <img
             src={coverAtSize(currentSong.cover, 96)}
