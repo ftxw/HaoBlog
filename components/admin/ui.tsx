@@ -686,28 +686,34 @@ export function NumberPagination({
   total,
   onChange,
   className,
+  showSummary = true,
 }: {
   page: number;
   pageSize: number;
   total: number;
   onChange: (page: number) => void;
   className?: string;
+  /** 卡片内嵌的翻页只保留页码（对齐参考图），关掉左侧「共 N 条」文案 */
+  showSummary?: boolean;
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (total <= 0 || totalPages <= 1) return null;
   const items = pageNumbers(page, totalPages);
   const navBtn =
-    "flex h-8 w-8 items-center justify-center rounded-lg border border-admin-border text-admin-ink-4 transition-colors hover:bg-admin-neutral disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
+    "flex h-8 w-8 items-center justify-center rounded-lg text-admin-ink-4 transition-colors hover:bg-admin-neutral disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 px-1 pt-4 text-sm text-admin-ink-4",
+        "flex flex-wrap items-center gap-3 px-1 pt-4 text-sm text-admin-ink-4",
+        showSummary ? "justify-between" : "justify-end",
         className
       )}
     >
-      <span>
-        共 {total} 条 · 第 {page} / {totalPages} 页
-      </span>
+      {showSummary && (
+        <span>
+          共 {total} 条 · 第 {page} / {totalPages} 页
+        </span>
+      )}
       <div className="flex items-center gap-1">
         <button
           type="button"

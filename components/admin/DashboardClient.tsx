@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { RotateCw, Trash2 } from "lucide-react";
-import { useApi, formatDate, runAction } from "@/components/admin/lib";
+import { RotateCw } from "lucide-react";
+import { useApi, formatDate } from "@/components/admin/lib";
 import {
   Card,
   Loading,
@@ -12,17 +12,15 @@ import {
   StatCard,
   StatAddButton,
   Segmented,
-  useConfirm,
+  NumberPagination,
   cn,
   type StatTone,
 } from "@/components/admin/ui";
 import { useToast } from "@/components/providers/ToastProvider";
-import {
-  deleteCommentAction,
-  deleteProjectCommentAction,
-} from "@/app/actions/comments";
-import { deleteChatterCommentAction } from "@/app/actions/chatters";
 import type {
+  DashboardCommentItem,
+  DashboardContentItem,
+  DashboardPage,
   DashboardStats,
   LoginLogItem,
 } from "@/app/lib/queries/dashboard";
@@ -32,7 +30,29 @@ interface LoginLogsResponse {
   data: { list: LoginLogItem[]; total: number };
 }
 
-type CommentItem = DashboardStats["latest_comments"][number];
+/** 与 app/lib/queries/dashboard.ts 的 DASHBOARD_LIST_PAGE_SIZE 保持一致 */
+const LIST_PAGE_SIZE = 4;
+
+/**
+ * 卡片内列表的分页：第 1 页直接用首屏统计里带回来的数据，
+ * 只在翻到第 2 页起才去打接口，省掉首屏一次多余请求。
+ */
+function useCardPage<T>(
+  baseUrl: string,
+  firstPage: { list: T[]; total: number } | null | undefined
+) {
+  const [page, setPage] = useState(1);
+  const query = useApi<DashboardPage<T>>(
+    page === 1 ? null : `${baseUrl}?page=${page}&size=${LIST_PAGE_SIZE}`
+  );
+  const first = firstPage ?? { list: [], total: 0 };
+  return {
+    page,
+    setPage,
+    list: page === 1 ? first.list : query.data?.list ?? [],
+    total: page === 1 ? first.total : query.data?.total ?? 0,
+  };
+}
 
 const RANGE_TABS = [
   { key: "week", label: "近一周" },
@@ -60,7 +80,6 @@ export default function DashboardClient({
   initialLoginLogs: LoginLogsResponse;
 }) {
   const { addToast } = useToast();
-  const { confirm, confirmElement } = useConfirm();
   const stats = useApi<DashboardStats>("/api/dashboard/stats", initialStats);
   const loginLogs = useApi<LoginLogsResponse>(
     "/api/auth/me-logs?page=1&size=20",
@@ -69,8 +88,18 @@ export default function DashboardClient({
   // 访问量与数据监测各自独立的时间窗口，两块卡片互不影响
   const [range, setRange] = useState<"week" | "month">("week");
   const [monitorRange, setMonitorRange] = useState<"week" | "month">("month");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [removedKeys, setRemovedKeys] = useState<string[]>([]);
+
+  const data = stats.data;
+
+  // 评论 / 最新内容两类列表各自分页（首屏复用统计数据里的第 1 页）
+  const comments = useCardPage<DashboardCommentItem>(
+    "/api/dashboard/comments",
+    data ? { list: data.latest_comments, total: data.comments_total } : null
+  );
+  const contents = useCardPage<DashboardContentItem>(
+    "/api/dashboard/content",
+    data ? { list: data.latest_content, total: data.content_total } : null
+  );
 
   if (stats.error && !stats.data) {
     return (
@@ -83,7 +112,6 @@ export default function DashboardClient({
     );
   }
 
-  const data = stats.data;
   const counts = data?.counts;
 
   const cards: Array<{
@@ -134,46 +162,11 @@ export default function DashboardClient({
       ]
     : [];
 
-  const contentList = data?.latest_content ?? [];
-  // 服务端统计接口有 30s 缓存且评论删除动作未失效该缓存，
-  // 这里用本地剔除保证删除后立即从列表消失。
-  const commentList = (data?.latest_comments ?? []).filter(
-    (c) => !removedKeys.includes(`${c.type}-${c.id}`)
-  );
   const fullTrend = data?.traffic?.trend ?? [];
   const trendData = range === "week" ? fullTrend.slice(-7) : fullTrend;
   const visitorList = data?.traffic?.recent_visitors ?? [];
   const browserDist = data?.traffic?.browser_dist?.[monitorRange] ?? [];
   const regionDist = data?.traffic?.region_dist?.[monitorRange] ?? [];
-
-  const handleDeleteComment = async (item: CommentItem) => {
-    const ok = await confirm(
-      "删除评论",
-      `确定删除「${item.author}」的这条评论吗？删除后不可恢复。`
-    );
-    if (!ok) return;
-    setDeletingId(item.id);
-    try {
-      if (item.type === "说说") {
-        await runAction(deleteChatterCommentAction(item.id));
-      } else if (item.type === "项目") {
-        await runAction(deleteProjectCommentAction(item.id));
-      } else {
-        await runAction(deleteCommentAction(item.id));
-      }
-      addToast("success", "评论已删除");
-      setRemovedKeys((prev) =>
-        prev.includes(`${item.type}-${item.id}`)
-          ? prev
-          : [...prev, `${item.type}-${item.id}`]
-      );
-      stats.reload();
-    } catch (e) {
-      addToast("error", e instanceof Error ? e.message : "删除失败");
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   return (
     <>
@@ -186,6 +179,9 @@ export default function DashboardClient({
             onClick={() => {
               stats.reload();
               loginLogs.reload();
+              // 刷新时把两处分页拉回第 1 页，否则新数据不会体现
+              comments.setPage(1);
+              contents.setPage(1);
               addToast("info", "数据已刷新");
             }}
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink"
@@ -277,22 +273,19 @@ export default function DashboardClient({
               <div className="mb-4 flex items-baseline justify-between gap-4">
                 <h2 className={CARD_TITLE}>
                   评论{" "}
-                  <span className="tabular-nums">{counts?.comments ?? 0}</span>
+                  <span className="tabular-nums">{comments.total}</span>
                 </h2>
-                <span className="text-xs text-admin-ink-5">
-                  展示 {commentList.length} 条
-                </span>
               </div>
-              {commentList.length === 0 ? (
+              {comments.list.length === 0 ? (
                 <p className="py-6 text-center text-sm text-admin-ink-5">
                   暂无评论
                 </p>
               ) : (
-                <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-                  {commentList.map((item) => (
+                <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
+                  {comments.list.map((item) => (
                     <li
                       key={`${item.type}-${item.id}`}
-                      className="group flex items-start gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-admin-neutral"
+                      className="flex items-start gap-3 py-3"
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-admin-accent-soft text-sm font-medium text-admin-accent">
                         {item.author.slice(0, 1)}
@@ -320,19 +313,17 @@ export default function DashboardClient({
                           </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        title="删除评论"
-                        disabled={deletingId === item.id}
-                        onClick={() => handleDeleteComment(item)}
-                        className="mt-1 shrink-0 cursor-pointer rounded-lg p-1 text-admin-ink-4 transition-colors hover:bg-admin-danger-soft hover:text-admin-danger disabled:opacity-40"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </li>
                   ))}
                 </ul>
               )}
+              <NumberPagination
+                page={comments.page}
+                pageSize={LIST_PAGE_SIZE}
+                total={comments.total}
+                onChange={comments.setPage}
+                showSummary={false}
+              />
             </Card>
 
             <Card className="flex h-[292px] flex-col p-6">
@@ -352,18 +343,20 @@ export default function DashboardClient({
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <Card className="flex h-[280px] flex-col p-6">
+            <Card className="flex h-[332px] flex-col p-6">
               <div className="mb-3 flex items-center justify-between gap-4">
                 <h2 className={CARD_TITLE}>最新内容</h2>
-                <span className="text-xs text-admin-ink-5">最近发布</span>
+                <span className="text-xs text-admin-ink-5">
+                  共 {contents.total} 条
+                </span>
               </div>
-              {contentList.length === 0 ? (
+              {contents.list.length === 0 ? (
                 <p className="py-6 text-center text-sm text-admin-ink-5">
                   暂无内容
                 </p>
               ) : (
                 <ul className="min-h-0 flex-1 divide-y divide-admin-border-soft overflow-y-auto">
-                  {contentList.map((item) => (
+                  {contents.list.map((item) => (
                     <li
                       key={`${item.type}-${item.id}`}
                       className="flex items-center gap-3 py-2.5"
@@ -388,9 +381,16 @@ export default function DashboardClient({
                   ))}
                 </ul>
               )}
+              <NumberPagination
+                page={contents.page}
+                pageSize={LIST_PAGE_SIZE}
+                total={contents.total}
+                onChange={contents.setPage}
+                showSummary={false}
+              />
             </Card>
 
-            <Card className="flex h-[280px] flex-col p-6">
+            <Card className="flex h-[332px] flex-col p-6">
               <h2 className={cn(CARD_TITLE, "mb-3")}>最近访客</h2>
               {visitorList.length === 0 ? (
                 <p className="py-6 text-center text-sm text-admin-ink-5">
@@ -417,7 +417,7 @@ export default function DashboardClient({
               )}
             </Card>
 
-            <Card className="flex h-[280px] flex-col p-6">
+            <Card className="flex h-[332px] flex-col p-6">
               <div className="mb-3 flex items-center justify-between gap-4">
                 <h2 className={CARD_TITLE}>最近登录</h2>
                 <span className="text-xs text-admin-ink-5">
@@ -468,8 +468,6 @@ export default function DashboardClient({
           </div>
         </>
       )}
-
-      {confirmElement}
     </>
   );
 }

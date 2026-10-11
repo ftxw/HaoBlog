@@ -5,6 +5,32 @@ import { getContentCounts } from "@/app/lib/queries/counts";
 import { formatDateCN } from "@/app/lib/format";
 import { VISITOR_LOG_RETENTION_DAYS, retentionCutoff } from "@/app/lib/retention";
 
+/** 总览卡片列表的每页条数（DashboardClient 里的同名常量需保持一致） */
+export const DASHBOARD_LIST_PAGE_SIZE = 4;
+
+export interface DashboardContentItem {
+  id: string;
+  type: "post" | "chatter";
+  title: string;
+  time: string;
+}
+
+export interface DashboardCommentItem {
+  id: string;
+  type: string;
+  author: string;
+  content: string;
+  target: string;
+  time: string;
+}
+
+export interface DashboardPage<T> {
+  list: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface DashboardStats {
   counts: {
     posts: number;
@@ -18,20 +44,11 @@ export interface DashboardStats {
     bookmarks: number;
     media_files: number;
   };
-  latest_content: Array<{
-    id: string;
-    type: "post" | "chatter";
-    title: string;
-    time: string;
-  }>;
-  latest_comments: Array<{
-    id: string;
-    type: string;
-    author: string;
-    content: string;
-    target: string;
-    time: string;
-  }>;
+  /** 最新内容 / 最新评论：均为**第 1 页**数据，配合下面的 total 做翻页 */
+  latest_content: DashboardContentItem[];
+  content_total: number;
+  latest_comments: DashboardCommentItem[];
+  comments_total: number;
   traffic: {
     today: { pv: number; uv: number };
     week: { pv: number; uv: number };
@@ -110,11 +127,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const [
     contentCounts,
-    latestPosts,
-    latestChatters,
-    latestArticleComments,
-    latestChatterComments,
-    latestProjectComments,
+    contentPage,
+    commentsPage,
     dailyStats,
     todayStat,
     weekAgg,
@@ -124,54 +138,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     regionWeekGroups,
   ] = await Promise.all([
     getContentCounts(),
-    prisma.post.findMany({
-      where: { status: "published" },
-      orderBy: { published_at: "desc" },
-      take: 20,
-      select: { id: true, title: true, published_at: true, created_at: true },
-    }),
-    prisma.chatter.findMany({
-      where: { status: "published" },
-      orderBy: { created_at: "desc" },
-      take: 20,
-      select: { id: true, content: true, created_at: true },
-    }),
-    prisma.comment.findMany({
-      where: { status: "approved" },
-      orderBy: { created_at: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        email_user_name: true,
-        content: true,
-        created_at: true,
-        post: { select: { title: true } },
-      },
-    }),
-    prisma.chatterComment.findMany({
-      where: { status: "approved" },
-      orderBy: { created_at: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        email_user_name: true,
-        content: true,
-        created_at: true,
-        chatter: { select: { content: true } },
-      },
-    }),
-    prisma.projectComment.findMany({
-      where: { status: "approved" },
-      orderBy: { created_at: "desc" },
-      take: 10,
-      select: {
-        id: true,
-        email_user_name: true,
-        content: true,
-        created_at: true,
-        project: { select: { name: true } },
-      },
-    }),
+    listDashboardContent({ page: 1, pageSize: DASHBOARD_LIST_PAGE_SIZE }),
+    listDashboardComments({ page: 1, pageSize: DASHBOARD_LIST_PAGE_SIZE }),
     prisma.dailyStat.findMany({
       where: { date: { gte: statsStartStr } },
       orderBy: { date: "asc" },
@@ -244,52 +212,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     console.error("Dashboard recentVisitors query failed:", e);
   }
 
-  const latestContent = [
-    ...latestPosts.map((p) => ({
-      id: p.id,
-      type: "post" as const,
-      title: p.title,
-      time: (p.published_at ?? p.created_at).toISOString(),
-    })),
-    ...latestChatters.map((c) => ({
-      id: c.id,
-      type: "chatter" as const,
-      title: c.content.replace(/\s+/g, " ").trim().slice(0, 60),
-      time: c.created_at.toISOString(),
-    })),
-  ]
-    .sort((a, b) => (a.time < b.time ? 1 : -1))
-    .slice(0, 20);
-
-  const latestComments = [
-    ...latestArticleComments.map((c) => ({
-      id: c.id,
-      type: "文章" as const,
-      author: c.email_user_name || "匿名",
-      content: c.content.replace(/\s+/g, " ").trim().slice(0, 60),
-      target: c.post?.title ?? "",
-      time: c.created_at.toISOString(),
-    })),
-    ...latestChatterComments.map((c) => ({
-      id: c.id,
-      type: "说说" as const,
-      author: c.email_user_name || "匿名",
-      content: c.content.replace(/\s+/g, " ").trim().slice(0, 60),
-      target: c.chatter?.content.replace(/\s+/g, " ").trim().slice(0, 30) ?? "",
-      time: c.created_at.toISOString(),
-    })),
-    ...latestProjectComments.map((c) => ({
-      id: c.id,
-      type: "项目" as const,
-      author: c.email_user_name || "匿名",
-      content: c.content.replace(/\s+/g, " ").trim().slice(0, 60),
-      target: c.project?.name ?? "",
-      time: c.created_at.toISOString(),
-    })),
-  ]
-    .sort((a, b) => (a.time < b.time ? 1 : -1))
-    .slice(0, 20);
-
   const statMap = new Map(dailyStats.map((s) => [s.date, s]));
   const days = getLast30Days();
   const trafficTrend = days.map((d) => {
@@ -310,8 +232,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       bookmarks: contentCounts.bookmarks,
       media_files: contentCounts.mediaFiles,
     },
-    latest_content: latestContent,
-    latest_comments: latestComments,
+    latest_content: contentPage.list,
+    content_total: contentPage.total,
+    latest_comments: commentsPage.list,
+    comments_total: commentsPage.total,
     traffic: {
       today: { pv: todayStat?.pv ?? 0, uv: todayStat?.uv ?? 0 },
       week: {
@@ -350,6 +274,137 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 
   return data;
+}
+
+function normalizePage(page?: number, pageSize?: number) {
+  return {
+    page: Math.max(1, Math.floor(page ?? 1)),
+    pageSize: Math.min(
+      50,
+      Math.max(1, Math.floor(pageSize ?? DASHBOARD_LIST_PAGE_SIZE))
+    ),
+  };
+}
+
+/**
+ * 最新内容（文章 + 随笔）按时间线合并后分页。
+ * 两张表要合起来排序再切页，Prisma 的 findMany 做不到，只能走 UNION ALL 原生 SQL。
+ */
+export async function listDashboardContent(
+  options: { page?: number; pageSize?: number } = {}
+): Promise<DashboardPage<DashboardContentItem>> {
+  const { page, pageSize } = normalizePage(options.page, options.pageSize);
+  const offset = (page - 1) * pageSize;
+
+  const [rows, counted] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{ id: string; kind: string; title: string; time: Date }>
+    >`
+      SELECT id, kind, title, time
+      FROM (
+        SELECT p.id, 'post'::text AS kind, p.title AS title,
+               COALESCE(p.published_at, p.created_at) AS time
+        FROM post p
+        WHERE p.status = 'published'
+        UNION ALL
+        SELECT c.id, 'chatter'::text, c.content, c.created_at
+        FROM chatter c
+        WHERE c.status = 'published'
+      ) t
+      ORDER BY time DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `,
+    prisma.$queryRaw<Array<{ total: number }>>`
+      SELECT (
+        (SELECT count(*) FROM post WHERE status = 'published') +
+        (SELECT count(*) FROM chatter WHERE status = 'published')
+      )::int AS total
+    `,
+  ]);
+
+  return {
+    list: rows.map((r) => ({
+      id: r.id,
+      // 随笔标题取正文前 60 字，与原来客户端拼装的展示口径一致
+      type: r.kind === "chatter" ? ("chatter" as const) : ("post" as const),
+      title:
+        r.kind === "chatter"
+          ? r.title.replace(/\s+/g, " ").trim().slice(0, 60)
+          : r.title,
+      time: r.time.toISOString(),
+    })),
+    total: counted[0]?.total ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+/**
+ * 最新评论分页：文章评论 / 随笔评论 / 项目评论三张表按时间线合并。
+ * 三类挂在不同的宿主表上，同样只能走 UNION ALL。
+ */
+export async function listDashboardComments(
+  options: { page?: number; pageSize?: number } = {}
+): Promise<DashboardPage<DashboardCommentItem>> {
+  const { page, pageSize } = normalizePage(options.page, options.pageSize);
+  const offset = (page - 1) * pageSize;
+
+  const [rows, counted] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{
+        id: string;
+        kind: string;
+        author: string;
+        content: string;
+        target: string;
+        time: Date;
+      }>
+    >`
+      SELECT id, kind, author, content, target, time
+      FROM (
+        SELECT c.id, '文章'::text AS kind, c.email_user_name AS author,
+               c.content, COALESCE(p.title, '') AS target, c.created_at AS time
+        FROM comment c
+        LEFT JOIN post p ON p.id = c.post_id
+        WHERE c.status = 'approved'
+        UNION ALL
+        SELECT cc.id, '说说'::text, cc.email_user_name,
+               cc.content, COALESCE(ch.content, ''), cc.created_at
+        FROM chatter_comment cc
+        LEFT JOIN chatter ch ON ch.id = cc.chatter_id
+        WHERE cc.status = 'approved'
+        UNION ALL
+        SELECT pc.id, '项目'::text, pc.email_user_name,
+               pc.content, COALESCE(pr.name, ''), pc.created_at
+        FROM project_comment pc
+        LEFT JOIN project pr ON pr.id = pc.project_id
+        WHERE pc.status = 'approved'
+      ) t
+      ORDER BY time DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `,
+    prisma.$queryRaw<Array<{ total: number }>>`
+      SELECT (
+        (SELECT count(*) FROM comment WHERE status = 'approved') +
+        (SELECT count(*) FROM chatter_comment WHERE status = 'approved') +
+        (SELECT count(*) FROM project_comment WHERE status = 'approved')
+      )::int AS total
+    `,
+  ]);
+
+  return {
+    list: rows.map((r) => ({
+      id: r.id,
+      type: r.kind,
+      author: r.author || "匿名",
+      content: r.content.replace(/\s+/g, " ").trim().slice(0, 60),
+      target: r.target.replace(/\s+/g, " ").trim().slice(0, 30),
+      time: r.time.toISOString(),
+    })),
+    total: counted[0]?.total ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 export async function listLoginLogs(
