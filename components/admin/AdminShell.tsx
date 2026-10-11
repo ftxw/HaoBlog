@@ -100,57 +100,60 @@ export default function AdminShell({
 
   return (
     <div className="theme-light flex min-h-screen flex-col bg-admin-canvas">
-      {/* 顶栏：左右通栏 */}
-      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-admin-border bg-admin-surface px-4 lg:px-6">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <button
-            type="button"
-            className="rounded-lg p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink lg:hidden cursor-pointer"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <Link href="/admin" className="flex min-w-0 items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-admin-accent text-sm font-bold text-admin-accent-ink">
-              管
-            </span>
-            <span className="truncate text-[15px] font-bold text-admin-ink">
-              博客后台
-            </span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            prefetch={false}
-            href="/"
-            target="_blank"
-            title="回到前台"
-            aria-label="回到前台"
-            className="hidden rounded-lg p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink sm:block"
-          >
-            <Home className="h-4 w-4" />
-          </Link>
-          {authorName && (
-            <span
-              title={authorName}
-              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-accent-soft text-xs font-semibold text-admin-accent-soft-ink sm:flex"
+      {/* 顶栏：底色左右通栏，内容与下方两栏对齐到同一居中栏 */}
+      <header className="sticky top-0 z-30 shrink-0 border-b border-admin-border bg-admin-surface">
+        <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink lg:hidden cursor-pointer"
+              onClick={() => setSidebarOpen(true)}
             >
-              {authorName.slice(0, 1)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-admin-accent px-3.5 py-1.5 text-sm font-medium text-admin-accent-ink transition-colors hover:bg-admin-accent-hover"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            退出
-          </button>
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href="/admin" className="flex min-w-0 items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-admin-accent text-sm font-bold text-admin-accent-ink">
+                管
+              </span>
+              <span className="truncate text-[15px] font-bold text-admin-ink">
+                博客后台
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              prefetch={false}
+              href="/"
+              target="_blank"
+              title="回到前台"
+              aria-label="回到前台"
+              className="hidden rounded-lg p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink sm:block"
+            >
+              <Home className="h-4 w-4" />
+            </Link>
+            {authorName && (
+              <span
+                title={authorName}
+                className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-accent-soft text-xs font-semibold text-admin-accent-soft-ink sm:flex"
+              >
+                {authorName.slice(0, 1)}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-admin-accent px-3.5 py-1.5 text-sm font-medium text-admin-accent-ink transition-colors hover:bg-admin-accent-hover"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              退出
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="flex min-w-0 flex-1">
+      {/* 侧边栏 + 内容：与顶栏同宽，整页居中 */}
+      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1">
         <aside className="hidden w-44 shrink-0 lg:block">
           <div className="sticky top-14 px-3 py-4">{nav}</div>
         </aside>
@@ -176,9 +179,7 @@ export default function AdminShell({
           </div>
         )}
 
-        <main className="min-w-0 flex-1 px-4 py-5 lg:px-8">
-          <div className="mx-auto max-w-6xl">{children}</div>
-        </main>
+        <main className="min-w-0 flex-1 px-4 py-5 lg:px-8">{children}</main>
       </div>
     </div>
   );
