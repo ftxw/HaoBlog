@@ -66,7 +66,9 @@ export default function DashboardClient({
     "/api/auth/me-logs?page=1&size=20",
     initialLoginLogs
   );
+  // 访问量与数据监测各自独立的时间窗口，两块卡片互不影响
   const [range, setRange] = useState<"week" | "month">("week");
+  const [monitorRange, setMonitorRange] = useState<"week" | "month">("month");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [removedKeys, setRemovedKeys] = useState<string[]>([]);
 
@@ -141,8 +143,8 @@ export default function DashboardClient({
   const fullTrend = data?.traffic?.trend ?? [];
   const trendData = range === "week" ? fullTrend.slice(-7) : fullTrend;
   const visitorList = data?.traffic?.recent_visitors ?? [];
-  const browserDist = data?.traffic?.browser_dist ?? [];
-  const regionDist = data?.traffic?.region_dist ?? [];
+  const browserDist = data?.traffic?.browser_dist?.[monitorRange] ?? [];
+  const regionDist = data?.traffic?.region_dist?.[monitorRange] ?? [];
 
   const handleDeleteComment = async (item: CommentItem) => {
     const ok = await confirm(
@@ -336,7 +338,11 @@ export default function DashboardClient({
             <Card className="flex h-[292px] flex-col p-6">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className={CARD_TITLE}>数据监测</h2>
-                <Segmented items={RANGE_TABS} active={range} onChange={setRange} />
+                <Segmented
+                  items={RANGE_TABS}
+                  active={monitorRange}
+                  onChange={setMonitorRange}
+                />
               </div>
               <div className="grid min-h-0 flex-1 gap-4 sm:grid-cols-2">
                 <DonutBlock title="访客浏览器" data={browserDist} />

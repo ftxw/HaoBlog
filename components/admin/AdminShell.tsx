@@ -152,34 +152,36 @@ export default function AdminShell({
         </div>
       </header>
 
-      {/* 侧边栏 + 内容：与顶栏同宽，整页居中 */}
-      <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1">
-        <aside className="hidden w-48 shrink-0 lg:block">
-          <div className="sticky top-[60px] px-5 py-4">{nav}</div>
+      {/* 移动端抽屉：独立覆盖层，不参与网格排布 */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-admin-scrim"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 w-60 overflow-y-auto bg-admin-canvas px-3 py-4">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                className="rounded-lg p-1 text-admin-ink-4 hover:bg-admin-sidebar-hover cursor-pointer"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {nav}
+          </aside>
+        </div>
+      )}
+
+      {/* 主体：网格分左右两列（左菜单 / 右内容），视觉样式维持原样 */}
+      <div className="mx-auto grid w-full min-w-0 max-w-[1440px] flex-1 grid-cols-1 lg:grid-cols-[12rem_minmax(0,1fr)]">
+        <aside className="hidden lg:block">
+          {/* 与 main 的 lg:pt-8 同值：菜单首项与页面标题顶部对齐 */}
+          <div className="sticky top-[60px] px-5 py-4 lg:pt-8 lg:pb-6">{nav}</div>
         </aside>
 
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div
-              className="absolute inset-0 bg-admin-scrim"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <aside className="absolute inset-y-0 left-0 w-60 overflow-y-auto bg-admin-canvas px-3 py-4">
-              <div className="mb-2 flex justify-end">
-                <button
-                  type="button"
-                  className="rounded-lg p-1 text-admin-ink-4 hover:bg-admin-sidebar-hover cursor-pointer"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              {nav}
-            </aside>
-          </div>
-        )}
-
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-6 lg:pt-8 lg:pb-6">
+        <main className="min-w-0 px-4 py-6 lg:px-6 lg:pt-8 lg:pb-6">
           {children}
         </main>
       </div>

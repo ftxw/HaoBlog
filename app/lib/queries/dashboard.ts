@@ -43,9 +43,20 @@ export interface DashboardStats {
       browser: string;
       time: string;
     }>;
-    browser_dist: Array<{ name: string; value: number }>;
-    region_dist: Array<{ name: string; value: number }>;
+    browser_dist: DistPair;
+    region_dist: DistPair;
   };
+}
+
+export interface DistItem {
+  name: string;
+  value: number;
+}
+
+/** 按时间窗口分组的占比数据：week 近一周 / month 近一月 */
+export interface DistPair {
+  week: DistItem[];
+  month: DistItem[];
 }
 
 export interface LoginLogItem {
@@ -91,6 +102,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const statsStartStr = formatDateCN(new Date(now.getTime() - 29 * 24 * 3600 * 1000));
   const todayStr = formatDateCN(now);
   const weekStartStr = formatDateCN(new Date(now.getTime() - 6 * 24 * 3600 * 1000));
+  // 数据监测的两个时间窗口：近一周（含今天共 7 个自然日）／近一月（= 访客日志留存上限 30 天）
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const visitorWeekSince = new Date(todayStart.getTime() - 6 * 24 * 3600 * 1000);
   const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
 
   const [
@@ -103,8 +118,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     dailyStats,
     todayStat,
     weekAgg,
-    browserGroups,
-    regionGroups,
+    browserMonthGroups,
+    regionMonthGroups,
+    browserWeekGroups,
+    regionWeekGroups,
   ] = await Promise.all([
     getContentCounts(),
     prisma.post.findMany({
@@ -174,6 +191,20 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     prisma.visitorLog.groupBy({
       by: ["address"],
       where: { created_at: { gte: visitorSince } },
+      _count: { _all: true },
+      orderBy: { _count: { address: "desc" } },
+      take: 6,
+    }),
+    prisma.visitorLog.groupBy({
+      by: ["browser"],
+      where: { created_at: { gte: visitorWeekSince } },
+      _count: { _all: true },
+      orderBy: { _count: { browser: "desc" } },
+      take: 6,
+    }),
+    prisma.visitorLog.groupBy({
+      by: ["address"],
+      where: { created_at: { gte: visitorWeekSince } },
       _count: { _all: true },
       orderBy: { _count: { address: "desc" } },
       take: 6,
@@ -295,14 +326,26 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         browser: v.browser,
         time: v.created_at.toISOString(),
       })),
-      browser_dist: browserGroups.map((g) => ({
-        name: g.browser || "未知",
-        value: g._count._all,
-      })),
-      region_dist: regionGroups.map((g) => ({
-        name: g.address || "未知",
-        value: g._count._all,
-      })),
+      browser_dist: {
+        week: browserWeekGroups.map((g) => ({
+          name: g.browser || "未知",
+          value: g._count._all,
+        })),
+        month: browserMonthGroups.map((g) => ({
+          name: g.browser || "未知",
+          value: g._count._all,
+        })),
+      },
+      region_dist: {
+        week: regionWeekGroups.map((g) => ({
+          name: g.address || "未知",
+          value: g._count._all,
+        })),
+        month: regionMonthGroups.map((g) => ({
+          name: g.address || "未知",
+          value: g._count._all,
+        })),
+      },
     },
   };
 
