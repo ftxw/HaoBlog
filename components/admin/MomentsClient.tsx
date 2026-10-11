@@ -152,7 +152,7 @@ export default function MomentsClient({
     <>
       {/* 标题行：大字标题 + 评论入口 + 搜索 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-admin-accent">随笔辅记</h1>
+        <h1 className="text-2xl font-bold text-admin-accent">随笔辅记</h1>
         <div className="flex items-center gap-1.5">
           <ToolbarAction
             icon={<MessageSquare className="h-4 w-4" />}

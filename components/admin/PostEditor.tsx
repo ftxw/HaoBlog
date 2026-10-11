@@ -11,6 +11,8 @@ import {
   List,
   Quote,
   ImageIcon,
+  ChevronDown,
+  Plus,
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -25,13 +27,11 @@ import {
   Button,
   Card,
   Field,
-  Input,
   Select,
   Switch,
   Textarea,
   cn,
 } from "@/components/admin/ui";
-import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { CategoryItem } from "@/app/lib/queries/catalog";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
@@ -66,6 +66,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -73,7 +74,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [coverOrientation, setCoverOrientation] = useState("landscape");
   const [categoryId, setCategoryId] = useState<string>("");
   const [tagsText, setTagsText] = useState("");
-  const [status, setStatus] = useState("published");
+  const [status, setStatus] = useState("draft");
   const [isPinned, setIsPinned] = useState(false);
   const [content, setContent] = useState("");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -165,11 +166,13 @@ export default function PostEditor({ postId }: { postId?: string }) {
     }
   };
 
-  const handleSave = async () => {
+  /** overrideStatus 传入时强制用该状态保存（「发布」按钮用 published） */
+  const handleSave = async (overrideStatus?: string) => {
     if (!title.trim()) {
       addToast("warning", "请填写文章标题");
       return;
     }
+    const nextStatus = overrideStatus ?? status;
     setSaving(true);
     const body = {
       title: title.trim(),
@@ -178,7 +181,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
       cover,
       category_id: categoryId || null,
       tags: parsedTags,
-      status,
+      status: nextStatus,
       is_pinned: isPinned,
     };
     try {
@@ -187,7 +190,10 @@ export default function PostEditor({ postId }: { postId?: string }) {
         addToast("success", "文章已更新");
       } else {
         await runAction(createPostAction(body));
-        addToast("success", "文章已创建");
+        addToast(
+          "success",
+          nextStatus === "published" ? "文章已发布" : "草稿已保存"
+        );
       }
       router.push("/admin/posts");
       router.refresh();
@@ -210,40 +216,294 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const toolbarBtn =
     "rounded-md p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink cursor-pointer disabled:opacity-50";
 
+  const tools = (
+    <>
+      <button
+        type="button"
+        title="加粗"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("**", "**", "粗体")}
+      >
+        <Bold className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="斜体"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("*", "*", "斜体")}
+      >
+        <Italic className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="二级标题"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n## ", "", "标题")}
+      >
+        <Heading2 className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="列表"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n- ", "", "列表项")}
+      >
+        <List className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="引用"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n> ", "", "引用")}
+      >
+        <Quote className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="代码块"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n```\n", "\n```\n", "在这里写代码")}
+      >
+        <Code className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="链接"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("[", "](https://)", "链接文字")}
+      >
+        <LinkIcon className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="插入图片"
+        className={toolbarBtn}
+        disabled={uploadingImage}
+        onClick={() => fileRef.current?.click()}
+      >
+        {uploadingImage ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <ImageIcon className="h-4 w-4" />
+        )}
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        className="hidden"
+        onChange={(e) => e.target.files?.[0] && insertImage(e.target.files[0])}
+      />
+    </>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-admin-ink">
-            {postId ? "编辑文章" : "新建文章"}
+      {/* 1. 标题卡：标题 + 保存 / 发布 */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold text-admin-ink">
+            {postId ? "编辑文章" : "新建博客文章"}
           </h1>
           {postId && (
-            <p className="mt-0.5 text-sm text-admin-ink-4">
+            <p className="mt-0.5 text-xs text-admin-ink-5">
               {updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => router.back()}>
-            返回
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={() => handleSave()}
+            loading={saving}
+          >
+            保存
           </Button>
-          <Button onClick={handleSave} loading={saving}>
-            {saving ? "提交中…" : "发布"}
+          <Button
+            size="sm"
+            onClick={() => handleSave("published")}
+            loading={saving}
+          >
+            发布
           </Button>
         </div>
-      </div>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="space-y-4 lg:col-span-3">
-          <Card className={EDITOR_SECTION}>
-            <Field label="标题" required>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="请输入文章标题"
+      {/* 2. 工具栏卡 */}
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-0.5">{tools}</div>
+          <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
+            <button
+              type="button"
+              className={cn(
+                "rounded-md px-3 py-1 cursor-pointer",
+                tab === "edit"
+                  ? "bg-admin-surface font-medium text-admin-ink"
+                  : "text-admin-ink-4"
+              )}
+              onClick={() => setTab("edit")}
+            >
+              编辑
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "rounded-md px-3 py-1 cursor-pointer",
+                tab === "preview"
+                  ? "bg-admin-surface font-medium text-admin-ink"
+                  : "text-admin-ink-4"
+              )}
+              onClick={() => setTab("preview")}
+            >
+              预览
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      {/* 3. 内容卡：标题 + 封面 + 分类/标签 + 正文 */}
+      <Card className="px-5 py-6 lg:px-10 lg:py-8">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="请输入标题"
+              className="w-full bg-transparent text-2xl font-bold text-admin-ink placeholder:text-admin-ink-none focus:outline-none"
+            />
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
+              <div className="relative inline-flex items-center rounded-lg transition-colors hover:bg-admin-neutral">
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className={cn(
+                    "cursor-pointer appearance-none bg-transparent py-1.5 pl-2.5 pr-7 text-sm focus:outline-none",
+                    categoryId ? "text-admin-ink-2" : "text-admin-ink-4"
+                  )}
+                >
+                  <option value="">选择分类</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-admin-ink-5" />
+              </div>
+
+              <span className="h-4 w-px bg-admin-border" />
+
+              <input
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                placeholder="插入标签"
+                className="w-28 bg-transparent py-1.5 text-sm text-admin-ink placeholder:text-admin-ink-4 focus:outline-none"
               />
-            </Field>
-            <Field label="摘要">
+              {parsedTags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-md bg-admin-neutral px-2 py-1 text-xs text-admin-ink-3"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0">
+            <ImageUploader
+              mode="single"
+              value={cover}
+              onChange={(urls) => setCover(urls[0] || "")}
+              onOrientation={setCoverOrientation}
+              boxSize="w-44"
+              height="h-36"
+              emptyContent={
+                <>
+                  <Plus className="h-5 w-5" />
+                  <span className="text-xs">封面 800×600</span>
+                </>
+              }
+              category="posts"
+            />
+            {cover && (
+              <p className="mt-1.5 text-center text-xs text-admin-ink-5">
+                {coverOrientation === "portrait" ? "竖版" : "横版"}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          {tab === "edit" ? (
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="请输入内容…"
+              className="min-h-[420px] w-full resize-y bg-transparent text-sm leading-relaxed text-admin-ink focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.ctrlKey && e.key.toLowerCase() === "b") {
+                  e.preventDefault();
+                  insertAtCursor("**", "**", "粗体");
+                } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
+                  e.preventDefault();
+                  insertAtCursor("*", "*", "斜体");
+                }
+              }}
+              onPaste={(e) => {
+                const files = Array.from(e.clipboardData.files).filter((f) =>
+                  f.type.startsWith("image/")
+                );
+                if (files.length > 0) {
+                  e.preventDefault();
+                  insertImage(files[0]);
+                }
+              }}
+            />
+          ) : (
+            <div className="min-h-[420px]">
+              <style>{POST_BODY_STYLE}</style>
+              <div
+                className="post-body"
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 flex justify-between text-xs text-admin-ink-5">
+          <span>Markdown 编辑 · 支持粘贴/上传插图</span>
+          <span>{content.length} 字</span>
+        </div>
+      </Card>
+
+      {/* 4. 更多设置（低频字段折叠） */}
+      <Card>
+        <button
+          type="button"
+          onClick={() => setMoreOpen((v) => !v)}
+          className="flex w-full cursor-pointer items-center justify-between px-5 py-3.5 text-left"
+        >
+          <span className="text-sm font-semibold text-admin-ink">
+            更多设置
+            <span className="ml-2 text-xs font-normal text-admin-ink-5">
+              摘要 · 发布状态 · 置顶
+            </span>
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-admin-ink-4 transition-transform",
+              moreOpen && "rotate-180"
+            )}
+          />
+        </button>
+        {moreOpen && (
+          <div className="space-y-4 border-t border-admin-border-soft px-5 py-4">
+            <Field label="摘要" hint="列表页与分享卡片展示的简介">
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -251,163 +511,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
                 rows={2}
               />
             </Field>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between border-b border-admin-border-soft px-3 py-2">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  title="加粗"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("**", "**", "粗体")}
-                >
-                  <Bold className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="斜体"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("*", "*", "斜体")}
-                >
-                  <Italic className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="二级标题"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("\n## ", "", "标题")}
-                >
-                  <Heading2 className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="列表"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("\n- ", "", "列表项")}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="引用"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("\n> ", "", "引用")}
-                >
-                  <Quote className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="代码块"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("\n```\n", "\n```\n", "在这里写代码")}
-                >
-                  <Code className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="链接"
-                  className={toolbarBtn}
-                  onClick={() => insertAtCursor("[", "](https://)", "链接文字")}
-                >
-                  <LinkIcon className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  title="插入图片"
-                  className={toolbarBtn}
-                  disabled={uploadingImage}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  {uploadingImage ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ImageIcon className="h-4 w-4" />
-                  )}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
-                  className="hidden"
-                  onChange={(e) =>
-                    e.target.files?.[0] && insertImage(e.target.files[0])
-                  }
-                />
-              </div>
-              <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
-                <button
-                  type="button"
-                  className={cn(
-                    "rounded-md px-2.5 py-1 cursor-pointer",
-                    tab === "edit"
-                      ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
-                      : "text-admin-ink-4"
-                  )}
-                  onClick={() => setTab("edit")}
-                >
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  className={cn(
-                    "rounded-md px-2.5 py-1 cursor-pointer",
-                    tab === "preview"
-                      ? "bg-admin-surface font-medium text-admin-ink shadow-sm"
-                      : "text-admin-ink-4"
-                  )}
-                  onClick={() => setTab("preview")}
-                >
-                  预览
-                </button>
-              </div>
-            </div>
-
-            {tab === "edit" ? (
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="在此输入 Markdown 正文…"
-                className="min-h-[420px] w-full resize-y px-4 py-3 font-mono text-sm leading-relaxed text-admin-ink focus:outline-none"
-                onKeyDown={(e) => {
-                  if (e.ctrlKey && e.key.toLowerCase() === "b") {
-                    e.preventDefault();
-                    insertAtCursor("**", "**", "粗体");
-                  } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
-                    e.preventDefault();
-                    insertAtCursor("*", "*", "斜体");
-                  }
-                }}
-                onPaste={(e) => {
-                  const files = Array.from(e.clipboardData.files).filter((f) =>
-                    f.type.startsWith("image/")
-                  );
-                  if (files.length > 0) {
-                    e.preventDefault();
-                    insertImage(files[0]);
-                  }
-                }}
-              />
-            ) : (
-              <div className="min-h-[420px] px-4 py-3">
-                <style>{POST_BODY_STYLE}</style>
-                <div
-                  className="post-body"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
-                />
-              </div>
-            )}
-            <div className="flex justify-between border-t border-admin-border-soft px-4 py-2 text-xs text-admin-ink-5">
-              <span>Markdown 编辑 · 支持粘贴/上传插图</span>
-              <span>{content.length} 字</span>
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          <Card className={EDITOR_SECTION}>
-            <Field label="发布状态" hint="决定点击右上角「发布」后是正式发布还是存为草稿">
+            <Field label="发布状态" hint="「保存」按此状态保存，「发布」始终正式发布">
               <Select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -416,60 +520,20 @@ export default function PostEditor({ postId }: { postId?: string }) {
                 <option value="draft">存为草稿（前台不可见）</option>
               </Select>
             </Field>
-            <Field label="分类">
-              <Select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">未分类</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="标签" hint="多个标签用逗号分隔">
-              <Input
-                value={tagsText}
-                onChange={(e) => setTagsText(e.target.value)}
-                placeholder="如：Next.js, React"
-              />
-              {parsedTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {parsedTags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-admin-accent-soft px-2 py-0.5 text-xs text-admin-accent"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </Field>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-admin-ink-2">置顶文章</span>
+              <span className="text-sm font-medium text-admin-ink-2">
+                置顶文章
+              </span>
               <Switch checked={isPinned} onChange={setIsPinned} />
             </div>
-          </Card>
-
-          <Card className="p-5">
-            <p className="mb-2 text-sm font-medium text-admin-ink-2">封面图片</p>
-            <ImageUploader
-              mode="single"
-              value={cover}
-              onChange={(urls) => setCover(urls[0] || "")}
-              onOrientation={setCoverOrientation}
-              height="h-40"
-              category="posts"
-            />
-            <p className="mt-2 text-xs text-admin-ink-5">
-              方向：{coverOrientation === "portrait" ? "竖版" : "横版"}（上传后自动识别）
-            </p>
-          </Card>
-        </div>
-      </div>
+            <Field label="返回">
+              <Button variant="soft" size="sm" onClick={() => router.back()}>
+                返回上一页
+              </Button>
+            </Field>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

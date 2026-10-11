@@ -207,7 +207,7 @@ export default function DashboardClient({
                     href={card.href}
                     title={`新建${card.label}`}
                     className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                      "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
                       card.solid
                         ? "bg-white/25 text-white hover:bg-white/40"
                         : "bg-black/5 text-admin-ink-3 hover:bg-black/10"

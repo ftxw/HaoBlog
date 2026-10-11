@@ -307,24 +307,8 @@ export default function PostsClient({
       </div>
 
       {tab === "posts" ? (
-        <ListShell
-          aside={
-            <TagCard onManage={() => setTagOpen(true)}>
-              {(tags.data ?? []).length === 0 ? (
-                <span className="text-xs text-admin-ink-none">暂无标签</span>
-              ) : (
-                (tags.data ?? []).map((t) => (
-                  <span
-                    key={t.id}
-                    className="rounded-md bg-admin-neutral px-2 py-1 text-xs text-admin-ink-3"
-                  >
-                    {t.name}
-                  </span>
-                ))
-              )}
-            </TagCard>
-          }
-        >
+        <>
+          {/* 筛选卡片：分类 + 新建 + 管理分组 同卡 */}
           <ListToolbar
             actions={
               <>
@@ -360,6 +344,24 @@ export default function PostsClient({
             />
           </ListToolbar>
 
+          <ListShell
+            aside={
+              <TagCard onManage={() => setTagOpen(true)}>
+                {(tags.data ?? []).length === 0 ? (
+                  <span className="text-xs text-admin-ink-none">暂无标签</span>
+                ) : (
+                  (tags.data ?? []).map((t) => (
+                    <span
+                      key={t.id}
+                      className="rounded-md bg-admin-neutral px-2 py-1 text-xs text-admin-ink-3"
+                    >
+                      {t.name}
+                    </span>
+                  ))
+                )}
+              </TagCard>
+            }
+          >
           {posts.loading && !posts.data ? (
             <Card>
               <Loading />
@@ -386,7 +388,7 @@ export default function PostsClient({
                       <Link
                         prefetch={false}
                         href={`/admin/posts/${post.id}`}
-                        className="min-w-0 truncate text-sm font-medium text-admin-ink hover:text-admin-accent"
+                        className="min-w-0 truncate text-[15px] font-semibold text-admin-ink hover:text-admin-accent"
                       >
                         {post.title}
                       </Link>
@@ -470,9 +472,10 @@ export default function PostsClient({
               />
             </>
           )}
-        </ListShell>
+          </ListShell>
+        </>
       ) : (
-        <ListShell>
+        <>
           <ListToolbar
             actions={
               <ToolbarAction
@@ -487,6 +490,7 @@ export default function PostsClient({
             </span>
           </ListToolbar>
 
+          <ListShell>
           {projects.loading && !projects.data ? (
             <Card>
               <Loading />
@@ -526,7 +530,8 @@ export default function PostsClient({
               />
             </>
           )}
-        </ListShell>
+          </ListShell>
+        </>
       )}
 
       {/* 管理分组（分类）弹窗 */}
@@ -626,7 +631,7 @@ function SortableProjectCard({
           <button
             type="button"
             onClick={onEdit}
-            className="min-w-0 truncate text-sm font-medium text-admin-ink hover:text-admin-accent cursor-pointer"
+            className="min-w-0 truncate text-[15px] font-semibold text-admin-ink hover:text-admin-accent cursor-pointer"
           >
             {project.name}
           </button>

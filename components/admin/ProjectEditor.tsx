@@ -45,7 +45,7 @@ const emptyForm: FormState = {
   cover_image: "",
   images: [],
   techStackText: "",
-  status: "published",
+  status: "draft",
   status_label: "",
   is_featured: false,
 };
@@ -147,25 +147,40 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-admin-ink">编辑项目</h1>
+      {/* 标题卡：标题 + 保存 / 发布 */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold text-admin-ink">
+            {isNew ? "新建项目" : "编辑项目"}
+          </h1>
           {data?.updated_at && (
-            <p className="mt-0.5 text-sm text-admin-ink-4">
+            <p className="mt-0.5 text-xs text-admin-ink-5">
               最后更新于 {formatDate(data.updated_at)}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ArrowLeft className="h-3.5 w-3.5" />
             返回
           </Button>
-          <Button onClick={() => handleSave()} loading={saving}>
-            {saving ? "保存中…" : "保存"}
+          <Button
+            variant="soft"
+            size="sm"
+            onClick={() => handleSave()}
+            loading={saving}
+          >
+            保存
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => handleSave("published")}
+            loading={saving}
+          >
+            发布
           </Button>
         </div>
-      </div>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-4 lg:col-span-3">

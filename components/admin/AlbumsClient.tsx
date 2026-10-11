@@ -15,7 +15,7 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
-import { ToolbarAction } from "@/components/admin/ContentListShell";
+import { ListToolbar, ToolbarAction } from "@/components/admin/ContentListShell";
 import {
   useDragSort,
   reorderItemsByIds,
@@ -177,16 +177,22 @@ export default function AlbumsClient({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-admin-accent">摄影图库</h1>
-        <ToolbarAction
-          icon={<CirclePlus className="h-4 w-4" />}
-          label="新建相册"
-          onClick={() => router.push("/admin/albums/new")}
-        />
+        <h1 className="text-2xl font-bold text-admin-accent">摄影图库</h1>
       </div>
-      <p className="mb-3 text-sm text-admin-ink-4">
-        共 {items.length} 个相册 · 拖拽卡片左上角手柄可排序
-      </p>
+
+      <ListToolbar
+        actions={
+          <ToolbarAction
+            icon={<CirclePlus className="h-4 w-4" />}
+            label="新建相册"
+            onClick={() => router.push("/admin/albums/new")}
+          />
+        }
+      >
+        <span className="text-sm text-admin-ink-4">
+          共 {items.length} 个相册 · 拖拽卡片手柄可排序
+        </span>
+      </ListToolbar>
 
       {albums.loading && !albums.data ? (
         <Card>

@@ -13,7 +13,9 @@ export default function ImageUploader({
   onOrientation,
   className,
   height = "h-28",
+  boxSize,
   square = false,
+  emptyContent,
   canDeleteImage,
   category,
   folder,
@@ -25,7 +27,11 @@ export default function ImageUploader({
   onOrientation?: (orientation: string) => void;
   className?: string;
   height?: string;
+  /** 单图模式下自定义占位框宽度（如 "w-44"），不传则按 square 走默认 */
+  boxSize?: string;
   square?: boolean;
+  /** 自定义占位内容（替换默认的图标 + 文案），用于「封面 800×600」这类场景 */
+  emptyContent?: React.ReactNode;
   canDeleteImage?: (url: string) => boolean;
   category?: string;
   folder?: string;
@@ -104,9 +110,11 @@ export default function ImageUploader({
           <div
             key={url}
             className={cn(
-              "group relative overflow-hidden rounded-lg border border-admin-border bg-admin-surface-muted",
+              "group relative overflow-hidden rounded-lg bg-admin-surface-muted",
               height,
-              mode === "single" ? (square ? "w-28" : "w-full") : "w-28"
+              mode === "single"
+                ? (boxSize ?? (square ? "w-28" : "w-full"))
+                : "w-28"
             )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -136,9 +144,11 @@ export default function ImageUploader({
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
             className={cn(
-              "flex w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-admin-border-control text-admin-ink-5 transition-colors hover:border-admin-accent-ring hover:text-admin-accent cursor-pointer",
+              "flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-admin-surface-muted text-admin-ink-4 transition-colors hover:bg-admin-neutral-strong hover:text-admin-accent cursor-pointer",
               height,
-              mode === "single" && (square ? "w-28" : "w-full")
+              mode === "single"
+                ? (boxSize ?? (square ? "w-28" : "w-full"))
+                : "w-28"
             )}
           >
             {uploading ? (
@@ -147,12 +157,14 @@ export default function ImageUploader({
                 <span className="text-xs">上传中…</span>
               </>
             ) : (
-              <>
-                <ImagePlus className="h-5 w-5" />
-                <span className="text-xs">
-                  {mode === "single" ? "点击或粘贴上传" : "点击上传"}
-                </span>
-              </>
+              emptyContent ?? (
+                <>
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-xs">
+                    {mode === "single" ? "点击或粘贴上传" : "点击上传"}
+                  </span>
+                </>
+              )
             )}
           </button>
         )}

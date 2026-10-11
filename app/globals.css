@@ -174,45 +174,47 @@ html:has(.theme-light) {
 }
 
 @theme static {
-  --color-admin-canvas: #f1f5f9;
+  /* 中性色板对齐逸刻设计规范：画布 #F6F6F8 / 卡片纯白 / 填充用画布灰 */
+  --color-admin-canvas: #f6f6f8;
   --color-admin-surface: #ffffff;
-  --color-admin-surface-muted: #f8fafc;
-  --color-admin-neutral: #f1f5f9;
-  --color-admin-row-hover: rgb(248 250 252 / 0.7);
-  --color-admin-neutral-strong: #e2e8f0;
-  --color-admin-overlay: rgb(255 255 255 / 0.9);
-  --color-admin-scrim: rgb(15 23 42 / 0.6);
+  --color-admin-surface-muted: #f6f6f8;
+  --color-admin-neutral: #f6f6f8;
+  --color-admin-row-hover: rgb(246 246 248 / 0.85);
+  --color-admin-neutral-strong: #ebebed;
+  --color-admin-overlay: rgb(255 255 255 / 0.92);
+  --color-admin-scrim: rgb(30 32 37 / 0.55);
 
-  --color-admin-sidebar: #ffffff;
-  --color-admin-sidebar-hover: #f1f5f9;
-  --color-admin-sidebar-ink: #0f172a;
-  --color-admin-sidebar-ink-2: #334155;
-  --color-admin-sidebar-divider: #f1f5f9;
-  --color-admin-sidebar-active: #eff6ff;
-  --color-admin-sidebar-active-ink: #1d4ed8;
+  /* 侧边栏无底色：直接落在画布上 */
+  --color-admin-sidebar: #f6f6f8;
+  --color-admin-sidebar-hover: #ececef;
+  --color-admin-sidebar-ink: #1e2025;
+  --color-admin-sidebar-ink-2: #3a3c40;
+  --color-admin-sidebar-divider: #ededee;
+  --color-admin-sidebar-active: #3758e4;
+  --color-admin-sidebar-active-ink: #ffffff;
 
-  --color-admin-border: #e2e8f0;
-  --color-admin-border-soft: #f1f5f9;
-  --color-admin-border-control: #cbd5e1;
+  --color-admin-border: #ededee;
+  --color-admin-border-soft: #f2f2f4;
+  --color-admin-border-control: #dcdcdf;
 
-  --color-admin-ink: #0f172a;
-  --color-admin-ink-2: #334155;
-  --color-admin-ink-3: #475569;
-  --color-admin-ink-4: #64748b;
-  --color-admin-ink-5: #94a3b8;
-  --color-admin-ink-none: #cbd5e1;
+  --color-admin-ink: #1e2025;
+  --color-admin-ink-2: #3a3c40;
+  --color-admin-ink-3: #5d5e61;
+  --color-admin-ink-4: #949497;
+  --color-admin-ink-5: #b1b2b5;
+  --color-admin-ink-none: #c9c9cc;
 
-  --color-admin-accent: #2563eb;
-  --color-admin-accent-hover: #1d4ed8;
+  --color-admin-accent: #3758e4;
+  --color-admin-accent-hover: #2f4ccd;
   --color-admin-accent-ink: #ffffff;
-  --color-admin-accent-soft: #eff6ff;
-  --color-admin-accent-soft-ink: #1d4ed8;
-  --color-admin-accent-border: #60a5fa;
-  --color-admin-accent-ring: #93c5fd;
+  --color-admin-accent-soft: #eff2fd;
+  --color-admin-accent-soft-ink: #3758e4;
+  --color-admin-accent-border: #a8b6f0;
+  --color-admin-accent-ring: #c3ccf7;
 
-  --color-admin-danger: #dc2626;
-  --color-admin-danger-hover: #b91c1c;
-  --color-admin-danger-soft: #fef2f2;
+  --color-admin-danger: #ea4025;
+  --color-admin-danger-hover: #cf2f16;
+  --color-admin-danger-soft: #fdeeeb;
 
   --color-admin-success: #059669;
   --color-admin-success-strong: #047857;

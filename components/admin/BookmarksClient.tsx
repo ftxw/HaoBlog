@@ -41,7 +41,6 @@ import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   CardAction,
-  CapsuleDivider,
   ContentCard,
   ListToolbar,
   PageTitleTabs,
@@ -412,8 +411,8 @@ export default function BookmarksClient({
 
   return (
     <>
-      {/* 标题行：大字 Tab（书签 | 友情链接） */}
-      <div className="mb-4">
+      {/* 标题行：大字 Tab（书签 | 友情链接） + 搜索 */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <PageTitleTabs
           tabs={[
             { key: "sites", label: "书签" },
@@ -422,6 +421,17 @@ export default function BookmarksClient({
           active={tab}
           onChange={setTab}
         />
+        {tab === "sites" && (
+          <SearchPill
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={() => {
+              setSearchText(searchInput);
+              setSitePage(1);
+            }}
+            placeholder="搜索名称 / URL"
+          />
+        )}
       </div>
 
       {tab === "sites" ? (
@@ -450,20 +460,7 @@ export default function BookmarksClient({
                 setSitePage(1);
               }}
             />
-            <CapsuleDivider />
           </ListToolbar>
-
-          <div className="mb-3">
-            <SearchPill
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={() => {
-                setSearchText(searchInput);
-                setSitePage(1);
-              }}
-              placeholder="搜索名称 / URL"
-            />
-          </div>
 
           {sites.loading && !sites.data ? (
             <Card>

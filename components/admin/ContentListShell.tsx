@@ -5,7 +5,7 @@ import { Image as ImageIcon, Search, Settings2 } from "lucide-react";
 import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import { cn } from "@/components/admin/ui";
 
-/** 列表页工具条：左侧筛选区 + 右侧操作区 */
+/** 列表页工具条：独立白卡（左侧筛选胶囊 + 右侧操作区） */
 export function ListToolbar({
   children,
   actions,
@@ -18,7 +18,7 @@ export function ListToolbar({
   return (
     <div
       className={cn(
-        "mb-4 flex flex-wrap items-center justify-between gap-3",
+        "mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-admin-surface px-4 py-3",
         className
       )}
     >
@@ -110,8 +110,8 @@ export function ContentCard({
   return (
     <div
       className={cn(
-        "group flex items-start gap-4 rounded-xl border border-admin-border bg-admin-surface p-3 transition-colors",
-        "hover:border-admin-accent-ring/70",
+        "group flex items-start gap-4 rounded-xl bg-admin-surface p-3 transition-shadow",
+        "hover:shadow-[0_2px_12px_rgb(30_32_37/0.06)]",
         className
       )}
     >
@@ -147,7 +147,7 @@ export function ContentCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">{title}</div>
         {subtitle && (
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-admin-ink-4">
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-admin-ink-4">
             {subtitle}
           </p>
         )}
@@ -185,7 +185,7 @@ export function PageTitleTabs<T extends string>({
           type="button"
           onClick={() => onChange(t.key)}
           className={cn(
-            "cursor-pointer text-xl font-bold transition-colors",
+            "cursor-pointer text-2xl font-bold transition-colors",
             active === t.key
               ? "text-admin-accent"
               : "text-admin-ink hover:text-admin-accent"
@@ -198,7 +198,7 @@ export function PageTitleTabs<T extends string>({
   );
 }
 
-/** 工具条右侧的幽灵操作按钮（新建 / 管理分组） */
+/** 工具条右侧的操作按钮（新建 / 管理分组 / 管理标签），参考图为蓝色文字按钮 */
 export function ToolbarAction({
   icon,
   label,
@@ -212,7 +212,7 @@ export function ToolbarAction({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-1.5 text-sm text-admin-ink-3 transition-colors hover:bg-admin-neutral hover:text-admin-ink"
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-admin-accent transition-colors hover:bg-admin-accent-soft"
     >
       {icon}
       {label}
@@ -277,7 +277,7 @@ export function TagCard({
           <button
             type="button"
             onClick={onManage}
-            className="inline-flex cursor-pointer items-center gap-1 text-xs text-admin-ink-4 transition-colors hover:text-admin-accent"
+            className="inline-flex cursor-pointer items-center gap-1 text-xs text-admin-accent transition-colors hover:opacity-80"
           >
             <Settings2 className="h-3.5 w-3.5" />
             {manageLabel}

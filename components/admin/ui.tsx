@@ -7,7 +7,7 @@ export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "success";
+type ButtonVariant = "primary" | "secondary" | "soft" | "danger" | "ghost" | "success";
 
 export function Button({
   variant = "primary",
@@ -26,6 +26,7 @@ export function Button({
       "bg-admin-accent text-admin-accent-ink hover:bg-admin-accent-hover focus-visible:outline-admin-accent",
     secondary:
       "bg-admin-surface text-admin-ink-2 border border-admin-border-control hover:bg-admin-neutral focus-visible:outline-admin-ink-5",
+    soft: "bg-admin-neutral text-admin-ink-2 hover:bg-admin-neutral-strong focus-visible:outline-admin-ink-5",
     danger:
       "bg-admin-danger text-admin-accent-ink hover:bg-admin-danger-hover focus-visible:outline-admin-danger",
     success:
@@ -34,7 +35,7 @@ export function Button({
       "bg-transparent text-admin-ink-3 hover:bg-admin-neutral hover:text-admin-ink",
   };
   const sizes = {
-    sm: "px-2.5 py-1 text-xs",
+    sm: "px-3.5 py-1.5 text-sm",
     md: "px-4 py-2 text-sm",
   };
   return (
@@ -363,7 +364,7 @@ export function PageHeader({
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-xl font-bold text-admin-ink">{title}</h1>
+        <h1 className="text-2xl font-bold text-admin-ink">{title}</h1>
         {description && (
           <p className="mt-0.5 text-xs text-admin-ink-4">{description}</p>
         )}
@@ -416,7 +417,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-admin-border bg-admin-surface shadow-sm",
+        "rounded-xl border border-admin-border bg-admin-surface",
         className
       )}
     >
@@ -428,21 +429,21 @@ export function Card({
 export type StatTone = "blue" | "orange" | "green" | "cyan" | "violet" | "pink";
 
 const STAT_SOLID: Record<StatTone, string> = {
-  blue: "bg-gradient-to-br from-blue-500 to-blue-600 text-white",
-  orange: "bg-gradient-to-br from-orange-400 to-orange-500 text-white",
-  green: "bg-gradient-to-br from-emerald-400 to-emerald-500 text-white",
-  cyan: "bg-gradient-to-br from-cyan-400 to-cyan-500 text-white",
-  violet: "bg-gradient-to-br from-violet-400 to-violet-500 text-white",
-  pink: "bg-gradient-to-br from-pink-400 to-pink-500 text-white",
+  blue: "bg-gradient-to-br from-[#5b7cf0] to-[#3758e4] text-white",
+  orange: "bg-gradient-to-br from-[#f2b389] to-[#e8935c] text-white",
+  green: "bg-gradient-to-br from-[#79cf9c] to-[#41b578] text-white",
+  cyan: "bg-gradient-to-br from-[#6fd2e8] to-[#31b6d6] text-white",
+  violet: "bg-gradient-to-br from-[#9b93f0] to-[#6f66e4] text-white",
+  pink: "bg-gradient-to-br from-[#f596c4] to-[#ea66a6] text-white",
 };
 
 const STAT_SOFT: Record<StatTone, string> = {
-  blue: "bg-gradient-to-br from-blue-100 to-blue-50 text-admin-ink",
-  orange: "bg-gradient-to-br from-orange-100 to-orange-50 text-admin-ink",
-  green: "bg-gradient-to-br from-emerald-100 to-emerald-50 text-admin-ink",
-  cyan: "bg-gradient-to-br from-cyan-100 to-cyan-50 text-admin-ink",
-  violet: "bg-gradient-to-br from-violet-100 to-violet-50 text-admin-ink",
-  pink: "bg-gradient-to-br from-pink-100 to-pink-50 text-admin-ink",
+  blue: "bg-gradient-to-br from-[#dbe4fc] to-[#f2f5fe] text-admin-ink",
+  orange: "bg-gradient-to-br from-[#f9dcc9] to-[#fdf1ea] text-admin-ink",
+  green: "bg-gradient-to-br from-[#d8ecd5] to-[#eef8ec] text-admin-ink",
+  cyan: "bg-gradient-to-br from-[#c6eef8] to-[#e9f8fd] text-admin-ink",
+  violet: "bg-gradient-to-br from-[#d5d2f7] to-[#eeedfb] text-admin-ink",
+  pink: "bg-gradient-to-br from-[#f9d8ea] to-[#fdeef6] text-admin-ink",
 };
 
 export function StatCard({
@@ -521,10 +522,10 @@ export function CapsuleFilter<T extends string>({
             type="button"
             onClick={() => onChange(item.key)}
             className={cn(
-              "inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors cursor-pointer",
+              "inline-flex items-center rounded-full px-3.5 py-1.5 text-sm transition-colors cursor-pointer",
               on
-                ? "border-transparent bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
-                : "border-admin-border bg-admin-surface text-admin-ink-3 hover:border-admin-accent-border hover:text-admin-ink"
+                ? "bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
+                : "bg-admin-neutral text-admin-ink-3 hover:bg-admin-neutral-strong hover:text-admin-ink"
             )}
           >
             {item.label}
@@ -532,7 +533,7 @@ export function CapsuleFilter<T extends string>({
               <span
                 className={cn(
                   "ml-1 text-xs",
-                  on ? "text-admin-accent-soft-ink/70" : "text-admin-ink-5"
+                  on ? "text-admin-accent-soft-ink/70" : "text-admin-ink-4"
                 )}
               >
                 {item.count}
