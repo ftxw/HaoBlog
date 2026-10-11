@@ -40,6 +40,13 @@ import { POST_BODY_STYLE } from "@/app/lib/post-body-style";
 import "highlight.js/styles/vs2015.css";
 import "katex/dist/katex.min.css";
 
+/** 工具栏分组之间的竖分隔线 */
+function DividerLine() {
+  return (
+    <span className="mx-2 h-5 w-px shrink-0 bg-admin-border" aria-hidden />
+  );
+}
+
 interface PostDetail {
   id: string;
   title: string;
@@ -214,10 +221,30 @@ export default function PostEditor({ postId }: { postId?: string }) {
   }
 
   const toolbarBtn =
-    "rounded-md p-1.5 text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink cursor-pointer disabled:opacity-50";
+    "flex h-8 w-8 items-center justify-center rounded-lg text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink cursor-pointer disabled:opacity-50";
+
 
   const tools = (
     <>
+      <button
+        type="button"
+        title="引用"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n> ", "", "引用")}
+      >
+        <Quote className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="二级标题"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n## ", "", "标题")}
+      >
+        <Heading2 className="h-4 w-4" />
+      </button>
+
+      <DividerLine />
+
       <button
         type="button"
         title="加粗"
@@ -234,14 +261,9 @@ export default function PostEditor({ postId }: { postId?: string }) {
       >
         <Italic className="h-4 w-4" />
       </button>
-      <button
-        type="button"
-        title="二级标题"
-        className={toolbarBtn}
-        onClick={() => insertAtCursor("\n## ", "", "标题")}
-      >
-        <Heading2 className="h-4 w-4" />
-      </button>
+
+      <DividerLine />
+
       <button
         type="button"
         title="列表"
@@ -250,22 +272,9 @@ export default function PostEditor({ postId }: { postId?: string }) {
       >
         <List className="h-4 w-4" />
       </button>
-      <button
-        type="button"
-        title="引用"
-        className={toolbarBtn}
-        onClick={() => insertAtCursor("\n> ", "", "引用")}
-      >
-        <Quote className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        title="代码块"
-        className={toolbarBtn}
-        onClick={() => insertAtCursor("\n```\n", "\n```\n", "在这里写代码")}
-      >
-        <Code className="h-4 w-4" />
-      </button>
+
+      <DividerLine />
+
       <button
         type="button"
         title="链接"
@@ -287,6 +296,14 @@ export default function PostEditor({ postId }: { postId?: string }) {
           <ImageIcon className="h-4 w-4" />
         )}
       </button>
+      <button
+        type="button"
+        title="代码块"
+        className={toolbarBtn}
+        onClick={() => insertAtCursor("\n```\n", "\n```\n", "在这里写代码")}
+      >
+        <Code className="h-4 w-4" />
+      </button>
       <input
         ref={fileRef}
         type="file"
@@ -299,46 +316,41 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
   return (
     <div className="space-y-4">
-      {/* 1. 标题卡：标题 + 保存 / 发布 */}
-      <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold text-admin-ink">
+      {/* 1. 标题卡（高 68）：标题 24px 粗体 + 保存 / 发布 36 高按钮 */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-bold text-admin-ink">
             {postId ? "编辑文章" : "新建博客文章"}
           </h1>
-          {postId && (
-            <p className="mt-0.5 text-xs text-admin-ink-5">
-              {updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
-            </p>
+          {postId && updatedAt && (
+            <span className="text-xs text-admin-ink-5">
+              最后更新于 {formatDate(updatedAt)}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="soft"
-            size="sm"
+            variant="secondary"
             onClick={() => handleSave()}
             loading={saving}
           >
             保存
           </Button>
-          <Button
-            size="sm"
-            onClick={() => handleSave("published")}
-            loading={saving}
-          >
+          <Button onClick={() => handleSave("published")} loading={saving}>
             发布
           </Button>
         </div>
       </Card>
 
-      {/* 2. 工具栏卡 */}
+      {/* 2. 工具栏卡（高 40）：32×32 图标按钮 + 分组分隔线 */}
       <Card>
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-1">
           <div className="flex flex-wrap items-center gap-0.5">{tools}</div>
           <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
             <button
               type="button"
               className={cn(
-                "rounded-md px-3 py-1 cursor-pointer",
+                "cursor-pointer rounded-md px-3 py-1 transition-colors",
                 tab === "edit"
                   ? "bg-admin-surface font-medium text-admin-ink"
                   : "text-admin-ink-4"
@@ -350,7 +362,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
             <button
               type="button"
               className={cn(
-                "rounded-md px-3 py-1 cursor-pointer",
+                "cursor-pointer rounded-md px-3 py-1 transition-colors",
                 tab === "preview"
                   ? "bg-admin-surface font-medium text-admin-ink"
                   : "text-admin-ink-4"
@@ -363,121 +375,123 @@ export default function PostEditor({ postId }: { postId?: string }) {
         </div>
       </Card>
 
-      {/* 3. 内容卡：标题 + 封面 + 分类/标签 + 正文 */}
-      <Card className="px-5 py-6 lg:px-10 lg:py-8">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="min-w-0 flex-1">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="请输入标题"
-              className="w-full bg-transparent text-2xl font-bold text-admin-ink placeholder:text-admin-ink-none focus:outline-none"
-            />
-
-            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
-              <div className="relative inline-flex items-center rounded-lg transition-colors hover:bg-admin-neutral">
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className={cn(
-                    "cursor-pointer appearance-none bg-transparent py-1.5 pl-2.5 pr-7 text-sm focus:outline-none",
-                    categoryId ? "text-admin-ink-2" : "text-admin-ink-4"
-                  )}
-                >
-                  <option value="">选择分类</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-admin-ink-5" />
-              </div>
-
-              <span className="h-4 w-px bg-admin-border" />
-
+      {/* 3. 内容卡：居中 800 列，标题 + 封面 160×120 + 分类/标签 + 正文 */}
+      <Card className="px-6 py-6">
+        <div className="mx-auto w-full max-w-[800px]">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="min-w-0 flex-1">
               <input
-                value={tagsText}
-                onChange={(e) => setTagsText(e.target.value)}
-                placeholder="插入标签"
-                className="w-28 bg-transparent py-1.5 text-sm text-admin-ink placeholder:text-admin-ink-4 focus:outline-none"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="请输入标题"
+                className="w-full bg-transparent text-2xl font-bold text-admin-ink placeholder:text-admin-ink-none focus:outline-none"
               />
-              {parsedTags.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-md bg-admin-neutral px-2 py-1 text-xs text-admin-ink-3"
-                >
-                  {t}
-                </span>
-              ))}
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
+                <div className="relative inline-flex items-center rounded-lg transition-colors hover:bg-admin-neutral">
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className={cn(
+                      "cursor-pointer appearance-none rounded-lg bg-transparent py-1 pl-2.5 pr-7 text-sm focus:outline-none",
+                      categoryId ? "text-admin-ink-2" : "text-admin-ink-4"
+                    )}
+                  >
+                    <option value="">选择分类</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-admin-ink-5" />
+                </div>
+
+                <span className="h-4 w-px bg-admin-border" />
+
+                <input
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                  placeholder="插入标签"
+                  className="w-28 bg-transparent py-1 text-sm text-admin-ink placeholder:text-admin-ink-4 focus:outline-none"
+                />
+                {parsedTags.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-lg bg-admin-chip px-2 py-1 text-xs text-admin-ink-3"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              <ImageUploader
+                mode="single"
+                value={cover}
+                onChange={(urls) => setCover(urls[0] || "")}
+                onOrientation={setCoverOrientation}
+                boxSize="w-40"
+                height="h-[120px]"
+                emptyContent={
+                  <>
+                    <Plus className="h-5 w-5" />
+                    <span className="text-xs">封面 800×600</span>
+                  </>
+                }
+                category="posts"
+              />
+              {cover && (
+                <p className="mt-1.5 text-center text-xs text-admin-ink-5">
+                  {coverOrientation === "portrait" ? "竖版" : "横版"}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="shrink-0">
-            <ImageUploader
-              mode="single"
-              value={cover}
-              onChange={(urls) => setCover(urls[0] || "")}
-              onOrientation={setCoverOrientation}
-              boxSize="w-44"
-              height="h-36"
-              emptyContent={
-                <>
-                  <Plus className="h-5 w-5" />
-                  <span className="text-xs">封面 800×600</span>
-                </>
-              }
-              category="posts"
-            />
-            {cover && (
-              <p className="mt-1.5 text-center text-xs text-admin-ink-5">
-                {coverOrientation === "portrait" ? "竖版" : "横版"}
-              </p>
+          <div className="mt-6">
+            {tab === "edit" ? (
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="请输入内容…"
+                className="min-h-[420px] w-full resize-y bg-transparent text-sm leading-relaxed text-admin-ink focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.ctrlKey && e.key.toLowerCase() === "b") {
+                    e.preventDefault();
+                    insertAtCursor("**", "**", "粗体");
+                  } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
+                    e.preventDefault();
+                    insertAtCursor("*", "*", "斜体");
+                  }
+                }}
+                onPaste={(e) => {
+                  const files = Array.from(e.clipboardData.files).filter((f) =>
+                    f.type.startsWith("image/")
+                  );
+                  if (files.length > 0) {
+                    e.preventDefault();
+                    insertImage(files[0]);
+                  }
+                }}
+              />
+            ) : (
+              <div className="min-h-[420px]">
+                <style>{POST_BODY_STYLE}</style>
+                <div
+                  className="post-body"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              </div>
             )}
           </div>
-        </div>
 
-        <div className="mt-6">
-          {tab === "edit" ? (
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="请输入内容…"
-              className="min-h-[420px] w-full resize-y bg-transparent text-sm leading-relaxed text-admin-ink focus:outline-none"
-              onKeyDown={(e) => {
-                if (e.ctrlKey && e.key.toLowerCase() === "b") {
-                  e.preventDefault();
-                  insertAtCursor("**", "**", "粗体");
-                } else if (e.ctrlKey && e.key.toLowerCase() === "i") {
-                  e.preventDefault();
-                  insertAtCursor("*", "*", "斜体");
-                }
-              }}
-              onPaste={(e) => {
-                const files = Array.from(e.clipboardData.files).filter((f) =>
-                  f.type.startsWith("image/")
-                );
-                if (files.length > 0) {
-                  e.preventDefault();
-                  insertImage(files[0]);
-                }
-              }}
-            />
-          ) : (
-            <div className="min-h-[420px]">
-              <style>{POST_BODY_STYLE}</style>
-              <div
-                className="post-body"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex justify-between text-xs text-admin-ink-5">
-          <span>Markdown 编辑 · 支持粘贴/上传插图</span>
-          <span>{content.length} 字</span>
+          <div className="mt-3 flex justify-between text-xs text-admin-ink-5">
+            <span>Markdown 编辑 · 支持粘贴/上传插图</span>
+            <span>{content.length} 字</span>
+          </div>
         </div>
       </Card>
 
@@ -486,7 +500,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
         <button
           type="button"
           onClick={() => setMoreOpen((v) => !v)}
-          className="flex w-full cursor-pointer items-center justify-between px-5 py-3.5 text-left"
+          className="flex w-full cursor-pointer items-center justify-between px-6 py-4 text-left"
         >
           <span className="text-sm font-semibold text-admin-ink">
             更多设置
@@ -502,7 +516,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
           />
         </button>
         {moreOpen && (
-          <div className="space-y-4 border-t border-admin-border-soft px-5 py-4">
+          <div className="space-y-4 border-t border-admin-border-soft px-6 py-4">
             <Field label="摘要" hint="列表页与分享卡片展示的简介">
               <Textarea
                 value={description}

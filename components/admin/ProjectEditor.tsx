@@ -147,36 +147,27 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
 
   return (
     <div className="space-y-4">
-      {/* 标题卡：标题 + 保存 / 发布 */}
-      <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold text-admin-ink">
+      {/* 标题卡（高 68）：标题 24px 粗体 + 保存 / 发布 36 高按钮 */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-bold text-admin-ink">
             {isNew ? "新建项目" : "编辑项目"}
           </h1>
           {data?.updated_at && (
-            <p className="mt-0.5 text-xs text-admin-ink-5">
+            <span className="text-xs text-admin-ink-5">
               最后更新于 {formatDate(data.updated_at)}
-            </p>
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-3.5 w-3.5" />
+          <Button variant="ghost" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
             返回
           </Button>
-          <Button
-            variant="soft"
-            size="sm"
-            onClick={() => handleSave()}
-            loading={saving}
-          >
+          <Button variant="secondary" onClick={() => handleSave()} loading={saving}>
             保存
           </Button>
-          <Button
-            size="sm"
-            onClick={() => handleSave("published")}
-            loading={saving}
-          >
+          <Button onClick={() => handleSave("published")} loading={saving}>
             发布
           </Button>
         </div>

@@ -5,7 +5,10 @@ import { Image as ImageIcon, Search, Settings2 } from "lucide-react";
 import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import { cn } from "@/components/admin/ui";
 
-/** 列表页工具条：独立白卡（左侧筛选胶囊 + 右侧操作区） */
+/**
+ * 列表页工具条 = 独立白卡（参考图结构）：
+ * 左侧筛选胶囊行，右侧蓝色文字操作按钮。内边距 24 / 16。
+ */
 export function ListToolbar({
   children,
   actions,
@@ -18,11 +21,11 @@ export function ListToolbar({
   return (
     <div
       className={cn(
-        "mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-admin-surface px-4 py-3",
+        "mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-admin-surface px-6 py-4 shadow-admin-card",
         className
       )}
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-4">
         {children}
       </div>
       {actions && (
@@ -34,12 +37,12 @@ export function ListToolbar({
   );
 }
 
-/** 胶囊行之间的竖直分隔线 */
+/** 参考图的胶囊行是等距平铺、无分隔线，故此组件不渲染任何内容 */
 export function CapsuleDivider() {
-  return <span className="mx-0.5 h-4 w-px shrink-0 bg-admin-border" />;
+  return null;
 }
 
-/** 卡片右上角的图标操作按钮 */
+/** 卡片右侧的图标操作按钮（参考图为常显灰色图标） */
 export function CardAction({
   title,
   onClick,
@@ -58,8 +61,8 @@ export function CardAction({
   const cls = cn(
     "rounded-lg p-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
     danger
-      ? "text-admin-ink-5 hover:bg-admin-danger-soft hover:text-admin-danger"
-      : "text-admin-ink-5 hover:bg-admin-neutral hover:text-admin-ink"
+      ? "text-admin-ink-4 hover:bg-admin-danger-soft hover:text-admin-danger"
+      : "text-admin-ink-4 hover:bg-admin-neutral hover:text-admin-ink"
   );
   if (href) {
     return (
@@ -83,8 +86,8 @@ export function CardAction({
 }
 
 /**
- * 内容卡片：封面 + 标题 + 副标题 + 元信息行 + 悬停操作。
- * 各内容模块（文章 / 随笔 / 项目 / 资源）共用此卡片保证列表视觉一致。
+ * 内容卡片：封面 + 标题 + 摘要 + 元信息行 + 右侧操作。
+ * 参考图尺寸：内边距 24、封面 154×115（圆角 12）、卡片间距 24。
  */
 export function ContentCard({
   cover,
@@ -98,6 +101,7 @@ export function ContentCard({
 }: {
   /** 传 null 表示无封面图（显示占位），传 undefined 表示整个封面区不渲染 */
   cover?: string | null;
+  /** 覆盖在封面底部的整条状态条（如「未发布」） */
   coverBadge?: ReactNode;
   title: ReactNode;
   subtitle?: string;
@@ -110,19 +114,19 @@ export function ContentCard({
   return (
     <div
       className={cn(
-        "group flex items-start gap-4 rounded-xl bg-admin-surface p-3 transition-shadow",
-        "hover:shadow-[0_2px_12px_rgb(30_32_37/0.06)]",
+        "group flex items-stretch gap-6 rounded-xl bg-admin-surface p-6 transition-shadow",
+        "hover:shadow-[0_6px_16px_rgb(30_32_37/0.10)]",
         className
       )}
     >
       {leading && (
-        <div className="flex shrink-0 items-center self-stretch text-admin-ink-none">
+        <div className="flex shrink-0 items-center text-admin-ink-none">
           {leading}
         </div>
       )}
 
       {cover !== undefined && (
-        <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border border-admin-border-soft bg-admin-surface-muted">
+        <div className="relative h-[115px] w-[154px] shrink-0 self-start overflow-hidden rounded-xl bg-admin-surface-muted">
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -139,7 +143,7 @@ export function ContentCard({
             </div>
           )}
           {coverBadge && (
-            <div className="absolute bottom-1.5 left-1.5">{coverBadge}</div>
+            <div className="absolute inset-x-0 bottom-0">{coverBadge}</div>
           )}
         </div>
       )}
@@ -147,21 +151,19 @@ export function ContentCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">{title}</div>
         {subtitle && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-admin-ink-4">
+          <p className="mt-2 line-clamp-2 text-sm leading-[1.6] text-admin-ink-3">
             {subtitle}
           </p>
         )}
         {meta && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-admin-ink-5">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-admin-ink-4">
             {meta}
           </div>
         )}
       </div>
 
       {actions && (
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 max-lg:opacity-100">
-          {actions}
-        </div>
+        <div className="flex shrink-0 items-end gap-1">{actions}</div>
       )}
     </div>
   );
@@ -212,7 +214,7 @@ export function ToolbarAction({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-admin-accent transition-colors hover:bg-admin-accent-soft"
+      className="inline-flex cursor-pointer items-center gap-1.5 px-1 text-sm text-admin-accent transition-opacity hover:opacity-75"
     >
       {icon}
       {label}
@@ -220,7 +222,7 @@ export function ToolbarAction({
   );
 }
 
-/** 参考图右上角的圆角搜索框（回车提交） */
+/** 参考图右上角的搜索框：灰底无边框、右侧放大镜（宽 310 / 高 36） */
 export function SearchPill({
   value,
   onChange,
@@ -238,18 +240,18 @@ export function SearchPill({
         e.preventDefault();
         onSearch();
       }}
-      className="flex w-52 items-center gap-2 rounded-full border border-transparent bg-admin-surface-muted px-3.5 py-1.5 transition-colors focus-within:border-admin-accent-border"
+      className="flex h-9 w-full items-center gap-2 rounded-lg bg-admin-fill pl-3.5 pr-2.5 sm:w-[310px]"
     >
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="min-w-0 flex-1 bg-transparent text-sm text-admin-ink outline-none placeholder:text-admin-ink-none"
+        className="min-w-0 flex-1 bg-transparent text-sm text-admin-ink outline-none placeholder:text-admin-ink-5"
       />
       <button
         type="submit"
         aria-label="搜索"
-        className="shrink-0 cursor-pointer text-admin-ink-none transition-colors hover:text-admin-ink-3"
+        className="shrink-0 cursor-pointer text-admin-ink transition-colors hover:text-admin-accent"
       >
         <Search className="h-4 w-4" />
       </button>
@@ -257,7 +259,7 @@ export function SearchPill({
   );
 }
 
-/** 右栏标签卡：常显标签胶囊流 + 管理入口 */
+/** 右栏标签卡：常显标签胶囊流 + 管理入口（内边距 24） */
 export function TagCard({
   title = "标签",
   manageLabel = "管理标签",
@@ -270,26 +272,32 @@ export function TagCard({
   children: ReactNode;
 }) {
   return (
-    <div className="h-fit rounded-xl border border-admin-border bg-admin-surface p-4 lg:sticky lg:top-16">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-admin-ink">{title}</h3>
+    <div className="h-fit rounded-xl bg-admin-surface p-6 shadow-admin-card lg:sticky lg:top-[76px]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-base font-bold text-admin-ink">{title}</h3>
         {onManage && (
-          <button
-            type="button"
+          <ToolbarAction
+            icon={<Settings2 className="h-4 w-4" />}
+            label={manageLabel}
             onClick={onManage}
-            className="inline-flex cursor-pointer items-center gap-1 text-xs text-admin-accent transition-colors hover:opacity-80"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            {manageLabel}
-          </button>
+          />
         )}
       </div>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+      <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }
 
-/** 两栏列表骨架：左侧卡片流 + 右栏（小屏堆叠） */
+/** 标签卡内的单个标签 */
+export function TagChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex h-6 items-center rounded-lg bg-admin-chip px-2 text-xs leading-6 text-admin-ink">
+      {children}
+    </span>
+  );
+}
+
+/** 两栏列表骨架：左侧卡片流 + 右栏（小屏堆叠），间距 24 */
 export function ListShell({
   children,
   aside,
@@ -298,7 +306,7 @@ export function ListShell({
   aside?: ReactNode;
 }) {
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start lg:gap-5">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start lg:gap-6">
       <div className="min-w-0">{children}</div>
       {aside != null && <div className="mt-4 lg:mt-0">{aside}</div>}
     </div>

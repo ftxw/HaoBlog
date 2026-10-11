@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { X, ChevronLeft, ChevronRight, Inbox, Loader2 } from "lucide-react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Loader2,
+  Search,
+  Plus,
+} from "lucide-react";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -18,25 +26,26 @@ export function Button({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   loading?: boolean;
 }) {
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-admin-accent text-admin-accent-ink hover:bg-admin-accent-hover focus-visible:outline-admin-accent",
+      "bg-admin-accent text-white hover:bg-admin-accent-hover focus-visible:outline-admin-accent",
     secondary:
-      "bg-admin-surface text-admin-ink-2 border border-admin-border-control hover:bg-admin-neutral focus-visible:outline-admin-ink-5",
+      "bg-admin-chip text-admin-ink hover:bg-admin-neutral-strong focus-visible:outline-admin-ink-5",
     soft: "bg-admin-neutral text-admin-ink-2 hover:bg-admin-neutral-strong focus-visible:outline-admin-ink-5",
     danger:
-      "bg-admin-danger text-admin-accent-ink hover:bg-admin-danger-hover focus-visible:outline-admin-danger",
+      "bg-admin-danger text-white hover:bg-admin-danger-hover focus-visible:outline-admin-danger",
     success:
-      "bg-admin-success text-admin-accent-ink hover:bg-admin-success-strong focus-visible:outline-admin-success",
+      "bg-admin-success text-white hover:bg-admin-success-strong focus-visible:outline-admin-success",
     ghost:
       "bg-transparent text-admin-ink-3 hover:bg-admin-neutral hover:text-admin-ink",
   };
   const sizes = {
-    sm: "px-3.5 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
+    sm: "h-6 px-2 text-xs rounded",
+    md: "h-9 px-4 text-sm rounded-lg",
+    lg: "h-12 px-6 text-base rounded-lg",
   };
   return (
     <button type="button"
@@ -58,13 +67,13 @@ export function Button({
 }
 
 const inputBase =
-  "w-full rounded-lg border border-admin-border-control bg-admin-surface px-3 py-2 text-sm text-admin-ink placeholder:text-admin-ink-5 focus:border-admin-accent-border focus:outline-none focus:ring-1 focus:ring-admin-accent-border disabled:bg-admin-surface-muted disabled:text-admin-ink-4";
+  "w-full rounded-lg border border-admin-border-control bg-admin-surface px-3 text-sm text-admin-ink placeholder:text-admin-ink-5 focus:border-admin-accent-border focus:outline-none focus:ring-1 focus:ring-admin-accent-border disabled:bg-admin-surface-muted disabled:text-admin-ink-4";
 
 export function Input({
   className,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(inputBase, className)} {...props} />;
+  return <input className={cn(inputBase, "h-9", className)} {...props} />;
 }
 
 export function Textarea({
@@ -73,7 +82,7 @@ export function Textarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={cn(inputBase, "min-h-20 resize-y", className)}
+      className={cn(inputBase, "min-h-20 resize-y py-2", className)}
       {...props}
     />
   );
@@ -85,9 +94,54 @@ export function Select({
   ...props
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cn(inputBase, "cursor-pointer", className)} {...props}>
+    <select
+      className={cn(inputBase, "h-9 cursor-pointer", className)}
+      {...props}
+    >
       {children}
     </select>
+  );
+}
+
+/** 列表页标题行右侧的搜索框：灰底无边框、右侧放大镜（对齐逸刻） */
+export function SearchInput({
+  value,
+  onChange,
+  onSearch,
+  placeholder = "请输入关键词",
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onSearch?: () => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-9 w-full items-center gap-2 rounded-lg bg-admin-fill pl-3.5 pr-2.5 sm:w-[310px]",
+        className
+      )}
+    >
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && onSearch) onSearch();
+        }}
+        placeholder={placeholder}
+        className="min-w-0 flex-1 bg-transparent text-sm text-admin-ink outline-none placeholder:text-admin-ink-5"
+      />
+      <button
+        type="button"
+        onClick={onSearch}
+        aria-label="搜索"
+        className="shrink-0 cursor-pointer text-admin-ink transition-colors hover:text-admin-accent"
+      >
+        <Search className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
 
@@ -362,7 +416,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 className="text-2xl font-bold text-admin-ink">{title}</h1>
         {description && (
@@ -407,6 +461,7 @@ export function AdminTabBar<T extends string>({
   );
 }
 
+/** 卡片：白底、圆角 12、逸刻 @shadow-s 投影、无边框 */
 export function Card({
   className,
   children,
@@ -417,7 +472,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-admin-border bg-admin-surface",
+        "rounded-xl bg-admin-surface shadow-admin-card",
         className
       )}
     >
@@ -426,26 +481,72 @@ export function Card({
   );
 }
 
+/** 分段开关（近一周 | 近一月）：灰底容器 + 实色蓝激活段 */
+export function Segmented<T extends string>({
+  items,
+  active,
+  onChange,
+  className,
+}: {
+  items: ReadonlyArray<{ key: T; label: string }>;
+  active: T;
+  onChange: (key: T) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-lg bg-admin-neutral p-0.5",
+        className
+      )}
+    >
+      {items.map((item) => {
+        const on = item.key === active;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={cn(
+              "cursor-pointer rounded-md px-3 py-1 text-sm transition-colors",
+              on
+                ? "bg-admin-accent font-medium text-white"
+                : "text-admin-ink-3 hover:text-admin-ink"
+            )}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export type StatTone = "blue" | "orange" | "green" | "cyan" | "violet" | "pink";
 
 const STAT_SOLID: Record<StatTone, string> = {
-  blue: "bg-gradient-to-br from-[#5b7cf0] to-[#3758e4] text-white",
-  orange: "bg-gradient-to-br from-[#f2b389] to-[#e8935c] text-white",
-  green: "bg-gradient-to-br from-[#79cf9c] to-[#41b578] text-white",
-  cyan: "bg-gradient-to-br from-[#6fd2e8] to-[#31b6d6] text-white",
-  violet: "bg-gradient-to-br from-[#9b93f0] to-[#6f66e4] text-white",
-  pink: "bg-gradient-to-br from-[#f596c4] to-[#ea66a6] text-white",
+  blue: "bg-gradient-to-b from-[#5279e8] to-[#2c5de8] text-white",
+  orange: "bg-gradient-to-b from-[#f2b389] to-[#e8935c] text-white",
+  green: "bg-gradient-to-b from-[#79cf9c] to-[#41b578] text-white",
+  cyan: "bg-gradient-to-b from-[#6fd2e8] to-[#31b6d6] text-white",
+  violet: "bg-gradient-to-b from-[#9b93f0] to-[#6f66e4] text-white",
+  pink: "bg-gradient-to-b from-[#f596c4] to-[#ea66a6] text-white",
 };
 
+/** 浅色卡渐变：取自参考图逐像素采样 */
 const STAT_SOFT: Record<StatTone, string> = {
-  blue: "bg-gradient-to-br from-[#dbe4fc] to-[#f2f5fe] text-admin-ink",
-  orange: "bg-gradient-to-br from-[#f9dcc9] to-[#fdf1ea] text-admin-ink",
-  green: "bg-gradient-to-br from-[#d8ecd5] to-[#eef8ec] text-admin-ink",
-  cyan: "bg-gradient-to-br from-[#c6eef8] to-[#e9f8fd] text-admin-ink",
-  violet: "bg-gradient-to-br from-[#d5d2f7] to-[#eeedfb] text-admin-ink",
-  pink: "bg-gradient-to-br from-[#f9d8ea] to-[#fdeef6] text-admin-ink",
+  blue: "bg-gradient-to-b from-[#dbe4fc] to-[#c3d1f9] text-admin-ink",
+  orange: "bg-gradient-to-b from-[#f7decc] to-[#f8d2bd] text-admin-ink",
+  green: "bg-gradient-to-b from-[#d3f2d0] to-[#c7f3be] text-admin-ink",
+  cyan: "bg-gradient-to-b from-[#cbf0f6] to-[#b7edf9] text-admin-ink",
+  violet: "bg-gradient-to-b from-[#dbd8f7] to-[#cccbf7] text-admin-ink",
+  pink: "bg-gradient-to-b from-[#f7d8ea] to-[#fdc6e5] text-admin-ink",
 };
 
+/**
+ * 统计卡（对齐参考图）：内边距 24，标签 14px，数值 32px 粗体，
+ * 右上角 48×48 半透明「+」垂直居中。
+ */
 export function StatCard({
   label,
   value,
@@ -469,35 +570,62 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl p-4 shadow-sm",
+        "relative rounded-xl p-6",
         solid ? STAT_SOLID[tone] : STAT_SOFT[tone],
         className
       )}
     >
-      {action && <div className="absolute right-3 top-3">{action}</div>}
+      {action && (
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">{action}</div>
+      )}
       <div className="flex items-center gap-2">
         {icon}
-        <span
-          className={cn(
-            "text-xs font-medium",
-            solid ? "text-white/80" : "text-admin-ink-4"
-          )}
-        >
+        <span className={cn("text-sm", solid ? "text-white/85" : "text-admin-ink-3")}>
           {label}
         </span>
       </div>
-      <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
+      <p className="mt-1.5 text-[32px] font-bold leading-[1.2] tabular-nums">
+        {value}
+      </p>
       {hint && (
         <p
           className={cn(
             "mt-0.5 text-xs",
-            solid ? "text-white/75" : "text-admin-ink-5"
+            solid ? "text-white/75" : "text-admin-ink-4"
           )}
         >
           {hint}
         </p>
       )}
     </div>
+  );
+}
+
+/** 统计卡右上角的「+」按钮（48×48） */
+export function StatAddButton({
+  solid = false,
+  onClick,
+  title = "新建",
+}: {
+  solid?: boolean;
+  onClick?: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={cn(
+        "flex h-12 w-12 cursor-pointer items-center justify-center rounded-lg transition-colors",
+        solid
+          ? "bg-white/25 text-white hover:bg-white/40"
+          : "bg-black/[0.08] text-admin-ink hover:bg-black/[0.14]"
+      )}
+    >
+      <Plus className="h-5 w-5" />
+    </button>
   );
 }
 
@@ -513,7 +641,7 @@ export function CapsuleFilter<T extends string>({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-4", className)}>
       {items.map((item) => {
         const on = item.key === active;
         return (
@@ -522,22 +650,15 @@ export function CapsuleFilter<T extends string>({
             type="button"
             onClick={() => onChange(item.key)}
             className={cn(
-              "inline-flex items-center rounded-full px-3.5 py-1.5 text-sm transition-colors cursor-pointer",
+              "inline-flex h-8 cursor-pointer items-center rounded-full px-4 text-sm transition-colors",
               on
-                ? "bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
-                : "bg-admin-neutral text-admin-ink-3 hover:bg-admin-neutral-strong hover:text-admin-ink"
+                ? "bg-admin-accent-soft font-medium text-admin-accent"
+                : "bg-admin-neutral text-admin-ink hover:bg-admin-neutral-strong"
             )}
           >
             {item.label}
             {typeof item.count === "number" && (
-              <span
-                className={cn(
-                  "ml-1 text-xs",
-                  on ? "text-admin-accent-soft-ink/70" : "text-admin-ink-4"
-                )}
-              >
-                {item.count}
-              </span>
+              <span className="ml-1 text-xs">{item.count}</span>
             )}
           </button>
         );

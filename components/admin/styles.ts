@@ -6,4 +6,4 @@ export const TABLE_HEAD_CELL =
 
 export const FILTER_BAR = "mb-4 flex flex-wrap items-center gap-3 px-4 py-3";
 
-export const EDITOR_SECTION = "space-y-4 p-5";
+export const EDITOR_SECTION = "space-y-4 p-6";

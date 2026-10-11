@@ -54,6 +54,7 @@ import {
   PageTitleTabs,
   SearchPill,
   TagCard,
+  TagChip,
   ToolbarAction,
 } from "@/components/admin/ContentListShell";
 import {
@@ -276,39 +277,32 @@ export default function PostsClient({
 
   return (
     <>
-      {/* 标题行：大字 Tab + 评论入口 + 搜索 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* 标题行：大字 Tab + 搜索（参考图：标题左、搜索右） */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <PageTitleTabs
           tabs={[
             { key: "posts", label: "博客文章" },
-            { key: "projects", label: "项目" },
+            { key: "projects", label: "项目产品" },
           ]}
           active={tab}
           onChange={setTab}
         />
-        <div className="flex items-center gap-1.5">
-          <ToolbarAction
-            icon={<MessageSquare className="h-4 w-4" />}
-            label={`评论${commentsTotal ? ` ${commentsTotal}` : ""}`}
-            onClick={() => setCommentsOpen(true)}
+        {tab === "posts" && (
+          <SearchPill
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={() => {
+              setSearchText(searchInput);
+              setPostPage(1);
+            }}
+            placeholder="请输入标题/简介"
           />
-          {tab === "posts" && (
-            <SearchPill
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={() => {
-                setSearchText(searchInput);
-                setPostPage(1);
-              }}
-              placeholder="请输入标题/简介"
-            />
-          )}
-        </div>
+        )}
       </div>
 
       {tab === "posts" ? (
         <>
-          {/* 筛选卡片：分类 + 新建 + 管理分组 同卡 */}
+          {/* 筛选卡片：胶囊 + 新建 / 管理分组 / 评论 同卡 */}
           <ListToolbar
             actions={
               <>
@@ -321,6 +315,11 @@ export default function PostsClient({
                   icon={<Settings2 className="h-4 w-4" />}
                   label="管理分组"
                   onClick={() => setGroupOpen(true)}
+                />
+                <ToolbarAction
+                  icon={<MessageSquare className="h-4 w-4" />}
+                  label={`评论${commentsTotal ? ` ${commentsTotal}` : ""}`}
+                  onClick={() => setCommentsOpen(true)}
                 />
               </>
             }
@@ -348,15 +347,10 @@ export default function PostsClient({
             aside={
               <TagCard onManage={() => setTagOpen(true)}>
                 {(tags.data ?? []).length === 0 ? (
-                  <span className="text-xs text-admin-ink-none">暂无标签</span>
+                  <span className="text-xs text-admin-ink-4">暂无标签</span>
                 ) : (
                   (tags.data ?? []).map((t) => (
-                    <span
-                      key={t.id}
-                      className="rounded-md bg-admin-neutral px-2 py-1 text-xs text-admin-ink-3"
-                    >
-                      {t.name}
-                    </span>
+                    <TagChip key={t.id}>{t.name}</TagChip>
                   ))
                 )}
               </TagCard>
@@ -372,14 +366,14 @@ export default function PostsClient({
             </Card>
           ) : (
             <>
-              <div className="space-y-2">
+              <div className="space-y-6">
                 {postList.map((post) => (
                   <ContentCard
                     key={post.id}
                     cover={post.cover || null}
                     coverBadge={
                       post.status === "draft" ? (
-                        <span className="rounded bg-admin-accent px-1.5 py-0.5 text-[11px] font-medium text-white">
+                        <span className="block h-6 bg-admin-accent/90 text-center text-xs leading-6 font-medium text-white">
                           未发布
                         </span>
                       ) : undefined
@@ -388,7 +382,7 @@ export default function PostsClient({
                       <Link
                         prefetch={false}
                         href={`/admin/posts/${post.id}`}
-                        className="min-w-0 truncate text-[15px] font-semibold text-admin-ink hover:text-admin-accent"
+                        className="min-w-0 truncate text-xl font-bold text-admin-ink hover:text-admin-accent"
                       >
                         {post.title}
                       </Link>
@@ -431,7 +425,7 @@ export default function PostsClient({
                         >
                           <Star
                             className={cn(
-                              "h-3.5 w-3.5",
+                              "h-4 w-4",
                               post.is_pinned && "fill-current text-admin-warning"
                             )}
                           />
@@ -441,23 +435,23 @@ export default function PostsClient({
                           onClick={() => handleTogglePublish(post)}
                         >
                           {post.status === "published" ? (
-                            <RotateCcw className="h-3.5 w-3.5" />
+                            <RotateCcw className="h-4 w-4" />
                           ) : (
-                            <Send className="h-3.5 w-3.5" />
+                            <Send className="h-4 w-4" />
                           )}
                         </CardAction>
                         <CardAction
                           title="编辑"
                           onClick={() => router.push(`/admin/posts/${post.id}`)}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-4 w-4" />
                         </CardAction>
                         <CardAction
                           title="删除"
                           danger
                           onClick={() => handleDeletePost(post)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </CardAction>
                       </>
                     }
@@ -510,7 +504,7 @@ export default function PostsClient({
                 onDragCancel={handleDragCancel}
               >
                 <SortableContext items={sortIds} strategy={strategy}>
-                  <div className="space-y-2">
+                  <div className="space-y-6">
                     {projectList.map((p) => (
                       <SortableProjectCard
                         key={p.id}
@@ -610,7 +604,7 @@ function SortableProjectCard({
         cover={project.cover_image || project.images?.[0] || null}
         coverBadge={
           project.is_featured ? (
-            <span className="rounded bg-admin-warning px-1.5 py-0.5 text-[11px] font-medium text-white">
+            <span className="block h-6 bg-admin-warning/90 text-center text-xs leading-6 font-medium text-white">
               精选
             </span>
           ) : undefined
@@ -631,7 +625,7 @@ function SortableProjectCard({
           <button
             type="button"
             onClick={onEdit}
-            className="min-w-0 truncate text-[15px] font-semibold text-admin-ink hover:text-admin-accent cursor-pointer"
+            className="min-w-0 truncate text-xl font-bold text-admin-ink hover:text-admin-accent cursor-pointer"
           >
             {project.name}
           </button>
@@ -653,10 +647,10 @@ function SortableProjectCard({
         actions={
           <>
             <CardAction title="编辑" onClick={onEdit}>
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-4 w-4" />
             </CardAction>
             <CardAction title="删除" danger onClick={onDelete}>
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </CardAction>
           </>
         }

@@ -212,17 +212,25 @@ html:has(.theme-light) {
   --color-admin-accent-border: #a8b6f0;
   --color-admin-accent-ring: #c3ccf7;
 
-  --color-admin-danger: #ea4025;
-  --color-admin-danger-hover: #cf2f16;
-  --color-admin-danger-soft: #fdeeeb;
+  /* 次级填充：逸刻 bgColor3（搜索框，参考图实测 #f0f0f1）与 gray1（标签 chip / 次级按钮） */
+  --color-admin-fill: #f0f0f1;
+  --color-admin-chip: #ededee;
 
-  --color-admin-success: #059669;
-  --color-admin-success-strong: #047857;
-  --color-admin-success-soft: #ecfdf5;
+  /* 功能色：对齐逸刻 UI 组件库 basis.less 的 ecolor / scolor / wcolor */
+  --color-admin-danger: #fa5247;
+  --color-admin-danger-hover: #df4d43;
+  --color-admin-danger-soft: #feeeed;
 
-  --color-admin-warning: #f59e0b;
-  --color-admin-warning-strong: #b45309;
-  --color-admin-warning-soft: #fffbeb;
+  --color-admin-success: #1fb4a2;
+  --color-admin-success-strong: #178e7f;
+  --color-admin-success-soft: #edf9f8;
+
+  --color-admin-warning: #ffaa1a;
+  --color-admin-warning-strong: #c07a00;
+  --color-admin-warning-soft: #fff8ed;
+
+  /* 卡片投影：逸刻 @shadow-s */
+  --shadow-admin-card: 0 6px 6px -2px rgb(0 0 0 / 0.12);
 }
 
 @layer base {

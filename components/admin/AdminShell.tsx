@@ -65,7 +65,7 @@ export default function AdminShell({
 
   /** 左侧菜单：无底色面板，直接落在画布上 */
   const nav = (
-    <nav className="space-y-1">
+    <nav className="space-y-2">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href);
@@ -75,10 +75,10 @@ export default function AdminShell({
             href={item.href}
             onClick={() => setSidebarOpen(false)}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+              "flex h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors",
               active
-                ? "bg-admin-accent font-medium text-admin-accent-ink"
-                : "text-admin-ink-3 hover:bg-admin-sidebar-hover hover:text-admin-ink"
+                ? "bg-admin-accent font-medium text-white"
+                : "text-admin-sidebar-ink-2 hover:bg-admin-sidebar-hover hover:text-admin-ink"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
@@ -90,7 +90,7 @@ export default function AdminShell({
         prefetch={false}
         href="/"
         target="_blank"
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-admin-ink-3 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-ink"
+        className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm text-admin-sidebar-ink-2 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-ink"
       >
         <Home className="h-4 w-4 shrink-0" />
         回到前台
@@ -102,7 +102,7 @@ export default function AdminShell({
     <div className="theme-light flex min-h-screen flex-col bg-admin-canvas">
       {/* 顶栏：底色左右通栏，内容与下方两栏对齐到同一居中栏 */}
       <header className="sticky top-0 z-30 shrink-0 border-b border-admin-border bg-admin-surface">
-        <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-6">
+        <div className="mx-auto flex h-[60px] w-full max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
             <button
               type="button"
@@ -143,7 +143,7 @@ export default function AdminShell({
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-admin-accent px-3.5 py-1.5 text-sm font-medium text-admin-accent-ink transition-colors hover:bg-admin-accent-hover"
+              className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-admin-accent px-4 text-sm font-medium text-white transition-colors hover:bg-admin-accent-hover"
             >
               <LogOut className="h-3.5 w-3.5" />
               退出
@@ -154,8 +154,8 @@ export default function AdminShell({
 
       {/* 侧边栏 + 内容：与顶栏同宽，整页居中 */}
       <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1">
-        <aside className="hidden w-44 shrink-0 lg:block">
-          <div className="sticky top-14 px-3 py-4">{nav}</div>
+        <aside className="hidden w-48 shrink-0 lg:block">
+          <div className="sticky top-[60px] px-5 py-4">{nav}</div>
         </aside>
 
         {sidebarOpen && (
@@ -179,7 +179,9 @@ export default function AdminShell({
           </div>
         )}
 
-        <main className="min-w-0 flex-1 px-4 py-5 lg:px-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 lg:px-6 lg:pt-8 lg:pb-6">
+          {children}
+        </main>
       </div>
     </div>
   );
