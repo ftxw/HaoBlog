@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     request,
     (args) =>
       prisma.chatterComment.findMany({ ...args, select: CHATTER_COMMENT_ADMIN_SELECT }),
-    (where) => prisma.chatterComment.count({ where })
+    (where) => prisma.chatterComment.count({ where }),
+    "chatter_id"
   );
 }

@@ -228,9 +228,6 @@ html:has(.theme-light) {
   --color-admin-warning: #ffaa1a;
   --color-admin-warning-strong: #c07a00;
   --color-admin-warning-soft: #fff8ed;
-
-  /* 卡片投影：逸刻 @shadow-s */
-  --shadow-admin-card: 0 6px 6px -2px rgb(0 0 0 / 0.12);
 }
 
 @layer base {

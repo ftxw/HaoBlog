@@ -48,7 +48,7 @@ function SortableAlbumCard({
     >
       <Card
         className={cn(
-          "relative flex flex-col overflow-hidden transition-shadow hover:shadow-md",
+          "relative flex flex-col overflow-hidden",
           isDragging && "opacity-70 ring-2 ring-inset ring-admin-accent-ring"
         )}
       >

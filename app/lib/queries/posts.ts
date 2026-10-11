@@ -12,6 +12,7 @@ export interface PostRowShape {
   status: string;
   is_pinned: boolean;
   views: number;
+  likes: number;
   published_at: Date | null;
   created_at: Date;
   updated_at: Date;
@@ -31,6 +32,7 @@ export interface PostListItem {
   status: string;
   is_pinned: boolean;
   views: number;
+  likes: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -45,6 +47,7 @@ export const POST_BASE_SELECT = {
   status: true,
   is_pinned: true,
   views: true,
+  likes: true,
   published_at: true,
   created_at: true,
   updated_at: true,
@@ -79,6 +82,7 @@ export function toPostItem(post: PostRowShape): PostListItem {
     status: post.status,
     is_pinned: post.is_pinned,
     views: post.views,
+    likes: post.likes,
     published_at: post.published_at ? post.published_at.toISOString() : null,
     created_at: post.created_at.toISOString(),
     updated_at: post.updated_at.toISOString(),

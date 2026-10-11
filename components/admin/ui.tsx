@@ -242,15 +242,19 @@ export function Modal({
         )}
       >
         <div className="flex items-center justify-between border-b border-admin-border-soft px-5 py-3.5">
-          <h3 className="text-base font-semibold text-admin-ink">{title}</h3>
+          <h3 className="min-w-0 truncate text-base font-semibold text-admin-ink">
+            {title}
+          </h3>
           <button type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-admin-ink-5 hover:bg-admin-neutral hover:text-admin-ink-3 cursor-pointer"
+            className="shrink-0 rounded-lg p-1 text-admin-ink-5 hover:bg-admin-neutral hover:text-admin-ink-3 cursor-pointer"
           >
             <X className="w-4.5 h-4.5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto bg-admin-canvas px-5 py-4">
+          {children}
+        </div>
         {footer && (
           <div className="flex justify-end gap-2 border-t border-admin-border-soft px-5 py-3.5">
             {footer}
@@ -461,7 +465,7 @@ export function AdminTabBar<T extends string>({
   );
 }
 
-/** 卡片：白底、圆角 12、逸刻 @shadow-s 投影、无边框 */
+/** 卡片：白底、圆角 12、无边框无阴影（靠画布底色区分层次） */
 export function Card({
   className,
   children,
@@ -470,12 +474,7 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-xl bg-admin-surface shadow-admin-card",
-        className
-      )}
-    >
+    <div className={cn("rounded-xl bg-admin-surface", className)}>
       {children}
     </div>
   );

@@ -101,10 +101,6 @@ export async function countProjects(options: { status?: string } = {}) {
   return prisma.project.count({ where });
 }
 
-export async function countProjectComments() {
-  return prisma.projectComment.count();
-}
-
 const FACET_ROWS_MAX = 5000;
 
 export interface ProjectTagFacet {

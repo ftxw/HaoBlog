@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     request,
     (args) =>
       prisma.projectComment.findMany({ ...args, select: PROJECT_COMMENT_ADMIN_SELECT }),
-    (where) => prisma.projectComment.count({ where })
+    (where) => prisma.projectComment.count({ where }),
+    "project_id"
   );
 }

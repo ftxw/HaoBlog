@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   return handleAdminCommentList(
     request,
     (args) => prisma.comment.findMany({ ...args, select: COMMENT_ADMIN_SELECT }),
-    (where) => prisma.comment.count({ where })
+    (where) => prisma.comment.count({ where }),
+    "post_id"
   );
 }

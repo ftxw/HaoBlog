@@ -21,7 +21,7 @@ export function ListToolbar({
   return (
     <div
       className={cn(
-        "mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-admin-surface px-6 py-4 shadow-admin-card",
+        "mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-admin-surface px-6 py-4",
         className
       )}
     >
@@ -114,8 +114,7 @@ export function ContentCard({
   return (
     <div
       className={cn(
-        "group flex items-stretch gap-6 rounded-xl bg-admin-surface p-6 transition-shadow",
-        "hover:shadow-[0_6px_16px_rgb(30_32_37/0.10)]",
+        "group flex items-stretch gap-6 rounded-xl bg-admin-surface p-6",
         className
       )}
     >
@@ -148,23 +147,25 @@ export function ContentCard({
         </div>
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2">{title}</div>
         {subtitle && (
           <p className="mt-2 line-clamp-2 text-sm leading-[1.6] text-admin-ink-3">
             {subtitle}
           </p>
         )}
-        {meta && (
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-admin-ink-4">
-            {meta}
+        {(meta || actions) && (
+          /* 元信息与右侧操作同处一行，并贴到卡片底部，底部对齐 */
+          <div className="mt-auto flex items-end justify-between gap-4 pt-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-admin-ink-4">
+              {meta}
+            </div>
+            {actions && (
+              <div className="flex shrink-0 items-end gap-1">{actions}</div>
+            )}
           </div>
         )}
       </div>
-
-      {actions && (
-        <div className="flex shrink-0 items-end gap-1">{actions}</div>
-      )}
     </div>
   );
 }
@@ -272,7 +273,7 @@ export function TagCard({
   children: ReactNode;
 }) {
   return (
-    <div className="h-fit rounded-xl bg-admin-surface p-6 shadow-admin-card lg:sticky lg:top-[76px]">
+    <div className="h-fit rounded-xl bg-admin-surface p-6 lg:sticky lg:top-[76px]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-base font-bold text-admin-ink">{title}</h3>
         {onManage && (

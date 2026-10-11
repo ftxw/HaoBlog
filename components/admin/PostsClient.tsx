@@ -10,6 +10,7 @@ import {
   CirclePlus,
   Eye,
   GripVertical,
+  Heart,
   MessageSquare,
   Pencil,
   RotateCcw,
@@ -76,18 +77,23 @@ interface BadgeCounts {
 
 type MainTab = "posts" | "projects";
 
+/** 评论弹窗要定位到具体宿主（文章 / 项目） */
+interface CommentTarget {
+  kind: "post" | "project";
+  id: string;
+  title: string;
+}
+
 const PAGE_SIZE = 15;
 
 export default function PostsClient({
   initialPosts,
   initialBadges,
   initialTab = "posts",
-  initialProjectComments = 0,
 }: {
   initialPosts: PostListItem[];
   initialBadges: BadgeCounts;
   initialTab?: MainTab;
-  initialProjectComments?: number;
 }) {
   const router = useRouter();
   const { addToast } = useToast();
@@ -108,7 +114,7 @@ export default function PostsClient({
   // 弹层
   const [groupOpen, setGroupOpen] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<CommentTarget | null>(null);
 
   const categoriesRef = useRef<CategoriesPanelHandle>(null);
   const tagsRef = useRef<TagsPanelHandle>(null);
@@ -147,18 +153,15 @@ export default function PostsClient({
     size: number;
   }>(projectsUrl);
 
-  const projectComments = useApi<{ items: unknown[]; total: number }>(
-    "/api/projects/comments/admin?page=1&size=1",
-    { items: [], total: initialProjectComments }
-  );
-
   const refreshBadges = () => {
     badges.reload();
     tags.reload();
   };
+  /** 评论增删后：宿主卡片的评论数与总览计数都要刷新 */
   const refreshComments = () => {
     badges.reload();
-    projectComments.reload();
+    posts.reload();
+    projects.reload();
   };
 
   // ---------- 文章操作 ----------
@@ -264,16 +267,11 @@ export default function PostsClient({
       await runAction(deleteProjectAction(p.id));
       addToast("success", "项目已删除");
       projects.reload();
-      projectComments.reload();
+      badges.reload();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "删除失败");
     }
   };
-
-  const commentsTotal =
-    tab === "posts"
-      ? (badges.data?.comments ?? 0)
-      : (projectComments.data?.total ?? 0);
 
   return (
     <>
@@ -302,7 +300,7 @@ export default function PostsClient({
 
       {tab === "posts" ? (
         <>
-          {/* 筛选卡片：胶囊 + 新建 / 管理分组 / 评论 同卡 */}
+          {/* 筛选卡片：胶囊 + 新建 / 管理分组 同卡（评论入口已下放到每张卡片） */}
           <ListToolbar
             actions={
               <>
@@ -315,11 +313,6 @@ export default function PostsClient({
                   icon={<Settings2 className="h-4 w-4" />}
                   label="管理分组"
                   onClick={() => setGroupOpen(true)}
-                />
-                <ToolbarAction
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  label={`评论${commentsTotal ? ` ${commentsTotal}` : ""}`}
-                  onClick={() => setCommentsOpen(true)}
                 />
               </>
             }
@@ -373,7 +366,7 @@ export default function PostsClient({
                     cover={post.cover || null}
                     coverBadge={
                       post.status === "draft" ? (
-                        <span className="block h-6 bg-admin-accent/90 text-center text-xs leading-6 font-medium text-white">
+                        <span className="block h-6 bg-admin-accent/80 text-center text-xs leading-6 font-medium text-white">
                           未发布
                         </span>
                       ) : undefined
@@ -395,9 +388,7 @@ export default function PostsClient({
                     }
                     meta={
                       <>
-                        {post.category && (
-                          <span>{post.category}</span>
-                        )}
+                        {post.category && <span>{post.category}</span>}
                         <span>
                           {formatDate(post.published_at || post.created_at)}
                         </span>
@@ -406,15 +397,24 @@ export default function PostsClient({
                           {post.views}
                         </span>
                         <span className="inline-flex items-center gap-1 tabular-nums">
+                          <Heart className="h-3.5 w-3.5" />
+                          {post.likes}
+                        </span>
+                        <button
+                          type="button"
+                          title="查看该文章的评论"
+                          onClick={() =>
+                            setCommentTarget({
+                              kind: "post",
+                              id: post.id,
+                              title: post.title,
+                            })
+                          }
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 tabular-nums transition-colors hover:bg-admin-neutral hover:text-admin-accent"
+                        >
                           <MessageSquare className="h-3.5 w-3.5" />
                           {post.comments_count ?? 0}
-                        </span>
-                        {post.is_pinned && (
-                          <span className="inline-flex items-center gap-1 text-admin-warning">
-                            <Star className="h-3.5 w-3.5 fill-current" />
-                            置顶
-                          </span>
-                        )}
+                        </button>
                       </>
                     }
                     actions={
@@ -511,6 +511,13 @@ export default function PostsClient({
                         project={p}
                         onEdit={() => router.push(`/admin/projects/${p.id}`)}
                         onDelete={() => handleDeleteProject(p)}
+                        onComments={() =>
+                          setCommentTarget({
+                            kind: "project",
+                            id: p.id,
+                            title: p.name,
+                          })
+                        }
                       />
                     ))}
                   </div>
@@ -561,19 +568,21 @@ export default function PostsClient({
         <TagsPanel ref={tagsRef} onChanged={refreshBadges} />
       </Modal>
 
-      {/* 评论管理弹窗 */}
+      {/* 评论弹窗：只显示被点击的那篇文章 / 项目下的评论 */}
       <Modal
-        open={commentsOpen}
-        title={tab === "posts" ? "文章评论" : "项目评论"}
-        onClose={() => setCommentsOpen(false)}
+        open={commentTarget !== null}
+        title={commentTarget ? `评论 · ${commentTarget.title}` : "评论"}
+        onClose={() => setCommentTarget(null)}
         wide
       >
-        <CommentsAdminPanel
-          key={tab}
-          kind={tab === "posts" ? "post" : "project"}
-          showOwner
-          onChanged={refreshComments}
-        />
+        {commentTarget && (
+          <CommentsAdminPanel
+            key={`${commentTarget.kind}:${commentTarget.id}`}
+            kind={commentTarget.kind}
+            ownerId={commentTarget.id}
+            onChanged={refreshComments}
+          />
+        )}
       </Modal>
 
       {confirmElement}
@@ -586,10 +595,12 @@ function SortableProjectCard({
   project,
   onEdit,
   onDelete,
+  onComments,
 }: {
   project: ProjectItem;
   onEdit: () => void;
   onDelete: () => void;
+  onComments: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: project.id });
@@ -646,6 +657,9 @@ function SortableProjectCard({
         }
         actions={
           <>
+            <CardAction title="查看该项目的评论" onClick={onComments}>
+              <MessageSquare className="h-4 w-4" />
+            </CardAction>
             <CardAction title="编辑" onClick={onEdit}>
               <Pencil className="h-4 w-4" />
             </CardAction>

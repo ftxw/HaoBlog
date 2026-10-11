@@ -153,10 +153,13 @@ function CommentRow({
 
 export default function CommentsAdminPanel({
   kind,
+  ownerId,
   showOwner = false,
   onChanged,
 }: {
   kind: CommentKind;
+  /** 只看某个宿主（文章 / 说说 / 项目）下的评论 */
+  ownerId?: string;
   showOwner?: boolean;
   onChanged?: () => void;
 }) {
@@ -178,8 +181,13 @@ export default function CommentsAdminPanel({
         : kind === "moment"
           ? "/api/chatters/comments/admin"
           : "/api/projects/comments/admin";
+    if (ownerId) {
+      const ownerKey =
+        kind === "post" ? "post_id" : kind === "moment" ? "chatter_id" : "project_id";
+      params.set(ownerKey, ownerId);
+    }
     return `${base}?${params.toString()}`;
-  }, [kind, status, page]);
+  }, [kind, status, page, ownerId]);
 
   const { data, loading, reload } = useApi<{ items: CommentItem[] }>(listUrl);
   const comments = data?.items ?? [];
