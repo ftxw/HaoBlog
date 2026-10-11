@@ -424,3 +424,248 @@ export function Card({
     </div>
   );
 }
+
+export type StatTone = "blue" | "orange" | "green" | "cyan" | "violet" | "pink";
+
+const STAT_SOLID: Record<StatTone, string> = {
+  blue: "bg-gradient-to-br from-blue-500 to-blue-600 text-white",
+  orange: "bg-gradient-to-br from-orange-400 to-orange-500 text-white",
+  green: "bg-gradient-to-br from-emerald-400 to-emerald-500 text-white",
+  cyan: "bg-gradient-to-br from-cyan-400 to-cyan-500 text-white",
+  violet: "bg-gradient-to-br from-violet-400 to-violet-500 text-white",
+  pink: "bg-gradient-to-br from-pink-400 to-pink-500 text-white",
+};
+
+const STAT_SOFT: Record<StatTone, string> = {
+  blue: "bg-gradient-to-br from-blue-100 to-blue-50 text-admin-ink",
+  orange: "bg-gradient-to-br from-orange-100 to-orange-50 text-admin-ink",
+  green: "bg-gradient-to-br from-emerald-100 to-emerald-50 text-admin-ink",
+  cyan: "bg-gradient-to-br from-cyan-100 to-cyan-50 text-admin-ink",
+  violet: "bg-gradient-to-br from-violet-100 to-violet-50 text-admin-ink",
+  pink: "bg-gradient-to-br from-pink-100 to-pink-50 text-admin-ink",
+};
+
+export function StatCard({
+  label,
+  value,
+  hint,
+  icon,
+  tone = "blue",
+  variant = "soft",
+  action,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  icon?: React.ReactNode;
+  tone?: StatTone;
+  variant?: "solid" | "soft";
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  const solid = variant === "solid";
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-xl p-4 shadow-sm",
+        solid ? STAT_SOLID[tone] : STAT_SOFT[tone],
+        className
+      )}
+    >
+      {action && <div className="absolute right-3 top-3">{action}</div>}
+      <div className="flex items-center gap-2">
+        {icon}
+        <span
+          className={cn(
+            "text-xs font-medium",
+            solid ? "text-white/80" : "text-admin-ink-4"
+          )}
+        >
+          {label}
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
+      {hint && (
+        <p
+          className={cn(
+            "mt-0.5 text-xs",
+            solid ? "text-white/75" : "text-admin-ink-5"
+          )}
+        >
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function CapsuleFilter<T extends string>({
+  items,
+  active,
+  onChange,
+  className,
+}: {
+  items: ReadonlyArray<{ key: T; label: string; count?: number }>;
+  active: T;
+  onChange: (key: T) => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      {items.map((item) => {
+        const on = item.key === active;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={cn(
+              "inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors cursor-pointer",
+              on
+                ? "border-transparent bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
+                : "border-admin-border bg-admin-surface text-admin-ink-3 hover:border-admin-accent-border hover:text-admin-ink"
+            )}
+          >
+            {item.label}
+            {typeof item.count === "number" && (
+              <span
+                className={cn(
+                  "ml-1 text-xs",
+                  on ? "text-admin-accent-soft-ink/70" : "text-admin-ink-5"
+                )}
+              >
+                {item.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function pageNumbers(current: number, totalPages: number): Array<number | "gap"> {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const pages: Array<number | "gap"> = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(totalPages - 1, current + 1);
+  if (start > 2) pages.push("gap");
+  for (let i = start; i <= end; i += 1) pages.push(i);
+  if (end < totalPages - 1) pages.push("gap");
+  pages.push(totalPages);
+  return pages;
+}
+
+export function NumberPagination({
+  page,
+  pageSize,
+  total,
+  onChange,
+  className,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onChange: (page: number) => void;
+  className?: string;
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (total <= 0 || totalPages <= 1) return null;
+  const items = pageNumbers(page, totalPages);
+  const navBtn =
+    "flex h-8 w-8 items-center justify-center rounded-lg border border-admin-border text-admin-ink-4 transition-colors hover:bg-admin-neutral disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 px-1 pt-4 text-sm text-admin-ink-4",
+        className
+      )}
+    >
+      <span>
+        共 {total} 条 · 第 {page} / {totalPages} 页
+      </span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          className={navBtn}
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        {items.map((item, index) =>
+          item === "gap" ? (
+            <span
+              key={`gap-${index}`}
+              className="flex h-8 w-8 items-center justify-center text-admin-ink-5"
+            >
+              …
+            </span>
+          ) : (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onChange(item)}
+              className={cn(
+                "h-8 w-8 rounded-lg text-sm transition-colors cursor-pointer",
+                item === page
+                  ? "bg-admin-accent font-medium text-admin-accent-ink"
+                  : "text-admin-ink-4 hover:bg-admin-neutral"
+              )}
+            >
+              {item}
+            </button>
+          )
+        )}
+        <button
+          type="button"
+          className={navBtn}
+          disabled={page >= totalPages}
+          onClick={() => onChange(page + 1)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AnchorNav({
+  items,
+  activeId,
+  className,
+}: {
+  items: ReadonlyArray<{ id: string; label: string }>;
+  activeId?: string;
+  className?: string;
+}) {
+  return (
+    <nav className={cn("space-y-1", className)}>
+      {items.map((item) => {
+        const on = item.id === activeId;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              document
+                .getElementById(item.id)
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className={cn(
+              "block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors cursor-pointer",
+              on
+                ? "bg-admin-accent-soft font-medium text-admin-accent-soft-ink"
+                : "text-admin-ink-3 hover:bg-admin-neutral hover:text-admin-ink"
+            )}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}

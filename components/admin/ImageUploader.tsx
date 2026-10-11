@@ -123,7 +123,7 @@ export default function ImageUploader({
             <button
               type="button"
               onClick={() => removeImage(url)}
-              className="absolute right-1 top-1 rounded-full bg-admin-scrim p-1 text-admin-sidebar-ink opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
+              className="absolute right-1 top-1 rounded-full bg-admin-scrim p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"
             >
               <X className="h-3 w-3" />
             </button>

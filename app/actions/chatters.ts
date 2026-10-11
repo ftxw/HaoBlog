@@ -1,6 +1,7 @@
 "use server";
 
 import { runAdminAction } from "@/app/lib/action-guard";
+import { invalidateChatterCaches } from "@/app/lib/api-cache";
 import {
   createChatter,
   deleteChatter,
@@ -29,12 +30,17 @@ export async function setChatterCommentStatusAction(
   commentId: string,
   status: string
 ) {
-  return runAdminAction(() => setChatterCommentStatus(commentId, status));
+  return runAdminAction(async () => {
+    const result = await setChatterCommentStatus(commentId, status);
+    invalidateChatterCaches();
+    return result;
+  });
 }
 
 export async function deleteChatterCommentAction(commentId: string) {
   return runAdminAction(async () => {
     await deleteChatterComment(commentId);
+    invalidateChatterCaches();
     return null;
   });
 }

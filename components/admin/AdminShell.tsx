@@ -5,15 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
+  FolderOpen,
   FileText,
   MessageCircle,
-  Image,
+  Images,
   Bookmark,
-  FolderGit2,
-  UserRound,
   Settings,
-  Wrench,
-  UserCog,
   LogOut,
   Menu,
   X,
@@ -28,35 +25,14 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface NavGroup {
-  title: string;
-  items: NavItem[];
-}
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    title: "概览",
-    items: [{ href: "/admin", label: "仪表盘", icon: LayoutDashboard }],
-  },
-  {
-    title: "内容管理",
-    items: [
-      { href: "/admin/posts", label: "文章管理", icon: FileText },
-      { href: "/admin/moments", label: "说说管理", icon: MessageCircle },
-      { href: "/admin/albums", label: "相册管理", icon: Image },
-      { href: "/admin/bookmarks", label: "书签管理", icon: Bookmark },
-      { href: "/admin/projects", label: "项目管理", icon: FolderGit2 },
-      { href: "/admin/about", label: "关于页", icon: UserRound },
-    ],
-  },
-  {
-    title: "系统管理",
-    items: [
-      { href: "/admin/settings", label: "信息设置", icon: Settings },
-      { href: "/admin/system-settings", label: "站点设置", icon: Wrench },
-      { href: "/admin/account", label: "账号设置", icon: UserCog },
-    ],
-  },
+const NAV_ITEMS: NavItem[] = [
+  { href: "/admin", label: "总览", icon: LayoutDashboard },
+  { href: "/admin/files", label: "媒体库", icon: FolderOpen },
+  { href: "/admin/posts", label: "博客文章", icon: FileText },
+  { href: "/admin/moments", label: "随笔辅记", icon: MessageCircle },
+  { href: "/admin/albums", label: "摄影图库", icon: Images },
+  { href: "/admin/bookmarks", label: "资源分享", icon: Bookmark },
+  { href: "/admin/settings", label: "用户设置", icon: Settings },
 ];
 
 export default function AdminShell({
@@ -89,48 +65,46 @@ export default function AdminShell({
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-admin-sidebar-divider px-5">
+      <Link
+        href="/admin"
+        onClick={() => setSidebarOpen(false)}
+        className="flex h-14 items-center gap-2 border-b border-admin-sidebar-divider px-5"
+      >
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-admin-accent text-sm font-bold text-admin-accent-ink">
           管
         </div>
-        <span className="text-base font-bold text-admin-sidebar-ink">博客后台</span>
-      </div>
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.title}>
-            <p className="px-3 pb-1.5 text-xs font-medium uppercase tracking-wider text-admin-ink-4">
-              {group.title}
-            </p>
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-                      active
-                        ? "bg-admin-sidebar-active font-medium text-admin-sidebar-active-ink"
-                        : "text-admin-ink-5 hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink-2"
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <span className="text-base font-bold text-admin-sidebar-ink">
+          博客后台
+        </span>
+      </Link>
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                "flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm transition-colors",
+                active
+                  ? "bg-admin-accent font-medium text-admin-accent-ink shadow-sm"
+                  : "text-admin-ink-3 hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink"
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
       <div className="border-t border-admin-sidebar-divider p-3">
-        <Link prefetch={false}
+        <Link
+          prefetch={false}
           href="/"
           target="_blank"
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-admin-ink-5 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink-2"
+          className="flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm text-admin-ink-3 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-sidebar-ink"
         >
           <Home className="h-4 w-4" />
           回到前台
@@ -141,7 +115,7 @@ export default function AdminShell({
 
   return (
     <div className="theme-light flex min-h-screen bg-admin-canvas">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 bg-admin-sidebar lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 border-r border-admin-border bg-admin-sidebar lg:block">
         {sidebar}
       </aside>
 
@@ -151,9 +125,10 @@ export default function AdminShell({
             className="absolute inset-0 bg-admin-scrim"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-admin-sidebar">
-            <button type="button"
-              className="absolute right-3 top-4 rounded-lg p-1 text-admin-ink-5 hover:bg-admin-sidebar-hover cursor-pointer"
+          <aside className="absolute inset-y-0 left-0 w-64 border-r border-admin-border bg-admin-sidebar">
+            <button
+              type="button"
+              className="absolute right-3 top-4 rounded-lg p-1 text-admin-ink-4 hover:bg-admin-sidebar-hover cursor-pointer"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -163,21 +138,31 @@ export default function AdminShell({
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-56">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-admin-border bg-admin-overlay px-4 backdrop-blur lg:px-6">
-          <button type="button"
-            className="rounded-lg p-1.5 text-admin-ink-4 bg-admin-canvas lg:hidden cursor-pointer"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="hidden truncate text-sm text-admin-ink-4 lg:block">
-            欢迎回来{authorName ? `，${authorName}` : ""}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-admin-ink-4 hover:bg-admin-neutral lg:hidden cursor-pointer"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href="/admin" className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-admin-accent text-xs font-bold text-admin-accent-ink">
+                管
+              </span>
+              <span className="text-sm font-bold text-admin-ink">博客后台</span>
+            </Link>
           </div>
           <div className="flex items-center gap-3">
-            <button type="button"
+            <span className="hidden truncate text-sm text-admin-ink-4 sm:block">
+              欢迎回来{authorName ? `，${authorName}` : ""}
+            </span>
+            <button
+              type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-admin-ink-4 transition-colors bg-admin-canvas hover:text-admin-danger cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-danger cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               退出

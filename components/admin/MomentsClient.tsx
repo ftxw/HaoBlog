@@ -1,30 +1,28 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { CirclePlus, Heart, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
 import { runAction, useApi, formatDate } from "@/components/admin/lib";
-import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import {
-  AdminTabBar,
   Button,
   Card,
   EmptyState,
   Field,
-  Input,
   Loading,
   Modal,
-  PageHeader,
-  Pagination,
+  NumberPagination,
   Select,
   Textarea,
   useConfirm,
 } from "@/components/admin/ui";
 import {
-  FILTER_BAR,
-  TABLE_HEAD_CELL,
-  TABLE_SHELL,
-} from "@/components/admin/styles";
+  CardAction,
+  ContentCard,
+  ListToolbar,
+  SearchPill,
+  ToolbarAction,
+} from "@/components/admin/ContentListShell";
 import ImageUploader from "@/components/admin/ImageUploader";
 import CommentsAdminPanel from "@/components/admin/CommentsAdminPanel";
 import {
@@ -55,9 +53,9 @@ export default function MomentsClient({
   const { confirm, confirmElement } = useConfirm();
 
   const [page, setPage] = useState(1);
-  const [keyword, setKeyword] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [activeTab, setActiveTab] = useState<"moments" | "comments">("moments");
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const commentsCount = useApi<{ items: unknown[]; total: number }>(
     "/api/chatters/comments/admin?page=1&size=1",
     { items: [], total: initialCommentsTotal }
@@ -144,6 +142,7 @@ export default function MomentsClient({
       await runAction(deleteChatterAction(m.id));
       addToast("success", "说说已删除");
       reload();
+      commentsCount.reload();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "删除失败");
     }
@@ -151,126 +150,102 @@ export default function MomentsClient({
 
   return (
     <>
-      <PageHeader
-        title="说说管理"
-        description="发布、编辑说说动态"
-      />
+      {/* 标题行：大字标题 + 评论入口 + 搜索 */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-admin-accent">随笔辅记</h1>
+        <div className="flex items-center gap-1.5">
+          <ToolbarAction
+            icon={<MessageSquare className="h-4 w-4" />}
+            label={`评论${
+              commentsCount.data?.total ? ` ${commentsCount.data.total}` : ""
+            }`}
+            onClick={() => setCommentsOpen(true)}
+          />
+          <SearchPill
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={() => {
+              setSearchText(searchInput);
+              setPage(1);
+            }}
+            placeholder="搜索说说内容"
+          />
+        </div>
+      </div>
 
-      <AdminTabBar
-        tabs={[
-          { key: "moments", label: `说说（${total}）` },
-          { key: "comments", label: `评论（${commentsCount.data?.total ?? 0}）` },
-        ]}
-        active={activeTab}
-        onChange={setActiveTab}
-        action={
-          <Button size="sm" className="ml-auto" onClick={openNew}>
-            <Plus className="h-3.5 w-3.5" />
-            发布说说
-          </Button>
+      <ListToolbar
+        actions={
+          <ToolbarAction
+            icon={<CirclePlus className="h-4 w-4" />}
+            label="发布说说"
+            onClick={openNew}
+          />
         }
-      />
+      >
+        <span className="text-sm text-admin-ink-4">共 {total} 条随笔</span>
+      </ListToolbar>
 
-      {activeTab === "comments" ? (
-        <CommentsAdminPanel kind="moment" onChanged={refresh} />
+      {loading && !data ? (
+        <Card>
+          <Loading />
+        </Card>
+      ) : moments.length === 0 ? (
+        <Card>
+          <EmptyState text="暂无随笔，点击右上角「发布说说」开始记录" />
+        </Card>
       ) : (
         <>
-      <Card className={FILTER_BAR}>
-        <form
-          className="ml-auto flex gap-2"
-          style={{ minWidth: 180 }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearchText(keyword);
-            setPage(1);
-          }}
-        >
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索说说内容"
-            className="!w-44 !py-1"
-          />
-          <Button type="submit" variant="secondary" className="whitespace-nowrap !py-1">
-            搜索
-          </Button>
-        </form>
-      </Card>
-
-      <Card>
-        {loading && !data ? (
-          <Loading />
-        ) : moments.length === 0 ? (
-          <EmptyState text="暂无说说" />
-        ) : (
-          <div className={TABLE_SHELL}>
-            <div className="grid grid-cols-[40%_8%_8%_22%_22%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
-            {["内容", "点赞", "评论", "发布时间", "操作"].map((h) => (
-              <div
-                key={h}
-                className={TABLE_HEAD_CELL}
-              >
-                {h}
-              </div>
-            ))}
+          <div className="space-y-2">
+            {moments.map((m) => {
+              const mood = m.mood ? MOOD_META[m.mood] : undefined;
+              return (
+                <ContentCard
+                  key={m.id}
+                  cover={m.images[0] || null}
+                  title={<span className="min-w-0 truncate">{m.content}</span>}
+                  meta={
+                    <>
+                      {mood && (
+                        <span className="text-xs">
+                          {mood.emoji} {mood.label}
+                        </span>
+                      )}
+                      {m.images.length > 1 && (
+                        <span className="tabular-nums">
+                          {m.images.length} 张配图
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 tabular-nums">
+                        <Heart className="h-3.5 w-3.5" />
+                        {m.likes}
+                      </span>
+                      <span className="inline-flex items-center gap-1 tabular-nums">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        {m.comments_count}
+                      </span>
+                      <span>{formatDate(m.created_at)}</span>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <CardAction title="编辑" onClick={() => openEdit(m)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </CardAction>
+                      <CardAction title="删除" danger onClick={() => handleDelete(m)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </CardAction>
+                    </>
+                  }
+                />
+              );
+            })}
           </div>
-          {moments.map((m) => (
-            <div
-              key={m.id}
-              className="grid grid-cols-[40%_8%_8%_22%_22%] border-b border-admin-border-soft text-admin-ink-2 last:border-0 hover:bg-admin-row-hover"
-            >
-              <div className="flex h-[60px] overflow-hidden items-center justify-start gap-2 px-4">
-                <p className="min-w-0 flex-1 truncate font-medium text-admin-ink">
-                  {m.content}
-                </p>
-                {m.images.length > 0 && (
-                  // eslint-disable-next-line @next/next/no-img-element -- 说说配图走图床/代理，原生 img 直连
-                  <img
-                    src={thumbUrlOf(m.images[0])}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => fallbackThumbToOriginal(e.currentTarget, m.images[0])}
-                    className="h-9 w-14 shrink-0 rounded object-cover"
-                  />
-                )}
-              </div>
-              <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 tabular-nums">
-                {m.likes}
-              </div>
-              <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 tabular-nums">
-                {m.comments_count}
-              </div>
-              <div className="flex h-[60px] overflow-hidden items-center justify-center px-4 text-xs text-admin-ink-4">
-                {formatDate(m.created_at)}
-              </div>
-              <div className="flex h-[60px] overflow-hidden items-center justify-center gap-1 px-4">
-                <Button size="sm" variant="ghost" onClick={() => openEdit(m)}>
-                  编辑
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-admin-danger hover:bg-admin-danger-soft hover:text-admin-danger-hover"
-                  onClick={() => handleDelete(m)}
-                >
-                  删除
-                </Button>
-              </div>
-            </div>
-          ))}
-          </div>
-        )}
-
-        <div className="px-4 pb-3">
-          <Pagination
+          <NumberPagination
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
             onChange={setPage}
           />
-        </div>
-      </Card>
         </>
       )}
 
@@ -322,6 +297,15 @@ export default function MomentsClient({
             </Select>
           </Field>
         </div>
+      </Modal>
+
+      <Modal
+        open={commentsOpen}
+        title="随笔评论"
+        onClose={() => setCommentsOpen(false)}
+        wide
+      >
+        <CommentsAdminPanel kind="moment" onChanged={refresh} />
       </Modal>
 
       {confirmElement}

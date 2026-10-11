@@ -89,7 +89,7 @@ function SortablePhoto({
         className="aspect-square w-full object-cover"
       />
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-        <p className="truncate text-xs text-admin-sidebar-ink">
+        <p className="truncate text-xs text-white">
           {photo.caption || formatDateCN(new Date(photo.taken_at)) || "无说明"}
         </p>
       </div>

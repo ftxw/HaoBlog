@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
 
     return ok({
       posts: counts.allPosts,
+      published: counts.publishedPosts,
+      drafts: counts.drafts,
       tags: counts.tags,
       comments: counts.comments,
       categories,

@@ -4,19 +4,18 @@ import { useRouter } from "next/navigation";
 import { CSS } from "@dnd-kit/utilities";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import { GripVertical, Images, Pencil, Plus, Trash2 } from "lucide-react";
+import { CirclePlus, GripVertical, Images, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
 import { formatDateOnly, runAction, useApi } from "@/components/admin/lib";
 import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import {
-  Button,
   Card,
   EmptyState,
   Loading,
-  PageHeader,
   cn,
   useConfirm,
 } from "@/components/admin/ui";
+import { ToolbarAction } from "@/components/admin/ContentListShell";
 import {
   useDragSort,
   reorderItemsByIds,
@@ -177,16 +176,17 @@ export default function AlbumsClient({
 
   return (
     <>
-      <PageHeader
-        title="相册管理"
-        description={`共 ${items.length} 个相册 · 拖拽卡片右上角手柄可排序`}
-        actions={
-          <Button onClick={() => router.push("/admin/albums/new")}>
-            <Plus className="h-4 w-4" />
-            新建相册
-          </Button>
-        }
-      />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-admin-accent">摄影图库</h1>
+        <ToolbarAction
+          icon={<CirclePlus className="h-4 w-4" />}
+          label="新建相册"
+          onClick={() => router.push("/admin/albums/new")}
+        />
+      </div>
+      <p className="mb-3 text-sm text-admin-ink-4">
+        共 {items.length} 个相册 · 拖拽卡片左上角手柄可排序
+      </p>
 
       {albums.loading && !albums.data ? (
         <Card>

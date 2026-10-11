@@ -9,6 +9,9 @@ export interface ContentCounts {
   comments: number;
   chatters: number;
   photos: number;
+  projects: number;
+  bookmarks: number;
+  mediaFiles: number;
 }
 
 type CountsRow = {
@@ -19,6 +22,9 @@ type CountsRow = {
   comments: bigint;
   chatters: bigint;
   photos: bigint;
+  projects: bigint;
+  bookmarks: bigint;
+  media_files: bigint;
 };
 
 export async function getContentCounts(): Promise<ContentCounts> {
@@ -30,7 +36,10 @@ export async function getContentCounts(): Promise<ContentCounts> {
       (SELECT count(*) FROM "tag")                                   AS tags,
       (SELECT count(*) FROM "comment")                               AS comments,
       (SELECT count(*) FROM "chatter"  WHERE "status" = 'published') AS chatters,
-      (SELECT count(*) FROM "photo")                                 AS photos
+      (SELECT count(*) FROM "photo")                                 AS photos,
+      (SELECT count(*) FROM "project")                               AS projects,
+      (SELECT count(*) FROM "bookmark_site")                         AS bookmarks,
+      (SELECT count(*) FROM "image_upload")                          AS media_files
   `;
 
   const publishedPosts = Number(row?.published_posts ?? 0);
@@ -45,5 +54,8 @@ export async function getContentCounts(): Promise<ContentCounts> {
     comments: Number(row?.comments ?? 0),
     chatters: Number(row?.chatters ?? 0),
     photos: Number(row?.photos ?? 0),
+    projects: Number(row?.projects ?? 0),
+    bookmarks: Number(row?.bookmarks ?? 0),
+    mediaFiles: Number(row?.media_files ?? 0),
   };
 }

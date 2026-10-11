@@ -14,6 +14,9 @@ export interface DashboardStats {
     comments: number;
     chatters: number;
     photos: number;
+    projects: number;
+    bookmarks: number;
+    media_files: number;
   };
   latest_content: Array<{
     id: string;
@@ -40,6 +43,8 @@ export interface DashboardStats {
       browser: string;
       time: string;
     }>;
+    browser_dist: Array<{ name: string; value: number }>;
+    region_dist: Array<{ name: string; value: number }>;
   };
 }
 
@@ -86,6 +91,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const statsStartStr = formatDateCN(new Date(now.getTime() - 29 * 24 * 3600 * 1000));
   const todayStr = formatDateCN(now);
   const weekStartStr = formatDateCN(new Date(now.getTime() - 6 * 24 * 3600 * 1000));
+  const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
 
   const [
     contentCounts,
@@ -97,6 +103,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     dailyStats,
     todayStat,
     weekAgg,
+    browserGroups,
+    regionGroups,
   ] = await Promise.all([
     getContentCounts(),
     prisma.post.findMany({
@@ -156,6 +164,20 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       _sum: { pv: true, uv: true },
       where: { date: { gte: weekStartStr } },
     }),
+    prisma.visitorLog.groupBy({
+      by: ["browser"],
+      where: { created_at: { gte: visitorSince } },
+      _count: { _all: true },
+      orderBy: { _count: { browser: "desc" } },
+      take: 6,
+    }),
+    prisma.visitorLog.groupBy({
+      by: ["address"],
+      where: { created_at: { gte: visitorSince } },
+      _count: { _all: true },
+      orderBy: { _count: { address: "desc" } },
+      take: 6,
+    }),
   ]);
 
   let recentVisitors: Array<{
@@ -166,7 +188,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     created_at: Date;
   }> = [];
   try {
-    const visitorSince = retentionCutoff(VISITOR_LOG_RETENTION_DAYS);
     const rows = await prisma.$queryRaw<
       Array<{
         id: string;
@@ -254,6 +275,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       comments: contentCounts.comments,
       chatters: contentCounts.chatters,
       photos: contentCounts.photos,
+      projects: contentCounts.projects,
+      bookmarks: contentCounts.bookmarks,
+      media_files: contentCounts.mediaFiles,
     },
     latest_content: latestContent,
     latest_comments: latestComments,
@@ -270,6 +294,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         address: v.address,
         browser: v.browser,
         time: v.created_at.toISOString(),
+      })),
+      browser_dist: browserGroups.map((g) => ({
+        name: g.browser || "未知",
+        value: g._count._all,
+      })),
+      region_dist: regionGroups.map((g) => ({
+        name: g.address || "未知",
+        value: g._count._all,
       })),
     },
   };

@@ -183,13 +183,13 @@ html:has(.theme-light) {
   --color-admin-overlay: rgb(255 255 255 / 0.9);
   --color-admin-scrim: rgb(15 23 42 / 0.6);
 
-  --color-admin-sidebar: #0f172a;
-  --color-admin-sidebar-hover: #1e293b;
-  --color-admin-sidebar-ink: #ffffff;
-  --color-admin-sidebar-ink-2: #e2e8f0;
-  --color-admin-sidebar-divider: #1e293b;
-  --color-admin-sidebar-active: rgb(99 102 241 / 0.2);
-  --color-admin-sidebar-active-ink: #a5b4fc;
+  --color-admin-sidebar: #ffffff;
+  --color-admin-sidebar-hover: #f1f5f9;
+  --color-admin-sidebar-ink: #0f172a;
+  --color-admin-sidebar-ink-2: #334155;
+  --color-admin-sidebar-divider: #f1f5f9;
+  --color-admin-sidebar-active: #eff6ff;
+  --color-admin-sidebar-active-ink: #1d4ed8;
 
   --color-admin-border: #e2e8f0;
   --color-admin-border-soft: #f1f5f9;
@@ -202,13 +202,13 @@ html:has(.theme-light) {
   --color-admin-ink-5: #94a3b8;
   --color-admin-ink-none: #cbd5e1;
 
-  --color-admin-accent: #4f46e5;
-  --color-admin-accent-hover: #4338ca;
+  --color-admin-accent: #2563eb;
+  --color-admin-accent-hover: #1d4ed8;
   --color-admin-accent-ink: #ffffff;
-  --color-admin-accent-soft: #eef2ff;
-  --color-admin-accent-soft-ink: #4338ca;
-  --color-admin-accent-border: #6366f1;
-  --color-admin-accent-ring: #818cf8;
+  --color-admin-accent-soft: #eff6ff;
+  --color-admin-accent-soft-ink: #1d4ed8;
+  --color-admin-accent-border: #60a5fa;
+  --color-admin-accent-ring: #93c5fd;
 
   --color-admin-danger: #dc2626;
   --color-admin-danger-hover: #b91c1c;
