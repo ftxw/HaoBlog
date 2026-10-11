@@ -92,6 +92,8 @@ export function toPostItem(post: PostRowShape): PostListItem {
 export interface ListPostsOptions {
   status?: string;
   categorySlug?: string;
+  /** true 时只取未归入任何分类的文章（category_id IS NULL） */
+  uncategorized?: boolean;
   tagSlug?: string;
   keyword?: string;
   page?: number;
@@ -101,7 +103,15 @@ export interface ListPostsOptions {
 export async function listPosts(
   options: ListPostsOptions = {}
 ): Promise<PostListItem[]> {
-  const { status, categorySlug, tagSlug, keyword, page = 1, size = 10 } = options;
+  const {
+    status,
+    categorySlug,
+    uncategorized,
+    tagSlug,
+    keyword,
+    page = 1,
+    size = 10,
+  } = options;
 
   const where: Prisma.PostWhereInput = {};
   const statusValue = parseContentStatus(status);
@@ -119,6 +129,7 @@ export async function listPosts(
   if (categorySlug && !cat) return [];
   if (tagSlug && !tag) return [];
 
+  if (uncategorized) where.category_id = null;
   if (cat) where.category_id = cat.id;
   if (tag) where.tags = { some: { tag_id: tag.id } };
 

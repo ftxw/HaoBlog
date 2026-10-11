@@ -37,11 +37,6 @@ export function ListToolbar({
   );
 }
 
-/** 参考图的胶囊行是等距平铺、无分隔线，故此组件不渲染任何内容 */
-export function CapsuleDivider() {
-  return null;
-}
-
 /** 卡片右侧的图标操作按钮（参考图为常显灰色图标） */
 export function CardAction({
   title,

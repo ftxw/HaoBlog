@@ -32,6 +32,7 @@ export default async function AdminPostsPage({
         posts: counts.allPosts,
         published: counts.publishedPosts,
         drafts: counts.drafts,
+        uncategorized: counts.uncategorized,
         tags: counts.tags,
         comments: counts.comments,
         categories,

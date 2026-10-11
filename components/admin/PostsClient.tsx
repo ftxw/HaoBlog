@@ -48,7 +48,6 @@ import {
 } from "@/components/admin/ui";
 import {
   CardAction,
-  CapsuleDivider,
   ContentCard,
   ListShell,
   ListToolbar,
@@ -70,6 +69,7 @@ interface BadgeCounts {
   posts: number;
   published: number;
   drafts: number;
+  uncategorized: number;
   tags: number;
   comments: number;
   categories: CategoryItem[];
@@ -103,8 +103,11 @@ export default function PostsClient({
 
   // 文章列表状态
   const [postPage, setPostPage] = useState(1);
-  const [status, setStatus] = useState("");
-  const [category, setCategory] = useState("");
+  /**
+   * 筛选是**单选**：状态（已发布 / 未发布）与分类（未分类 / 各分类）共用同一条胶囊行，
+   * 一次只能命中一个。取值 = all | published | draft | uncategorized | <分类 slug>
+   */
+  const [postFilter, setPostFilter] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [searchText, setSearchText] = useState("");
 
@@ -123,20 +126,24 @@ export default function PostsClient({
   const tags = useApi<TagItem[]>("/api/tags", []);
   const categoryOptions = badges.data?.categories ?? [];
 
+  /** 单选筛选 → 三个互斥的查询参数 */
+  const isStatusFilter = postFilter === "published" || postFilter === "draft";
+  const isUncategorized = postFilter === "uncategorized";
+
   const listUrl = useMemo(() => {
     const params = new URLSearchParams();
-    if (status) params.set("status", status);
-    if (category) params.set("category", category);
+    if (isStatusFilter) params.set("status", postFilter);
+    if (isUncategorized) params.set("uncategorized", "1");
+    if (!isStatusFilter && !isUncategorized && postFilter !== "all") {
+      params.set("category", postFilter);
+    }
     if (searchText.trim()) params.set("keyword", searchText.trim());
     params.set("page", String(postPage));
     params.set("size", String(PAGE_SIZE));
     return `/api/posts?${params.toString()}`;
-  }, [status, category, searchText, postPage]);
+  }, [postFilter, isStatusFilter, isUncategorized, searchText, postPage]);
 
   const posts = useApi<PostListItem[]>(listUrl, initialPosts);
-  const postCount = useApi<{ count: number }>(
-    tab === "posts" && status ? `/api/posts/count?status=${status}` : null
-  );
 
   const projectsUrl = useMemo(() => {
     if (tab !== "projects") return null;
@@ -166,23 +173,23 @@ export default function PostsClient({
 
   // ---------- 文章操作 ----------
   const postList = posts.data ?? [];
-  const postTotal = status
-    ? (postCount.data?.count ?? 0)
-    : (badges.data?.posts ?? 0);
-
-  const statusItems = [
+  /**
+   * 一条单选胶囊行：全部 · 已发布 · 未发布 · 未分类 · 各分类。
+   * 计数全部来自 badges（含 category.post_count，由数据库触发器维护），不再单独请求 count 接口。
+   */
+  const filterItems = [
     { key: "all", label: "全部", count: badges.data?.posts ?? 0 },
     { key: "published", label: "已发布", count: badges.data?.published ?? 0 },
     { key: "draft", label: "未发布", count: badges.data?.drafts ?? 0 },
-  ];
-  const categoryItems = [
-    { key: "all", label: "全部分类", count: badges.data?.posts ?? 0 },
+    { key: "uncategorized", label: "未分类", count: badges.data?.uncategorized ?? 0 },
     ...categoryOptions.map((c) => ({
       key: c.slug,
       label: c.name,
       count: c.post_count,
     })),
   ];
+  const postTotal =
+    filterItems.find((i) => i.key === postFilter)?.count ?? postList.length;
 
   const handleTogglePinned = async (post: PostListItem) => {
     try {
@@ -191,7 +198,6 @@ export default function PostsClient({
       );
       addToast("success", post.is_pinned ? "已取消置顶" : "已置顶");
       posts.reload();
-      postCount.reload();
       badges.reload();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "操作失败");
@@ -211,7 +217,6 @@ export default function PostsClient({
       );
       addToast("success", next === "published" ? "已发布" : "已撤回");
       posts.reload();
-      postCount.reload();
       badges.reload();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "操作失败");
@@ -228,7 +233,6 @@ export default function PostsClient({
       await runAction(deletePostAction(post.id));
       addToast("success", "文章已删除");
       posts.reload();
-      postCount.reload();
       badges.reload();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "删除失败");
@@ -317,20 +321,12 @@ export default function PostsClient({
               </>
             }
           >
+            {/* 单选：状态与分类共用一条胶囊行，一次只能选中一个（已去掉「全部分类」） */}
             <CapsuleFilter
-              items={statusItems}
-              active={status === "" ? "all" : (status as "published" | "draft" | "all")}
+              items={filterItems}
+              active={postFilter}
               onChange={(key) => {
-                setStatus(key === "all" ? "" : key);
-                setPostPage(1);
-              }}
-            />
-            <CapsuleDivider />
-            <CapsuleFilter
-              items={categoryItems}
-              active={category || "all"}
-              onChange={(key) => {
-                setCategory(key === "all" ? "" : key);
+                setPostFilter(key);
                 setPostPage(1);
               }}
             />

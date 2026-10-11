@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       listPosts({
         status: effectiveStatus,
         categorySlug: searchParams.get("category") || undefined,
+        uncategorized: searchParams.get("uncategorized") === "1",
         tagSlug: searchParams.get("tag") || undefined,
         keyword: searchParams.get("keyword") || undefined,
         page,
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
       return ok(await loader());
     }
     return await cachedPublicGet(CACHE_NAMESPACE.posts, req, loader, {
-      keyParams: ["page", "size", "category", "tag", "keyword"],
+      keyParams: ["page", "size", "category", "uncategorized", "tag", "keyword"],
     });
   } catch (err) {
     console.error("GET /api/posts error:", err);

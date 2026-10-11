@@ -62,9 +62,13 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(Boolean(postId));
-  const [saving, setSaving] = useState(false);
+  /** 哪颗按钮在保存 —— 决定哪一颗转菊花，避免「点一个另一个也转」 */
+  const [saving, setSaving] = useState<"draft" | "published" | null>(null);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  /** 编辑已有文章时的原始发布状态：保存不改变它，故编辑态只暴露一个「保存」按钮 */
+  const [originStatus, setOriginStatus] = useState<"draft" | "published">("draft");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -100,6 +104,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
         setTitle(post.title);
         setDescription(post.description || "");
         setCover(post.cover || "");
+        setOriginStatus(post.status === "published" ? "published" : "draft");
         setIsPinned(Boolean(post.is_pinned));
         setContent(post.content || "");
         setUpdatedAt(post.updated_at);
@@ -162,13 +167,17 @@ export default function PostEditor({ postId }: { postId?: string }) {
     }
   };
 
-  /** nextStatus 由按钮决定：「保存」= draft，「发布」= published */
+  /**
+   * nextStatus 由按钮决定：
+   * - 新建：「保存」= draft，「发布」= published
+   * - 编辑：只有一个「保存」，传的是原文的发布状态（originStatus），即保存不改发布状态
+   */
   const handleSave = async (nextStatus: "draft" | "published") => {
     if (!title.trim()) {
       addToast("warning", "请填写文章标题");
       return;
     }
-    setSaving(true);
+    setSaving(nextStatus);
     const body = {
       title: title.trim(),
       description,
@@ -185,13 +194,20 @@ export default function PostEditor({ postId }: { postId?: string }) {
       } else {
         await runAction(createPostAction(body));
       }
-      addToast("success", nextStatus === "published" ? "文章已发布" : "草稿已保存");
+      addToast(
+        "success",
+        postId
+          ? "文章已保存"
+          : nextStatus === "published"
+            ? "文章已发布"
+            : "草稿已保存"
+      );
       router.push("/admin/posts");
       router.refresh();
     } catch (e) {
       addToast("error", e instanceof Error ? e.message : "保存失败");
     } finally {
-      setSaving(false);
+      setSaving(null);
     }
   };
 
@@ -313,21 +329,42 @@ export default function PostEditor({ postId }: { postId?: string }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            title="保存为草稿（未发布）"
-            onClick={() => handleSave("draft")}
-            loading={saving}
-          >
-            保存
-          </Button>
-          <Button
-            title="立即发布（已发布）"
-            onClick={() => handleSave("published")}
-            loading={saving}
-          >
-            发布
-          </Button>
+          {/* 编辑：只有一个「保存」，发布状态以编辑前为准；新建：保存=草稿 / 发布=已发布 */}
+          {postId ? (
+            <Button
+              variant="secondary"
+              title={
+                originStatus === "published"
+                  ? "保存（保持已发布状态）"
+                  : "保存（保持草稿状态）"
+              }
+              onClick={() => handleSave(originStatus)}
+              loading={saving === originStatus}
+              disabled={saving !== null}
+            >
+              保存
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                title="保存为草稿（未发布）"
+                onClick={() => handleSave("draft")}
+                loading={saving === "draft"}
+                disabled={saving !== null}
+              >
+                保存
+              </Button>
+              <Button
+                title="立即发布（已发布）"
+                onClick={() => handleSave("published")}
+                loading={saving === "published"}
+                disabled={saving !== null}
+              >
+                发布
+              </Button>
+            </>
+          )}
         </div>
       </Card>
 
@@ -378,15 +415,13 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
               <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
                 <div className="relative inline-flex items-center rounded-lg transition-colors hover:bg-admin-neutral">
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className={cn(
-                      "cursor-pointer appearance-none rounded-lg bg-transparent py-1 pl-2.5 pr-7 text-sm focus:outline-none",
-                      categoryId ? "text-admin-ink-2" : "text-admin-ink-4"
-                    )}
-                  >
-                    <option value="">选择分类</option>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="cursor-pointer appearance-none rounded-lg bg-transparent py-1 pl-2.5 pr-7 text-sm text-admin-ink-2 focus:outline-none"
+                >
+                  {/* 默认即「未分类」（category_id = null），它是正常取值而非占位符 */}
+                  <option value="">未分类</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}

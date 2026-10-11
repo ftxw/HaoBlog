@@ -4,6 +4,8 @@ export interface ContentCounts {
   publishedPosts: number;
   drafts: number;
   allPosts: number;
+  /** 未归入任何分类的文章数（category_id IS NULL） */
+  uncategorized: number;
   categories: number;
   tags: number;
   comments: number;
@@ -17,6 +19,7 @@ export interface ContentCounts {
 type CountsRow = {
   published_posts: bigint;
   drafts: bigint;
+  uncategorized: bigint;
   categories: bigint;
   tags: bigint;
   comments: bigint;
@@ -32,6 +35,7 @@ export async function getContentCounts(): Promise<ContentCounts> {
     SELECT
       (SELECT count(*) FROM "post"     WHERE "status" = 'published') AS published_posts,
       (SELECT count(*) FROM "post"     WHERE "status" = 'draft')     AS drafts,
+      (SELECT count(*) FROM "post"     WHERE "category_id" IS NULL)  AS uncategorized,
       (SELECT count(*) FROM "category")                              AS categories,
       (SELECT count(*) FROM "tag")                                   AS tags,
       (SELECT count(*) FROM "comment")                               AS comments,
@@ -49,6 +53,7 @@ export async function getContentCounts(): Promise<ContentCounts> {
     publishedPosts,
     drafts,
     allPosts: publishedPosts + drafts,
+    uncategorized: Number(row?.uncategorized ?? 0),
     categories: Number(row?.categories ?? 0),
     tags: Number(row?.tags ?? 0),
     comments: Number(row?.comments ?? 0),
