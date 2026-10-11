@@ -11,7 +11,6 @@ import {
   List,
   Quote,
   ImageIcon,
-  ChevronDown,
   Plus,
   Loader2,
 } from "lucide-react";
@@ -24,6 +23,7 @@ import {
 } from "@/components/admin/lib";
 import { createPostAction, updatePostAction } from "@/app/actions/posts";
 import { Button, Card, cn } from "@/components/admin/ui";
+import CategorySelect from "@/components/admin/CategorySelect";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { CategoryItem } from "@/app/lib/queries/catalog";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
@@ -410,28 +410,20 @@ export default function PostEditor({ postId }: { postId?: string }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="请输入标题"
-                className="w-full bg-transparent text-2xl font-bold text-admin-ink placeholder:text-admin-ink-none focus:outline-none"
+                className="w-full bg-transparent text-2xl font-bold text-admin-ink placeholder:text-admin-ink-4 focus:outline-none"
               />
 
-              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
-                <div className="relative inline-flex items-center rounded-lg transition-colors hover:bg-admin-neutral">
-                <select
+              <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <CategorySelect
                   value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="cursor-pointer appearance-none rounded-lg bg-transparent py-1 pl-2.5 pr-7 text-sm text-admin-ink-2 focus:outline-none"
-                >
-                  {/* 默认即「未分类」（category_id = null），它是正常取值而非占位符 */}
-                  <option value="">未分类</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-admin-ink-5" />
-                </div>
+                  categories={categories}
+                  onChange={setCategoryId}
+                  onCreated={(item) =>
+                    setCategories((prev) => [...prev, item])
+                  }
+                />
 
-                <span className="h-4 w-px bg-admin-border" />
+                <span className="h-7 w-px shrink-0 bg-admin-border" />
 
                 <input
                   value={tagsText}
