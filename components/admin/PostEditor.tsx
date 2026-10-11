@@ -23,15 +23,7 @@ import {
   formatDate,
 } from "@/components/admin/lib";
 import { createPostAction, updatePostAction } from "@/app/actions/posts";
-import {
-  Button,
-  Card,
-  Field,
-  Select,
-  Switch,
-  Textarea,
-  cn,
-} from "@/components/admin/ui";
+import { Button, Card, cn } from "@/components/admin/ui";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { CategoryItem } from "@/app/lib/queries/catalog";
 import { useMarkdownPreview } from "@/app/lib/hooks/use-markdown-preview";
@@ -73,7 +65,6 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -81,7 +72,6 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [coverOrientation, setCoverOrientation] = useState("landscape");
   const [categoryId, setCategoryId] = useState<string>("");
   const [tagsText, setTagsText] = useState("");
-  const [status, setStatus] = useState("draft");
   const [isPinned, setIsPinned] = useState(false);
   const [content, setContent] = useState("");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -110,7 +100,6 @@ export default function PostEditor({ postId }: { postId?: string }) {
         setTitle(post.title);
         setDescription(post.description || "");
         setCover(post.cover || "");
-        setStatus(post.status);
         setIsPinned(Boolean(post.is_pinned));
         setContent(post.content || "");
         setUpdatedAt(post.updated_at);
@@ -173,13 +162,12 @@ export default function PostEditor({ postId }: { postId?: string }) {
     }
   };
 
-  /** overrideStatus 传入时强制用该状态保存（「发布」按钮用 published） */
-  const handleSave = async (overrideStatus?: string) => {
+  /** nextStatus 由按钮决定：「保存」= draft，「发布」= published */
+  const handleSave = async (nextStatus: "draft" | "published") => {
     if (!title.trim()) {
       addToast("warning", "请填写文章标题");
       return;
     }
-    const nextStatus = overrideStatus ?? status;
     setSaving(true);
     const body = {
       title: title.trim(),
@@ -194,14 +182,10 @@ export default function PostEditor({ postId }: { postId?: string }) {
     try {
       if (postId) {
         await runAction(updatePostAction(postId, body));
-        addToast("success", "文章已更新");
       } else {
         await runAction(createPostAction(body));
-        addToast(
-          "success",
-          nextStatus === "published" ? "文章已发布" : "草稿已保存"
-        );
       }
+      addToast("success", nextStatus === "published" ? "文章已发布" : "草稿已保存");
       router.push("/admin/posts");
       router.refresh();
     } catch (e) {
@@ -331,20 +315,25 @@ export default function PostEditor({ postId }: { postId?: string }) {
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
-            onClick={() => handleSave()}
+            title="保存为草稿（未发布）"
+            onClick={() => handleSave("draft")}
             loading={saving}
           >
             保存
           </Button>
-          <Button onClick={() => handleSave("published")} loading={saving}>
+          <Button
+            title="立即发布（已发布）"
+            onClick={() => handleSave("published")}
+            loading={saving}
+          >
             发布
           </Button>
         </div>
       </Card>
 
-      {/* 2. 工具栏卡（高 40）：32×32 图标按钮 + 分组分隔线 */}
+      {/* 2. 工具栏卡（高 48，较参考略微加高）：32×32 图标按钮 + 分组分隔线 */}
       <Card>
-        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-2">
           <div className="flex flex-wrap items-center gap-0.5">{tools}</div>
           <div className="flex rounded-lg bg-admin-neutral p-0.5 text-xs">
             <button
@@ -375,9 +364,9 @@ export default function PostEditor({ postId }: { postId?: string }) {
         </div>
       </Card>
 
-      {/* 3. 内容卡：居中 800 列，标题 + 封面 160×120 + 分类/标签 + 正文 */}
+      {/* 3. 内容卡：内容与标题卡同宽（卡片内边距内满宽）；标题 + 封面 160×120 + 分类/标签 + 摘要 + 分割线 + 正文 */}
       <Card className="px-6 py-6">
-        <div className="mx-auto w-full max-w-[800px]">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="min-w-0 flex-1">
               <input
@@ -450,7 +439,18 @@ export default function PostEditor({ postId }: { postId?: string }) {
             </div>
           </div>
 
-          <div className="mt-6">
+          {/* 摘要：夹在分类/标签与分割线之间，灰字以区别正文 */}
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="文章摘要（列表页与分享卡片展示的简介）"
+            rows={2}
+            className="w-full resize-none bg-transparent text-sm leading-relaxed text-admin-ink-3 placeholder:text-admin-ink-5 focus:outline-none"
+          />
+
+          <hr className="border-t border-admin-border" />
+
+          <div>
             {tab === "edit" ? (
               <textarea
                 ref={textareaRef}
@@ -488,65 +488,11 @@ export default function PostEditor({ postId }: { postId?: string }) {
             )}
           </div>
 
-          <div className="mt-3 flex justify-between text-xs text-admin-ink-5">
+          <div className="flex justify-between text-xs text-admin-ink-5">
             <span>Markdown 编辑 · 支持粘贴/上传插图</span>
             <span>{content.length} 字</span>
           </div>
         </div>
-      </Card>
-
-      {/* 4. 更多设置（低频字段折叠） */}
-      <Card>
-        <button
-          type="button"
-          onClick={() => setMoreOpen((v) => !v)}
-          className="flex w-full cursor-pointer items-center justify-between px-6 py-4 text-left"
-        >
-          <span className="text-sm font-semibold text-admin-ink">
-            更多设置
-            <span className="ml-2 text-xs font-normal text-admin-ink-5">
-              摘要 · 发布状态 · 置顶
-            </span>
-          </span>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-admin-ink-4 transition-transform",
-              moreOpen && "rotate-180"
-            )}
-          />
-        </button>
-        {moreOpen && (
-          <div className="space-y-4 border-t border-admin-border-soft px-6 py-4">
-            <Field label="摘要" hint="列表页与分享卡片展示的简介">
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="文章摘要（列表页展示）"
-                rows={2}
-              />
-            </Field>
-            <Field label="发布状态" hint="「保存」按此状态保存，「发布」始终正式发布">
-              <Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="published">正式发布（前台可见）</option>
-                <option value="draft">存为草稿（前台不可见）</option>
-              </Select>
-            </Field>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-admin-ink-2">
-                置顶文章
-              </span>
-              <Switch checked={isPinned} onChange={setIsPinned} />
-            </div>
-            <Field label="返回">
-              <Button variant="soft" size="sm" onClick={() => router.back()}>
-                返回上一页
-              </Button>
-            </Field>
-          </div>
-        )}
       </Card>
     </div>
   );
