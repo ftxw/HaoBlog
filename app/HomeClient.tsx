@@ -59,7 +59,7 @@ export default function HomeClient({
   const photoWallHasCover = !!photoWall.cover;
 
   return (
-    <div className="container-page pb-6 pt-6 md:pt-12">
+    <div className="container-page relative z-10 pb-6 pt-6 md:pt-12">
       {/* 与其他页面保持一致：不做首屏入场动画，内容就绪即显示 */}
       <SearchBar posts={searchPosts} />
 
