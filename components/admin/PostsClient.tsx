@@ -36,9 +36,8 @@ import type { ProjectItem } from "@/app/lib/queries/projects";
 import type { CategoryItem, TagItem } from "@/app/lib/queries/catalog";
 import {
   Button,
-  Sheet,
+  Card,
   CapsuleFilter,
-  SearchInput,
   EmptyState,
   Loading,
   Modal,
@@ -53,6 +52,7 @@ import {
   ListShell,
   ListToolbar,
   PageTitleTabs,
+  SearchPill,
   TagCard,
   TagChip,
   ToolbarAction,
@@ -279,8 +279,8 @@ export default function PostsClient({
 
   return (
     <>
-      {/* 页面标题 + Tab + 搜索：无容器，直接落在画布上 */}
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      {/* 标题行：大字 Tab + 右侧主操作（与列表页统一） */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <PageTitleTabs
           tabs={[
             { key: "posts", label: "博客文章" },
@@ -289,43 +289,55 @@ export default function PostsClient({
           active={tab}
           onChange={setTab}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {tab === "posts" && (
-            <SearchInput
+            <SearchPill
               value={searchInput}
               onChange={setSearchInput}
               onSearch={() => {
                 setSearchText(searchInput);
                 setPostPage(1);
               }}
-              placeholder="搜索标题或简介"
+              placeholder="请输入标题/简介"
             />
           )}
-          {tab === "posts" ? (
-            <>
-              <ToolbarAction
-                icon={<Settings2 className="h-3.5 w-3.5" />}
-                label="管理分组"
-                onClick={() => setGroupOpen(true)}
-              />
-              <Button onClick={() => router.push("/admin/posts/new")}>
-                <CirclePlus className="h-3.5 w-3.5" />
-                新建文章
-              </Button>
-            </>
-          ) : (
-            <Button onClick={() => router.push("/admin/projects/new")}>
-              <CirclePlus className="h-3.5 w-3.5" />
-              新建项目
-            </Button>
-          )}
+          <ToolbarAction
+            icon={<CirclePlus className="h-4 w-4" />}
+            label={tab === "posts" ? "新建文章" : "新建项目"}
+            onClick={() =>
+              router.push(tab === "posts" ? "/admin/posts/new" : "/admin/projects/new")
+            }
+          />
         </div>
       </div>
 
       {tab === "posts" ? (
-        <ListShell
-          aside={
-            <Sheet>
+        <>
+          {/* 筛选卡片：胶囊 + 新建 / 管理分组 同卡（评论入口已下放到每张卡片） */}
+          <ListToolbar
+            actions={
+              <>
+                <ToolbarAction
+                  icon={<Settings2 className="h-4 w-4" />}
+                  label="管理分组"
+                  onClick={() => setGroupOpen(true)}
+                />
+              </>
+            }
+          >
+            {/* 单选：状态与分类共用一条胶囊行，一次只能选中一个（已去掉「全部分类」） */}
+            <CapsuleFilter
+              items={filterItems}
+              active={postFilter}
+              onChange={(key) => {
+                setPostFilter(key);
+                setPostPage(1);
+              }}
+            />
+          </ListToolbar>
+
+          <ListShell
+            aside={
               <TagCard onManage={() => setTagOpen(true)}>
                 {(tags.data ?? []).length === 0 ? (
                   <span className="text-xs text-admin-ink-4">暂无标签</span>
@@ -335,89 +347,62 @@ export default function PostsClient({
                   ))
                 )}
               </TagCard>
-            </Sheet>
-          }
-        >
-          <Sheet>
-            {/* 筛选行：纸面内的一行，不再单独成卡 */}
-            <ListToolbar>
-              <CapsuleFilter
-                items={filterItems}
-                active={postFilter}
-                onChange={(key) => {
-                  setPostFilter(key);
-                  setPostPage(1);
-                }}
-              />
-            </ListToolbar>
-
-            {posts.loading && !posts.data ? (
+            }
+          >
+          {posts.loading && !posts.data ? (
+            <Card>
               <Loading />
-            ) : postList.length === 0 ? (
-              <EmptyState
-                text="还没有文章"
-                hint="从一篇随笔开始，或先建一个分类"
-                action={
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => router.push("/admin/posts/new")}
-                  >
-                    新建文章
-                  </Button>
-                }
-              />
-            ) : (
-              <>
+            </Card>
+          ) : postList.length === 0 ? (
+            <Card>
+              <EmptyState text="暂无文章，点击右上角「新建」开始创作" />
+            </Card>
+          ) : (
+            <>
+              <div className="space-y-6">
                 {postList.map((post) => (
                   <ContentCard
                     key={post.id}
                     cover={post.cover || null}
                     coverBadge={
                       post.status === "draft" ? (
-                        <span className="block bg-admin-ink/70 py-0.5 text-center text-[10px] font-medium text-white">
-                          草稿
+                        <span className="block h-6 bg-admin-accent/80 text-center text-xs leading-6 font-medium text-white">
+                          未发布
                         </span>
                       ) : undefined
                     }
                     title={
-                      <>
-                        <Link
-                          prefetch={false}
-                          href={`/admin/posts/${post.id}`}
-                          className="min-w-0 truncate text-[14px] font-semibold text-admin-ink hover:text-admin-accent"
-                        >
-                          {post.title}
-                        </Link>
-                        {post.is_pinned && (
-                          <Star className="h-3 w-3 shrink-0 fill-current text-admin-warning" />
-                        )}
-                        <StatusBadge status={post.status} />
-                      </>
+                      <Link
+                        prefetch={false}
+                        href={`/admin/posts/${post.id}`}
+                        className="min-w-0 truncate text-xl font-bold leading-7 text-admin-ink hover:text-admin-accent"
+                      >
+                        {post.title}
+                      </Link>
                     }
-                    subtitle={post.description || undefined}
+                    subtitle={
+                      post.description ||
+                      (post.tags.length > 0
+                        ? post.tags.map((t) => `#${t}`).join("  ")
+                        : undefined)
+                    }
                     meta={
                       <>
-                        {post.category && (
-                          <span className="rounded bg-admin-chip px-1.5 py-0.5 text-admin-ink-3">
-                            {post.category}
-                          </span>
-                        )}
-                        {post.tags.slice(0, 3).map((t) => (
-                          <span key={t}>#{t}</span>
-                        ))}
-                        <span>{formatDate(post.published_at || post.created_at)}</span>
+                        {post.category && <span>{post.category}</span>}
+                        <span>
+                          {formatDate(post.published_at || post.created_at)}
+                        </span>
                         <span className="inline-flex items-center gap-1 tabular-nums">
-                          <Eye className="h-3 w-3" />
+                          <Eye className="h-3.5 w-3.5" />
                           {post.views}
                         </span>
                         <span className="inline-flex items-center gap-1 tabular-nums">
-                          <Heart className="h-3 w-3" />
+                          <Heart className="h-3.5 w-3.5" />
                           {post.likes}
                         </span>
                         <button
                           type="button"
-                          title="查看评论"
+                          title="查看该文章的评论"
                           onClick={() =>
                             setCommentTarget({
                               kind: "post",
@@ -425,9 +410,9 @@ export default function PostsClient({
                               title: post.title,
                             })
                           }
-                          className="inline-flex cursor-pointer items-center gap-1 rounded px-1 tabular-nums transition-colors hover:bg-admin-neutral hover:text-admin-accent"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 tabular-nums transition-colors hover:bg-admin-neutral hover:text-admin-accent"
                         >
-                          <MessageSquare className="h-3 w-3" />
+                          <MessageSquare className="h-3.5 w-3.5" />
                           {post.comments_count ?? 0}
                         </button>
                       </>
@@ -440,7 +425,7 @@ export default function PostsClient({
                         >
                           <Star
                             className={cn(
-                              "h-3.5 w-3.5",
+                              "h-4 w-4",
                               post.is_pinned && "fill-current text-admin-warning"
                             )}
                           />
@@ -450,62 +435,56 @@ export default function PostsClient({
                           onClick={() => handleTogglePublish(post)}
                         >
                           {post.status === "published" ? (
-                            <RotateCcw className="h-3.5 w-3.5" />
+                            <RotateCcw className="h-4 w-4" />
                           ) : (
-                            <Send className="h-3.5 w-3.5" />
+                            <Send className="h-4 w-4" />
                           )}
                         </CardAction>
                         <CardAction
                           title="编辑"
                           onClick={() => router.push(`/admin/posts/${post.id}`)}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-4 w-4" />
                         </CardAction>
                         <CardAction
                           title="删除"
                           danger
                           onClick={() => handleDeletePost(post)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </CardAction>
                       </>
                     }
                   />
                 ))}
-                <NumberPagination
-                  page={postPage}
-                  pageSize={PAGE_SIZE}
-                  total={postTotal}
-                  onChange={setPostPage}
-                />
-              </>
-            )}
-          </Sheet>
-        </ListShell>
+              </div>
+              <NumberPagination
+                page={postPage}
+                pageSize={PAGE_SIZE}
+                total={postTotal}
+                onChange={setPostPage}
+              />
+            </>
+          )}
+          </ListShell>
+        </>
       ) : (
-        <Sheet>
+        <>
           <ListToolbar>
-            <span className="text-xs text-admin-ink-4">
-              共 {projectTotal} 个项目 · 拖拽左侧手柄可调整排序
+            <span className="text-sm text-admin-ink-4">
+              共 {projectTotal} 个项目，拖拽卡片可调整排序
             </span>
           </ListToolbar>
 
+          <ListShell>
           {projects.loading && !projects.data ? (
-            <Loading />
+            <Card>
+              <Loading />
+            </Card>
           ) : projectList.length === 0 ? (
-            <EmptyState
-              text="还没有项目"
-              hint="展示你做过的产品、工具或作品集"
-              action={
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => router.push("/admin/projects/new")}
-                >
-                  新建项目
-                </Button>
-              }
-            />
+            <Card>
+              <EmptyState text="暂无项目，点击右上角「新建项目」开始" />
+            </Card>
           ) : (
             <>
               <DndContext
@@ -517,21 +496,23 @@ export default function PostsClient({
                 onDragCancel={handleDragCancel}
               >
                 <SortableContext items={sortIds} strategy={strategy}>
-                  {projectList.map((p) => (
-                    <SortableProjectCard
-                      key={p.id}
-                      project={p}
-                      onEdit={() => router.push(`/admin/projects/${p.id}`)}
-                      onDelete={() => handleDeleteProject(p)}
-                      onComments={() =>
-                        setCommentTarget({
-                          kind: "project",
-                          id: p.id,
-                          title: p.name,
-                        })
-                      }
-                    />
-                  ))}
+                  <div className="space-y-6">
+                    {projectList.map((p) => (
+                      <SortableProjectCard
+                        key={p.id}
+                        project={p}
+                        onEdit={() => router.push(`/admin/projects/${p.id}`)}
+                        onDelete={() => handleDeleteProject(p)}
+                        onComments={() =>
+                          setCommentTarget({
+                            kind: "project",
+                            id: p.id,
+                            title: p.name,
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
                 </SortableContext>
               </DndContext>
               <NumberPagination
@@ -542,7 +523,8 @@ export default function PostsClient({
               />
             </>
           )}
-        </Sheet>
+          </ListShell>
+        </>
       )}
 
       {/* 管理分组（分类）弹窗 */}
@@ -637,7 +619,7 @@ function SortableProjectCard({
             aria-label="拖拽排序"
             {...attributes}
             {...listeners}
-            className="cursor-grab rounded-lg p-1.5 text-admin-ink-none transition-colors hover:bg-admin-neutral hover:text-admin-ink active:cursor-grabbing"
+            className="cursor-grab rounded-[9px] p-1.5 text-admin-ink-none transition-colors hover:bg-admin-neutral hover:text-admin-ink active:cursor-grabbing"
           >
             <GripVertical className="h-4 w-4" />
           </button>
@@ -646,7 +628,7 @@ function SortableProjectCard({
           <button
             type="button"
             onClick={onEdit}
-            className="min-w-0 truncate text-xl font-bold text-admin-ink hover:text-admin-accent cursor-pointer"
+            className="min-w-0 truncate text-xl font-bold leading-7 text-admin-ink hover:text-admin-accent cursor-pointer"
           >
             {project.name}
           </button>

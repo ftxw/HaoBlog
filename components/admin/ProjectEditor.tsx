@@ -11,16 +11,14 @@ import {
 } from "@/app/actions/projects";
 import {
   Button,
-  Sheet,
-  SheetHeader,
-  Section,
-  PageHeader,
+  Card,
   Field,
   Input,
   Textarea,
   Select,
   Loading,
 } from "@/components/admin/ui";
+import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { ProjectItem } from "@/app/lib/queries/projects";
 import type { ProjectStatus } from "@/app/lib/mutations/projects";
@@ -141,98 +139,96 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
 
   if (!isNew && dataLoading) {
     return (
-      <Sheet>
+      <Card>
         <Loading />
-      </Sheet>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title={isNew ? "新建项目" : "编辑项目"}
-        description={
-          data?.updated_at ? `最后更新于 ${formatDate(data.updated_at)}` : "填写内容后保存"
-        }
-        actions={
-          <>
-            <Button variant="ghost" onClick={handleBack}>
-              <ArrowLeft className="h-3.5 w-3.5" />
-              返回
-            </Button>
-            <Button variant="secondary" onClick={() => handleSave()} loading={saving}>
-              保存
-            </Button>
-            <Button onClick={() => handleSave("published")} loading={saving}>
-              发布
-            </Button>
-          </>
-        }
-      />
+      {/* 标题卡（高 68）：标题 24px 粗体 + 保存 / 发布 36 高按钮 */}
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-bold text-admin-ink">
+            {isNew ? "新建项目" : "编辑项目"}
+          </h1>
+          {data?.updated_at && (
+            <span className="text-xs text-admin-ink-5">
+              最后更新于 {formatDate(data.updated_at)}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
+            返回
+          </Button>
+          <Button variant="secondary" onClick={() => handleSave()} loading={saving}>
+            保存
+          </Button>
+          <Button onClick={() => handleSave("published")} loading={saving}>
+            发布
+          </Button>
+        </div>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
-        <div className="space-y-4">
-          <Sheet>
-            <SheetHeader title="项目信息" />
-            <Section>
-              <div className="space-y-4">
-                <Field label="项目名称" required>
-                  <Input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="项目名称"
-                  />
-                </Field>
-                <Field label="简介">
-                  <Textarea
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    rows={2}
-                    placeholder="一句话介绍"
-                  />
-                </Field>
-                <Field label="详细介绍">
-                  <Textarea
-                    value={form.long_description}
-                    onChange={(e) =>
-                      setForm({ ...form, long_description: e.target.value })
-                    }
-                    rows={5}
-                    placeholder="详细介绍（支持 Markdown）"
-                  />
-                </Field>
-                <Field label="技术栈" hint="逗号分隔">
-                  <Input
-                    value={form.techStackText}
-                    onChange={(e) =>
-                      setForm({ ...form, techStackText: e.target.value })
-                    }
-                    placeholder="Next.js, Prisma, Tailwind"
-                  />
-                </Field>
-              </div>
-            </Section>
-          </Sheet>
-
-          <Sheet>
-            <SheetHeader title="项目截图" description="支持批量上传，上传顺序即展示顺序" />
-            <Section>
-              <ImageUploader
-                mode="multi"
-                value={form.images}
-                onChange={(images) => setForm({ ...form, images })}
-                category="projects"
-                folder={effectiveId ? String(effectiveId) : undefined}
-                folderResolver={ensureProject}
+      <div className="grid gap-4 lg:grid-cols-4">
+        <div className="space-y-4 lg:col-span-3">
+          <Card className={EDITOR_SECTION}>
+            <Field label="项目名称" required>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="项目名称"
               />
-            </Section>
-          </Sheet>
+            </Field>
+            <Field label="简介">
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={2}
+                placeholder="一句话介绍"
+              />
+            </Field>
+            <Field label="详细介绍">
+              <Textarea
+                value={form.long_description}
+                onChange={(e) => setForm({ ...form, long_description: e.target.value })}
+                rows={5}
+                placeholder="详细介绍（支持 Markdown）"
+              />
+            </Field>
+            <Field label="技术栈" hint="逗号分隔">
+              <Input
+                value={form.techStackText}
+                onChange={(e) => setForm({ ...form, techStackText: e.target.value })}
+                placeholder="Next.js, Prisma, Tailwind"
+              />
+            </Field>
+          </Card>
+
+          <Card className={EDITOR_SECTION}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-base font-semibold text-admin-ink">项目截图</h2>
+                <p className="text-xs text-admin-ink-5">支持批量上传，上传顺序即展示顺序</p>
+              </div>
+            </div>
+            <ImageUploader
+              mode="multi"
+              value={form.images}
+              onChange={(images) => setForm({ ...form, images })}
+              category="projects"
+              folder={effectiveId ? String(effectiveId) : undefined}
+              folderResolver={ensureProject}
+            />
+          </Card>
         </div>
 
         <div className="space-y-4">
-          <Sheet>
-            <SheetHeader title="封面图" />
-            <Section>
+          <Card className={EDITOR_SECTION}>
+            <Field label="封面图">
               <ImageUploader
                 mode="single"
                 value={form.cover_image}
@@ -242,46 +238,41 @@ export default function ProjectEditor({ projectId }: { projectId?: string }) {
                 folder={effectiveId ? String(effectiveId) : undefined}
                 folderResolver={ensureProject}
               />
-            </Section>
-          </Sheet>
-          <Sheet>
-            <SheetHeader title="发布设置" />
-            <Section>
-              <div className="space-y-4">
-                <Field label="状态" hint="仅「已发布」会在前台展示">
-                  <Select
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm({ ...form, status: e.target.value as ProjectStatus })
-                    }
-                  >
-                    <option value="published">已发布</option>
-                    <option value="draft">隐藏</option>
-                  </Select>
-                </Field>
-                <Field label="状态标签" hint="如：开发中 / 稳定运行">
-                  <Input
-                    value={form.status_label}
-                    onChange={(e) =>
-                      setForm({ ...form, status_label: e.target.value })
-                    }
-                    placeholder="稳定运行"
-                  />
-                </Field>
-                <label className="flex cursor-pointer items-center gap-2 text-[13px] text-admin-ink-2">
-                  <input
-                    type="checkbox"
-                    checked={form.is_featured}
-                    onChange={(e) =>
-                      setForm({ ...form, is_featured: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border-admin-border-control accent-admin-accent"
-                  />
-                  精选项目
-                </label>
-              </div>
-            </Section>
-          </Sheet>
+            </Field>
+          </Card>
+          <Card className={EDITOR_SECTION}>
+            <Field label="状态" hint="仅「已发布」会在前台展示">
+              <Select
+                value={form.status}
+                onChange={(e) =>
+                  setForm({ ...form, status: e.target.value as ProjectStatus })
+                }
+              >
+                <option value="published">已发布</option>
+                <option value="draft">隐藏</option>
+              </Select>
+            </Field>
+            <Field label="状态标签" hint="如：开发中 / 稳定运行">
+              <Input
+                value={form.status_label}
+                onChange={(e) => setForm({ ...form, status_label: e.target.value })}
+                placeholder="稳定运行"
+              />
+            </Field>
+            <div className="flex items-end pb-1">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-admin-ink-2">
+                <input
+                  type="checkbox"
+                  checked={form.is_featured}
+                  onChange={(e) =>
+                    setForm({ ...form, is_featured: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-admin-border-control accent-admin-accent"
+                />
+                精选项目
+              </label>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

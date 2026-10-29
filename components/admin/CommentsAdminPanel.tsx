@@ -16,6 +16,7 @@ import {
 } from "@/app/actions/comments";
 import {
   Button,
+  Card,
   EmptyState,
   Loading,
   Select,
@@ -112,8 +113,8 @@ function CommentRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 px-4 py-3 hover:bg-admin-row-hover",
-        comment._depth ? "border-l-2 border-admin-accent-ring" : ""
+        "flex items-start gap-3 rounded-[9px] bg-admin-surface-muted p-3",
+        comment._depth ? "bg-admin-surface border border-admin-border-soft" : ""
       )}
       style={{ marginLeft: (comment._depth ?? 0) * 24 }}
     >
@@ -243,8 +244,7 @@ export default function CommentsAdminPanel({
 
   return (
     <>
-      <>
-      <div className={FILTER_BAR}>
+      <Card className={FILTER_BAR}>
         <Select
           value={status}
           onChange={(e) => {
@@ -277,9 +277,9 @@ export default function CommentsAdminPanel({
             下一页
           </Button>
         </div>
-      </div>
+      </Card>
 
-      <div className="divide-y divide-admin-border-soft">
+      <Card className="space-y-3 p-4">
         {loading && !data ? (
           <Loading />
         ) : comments.length === 0 ? (
@@ -290,7 +290,7 @@ export default function CommentsAdminPanel({
             const isExpanded = expanded.has(comment.id);
             return (
               <div key={comment.id} className="space-y-2">
-                <div className="flex items-start gap-3 border-b border-admin-border-soft px-4 py-3 last:border-b-0">
+                <div className="flex items-start gap-3 rounded-[9px] border border-admin-border-soft bg-admin-surface p-3">
                   <UserCell comment={comment} />
                   <div className="min-w-0 flex-1">
                     {showOwner && ownerTitle(comment, kind) && (
@@ -368,8 +368,7 @@ export default function CommentsAdminPanel({
             );
           })
         )}
-      </div>
-      </>
+      </Card>
 
       {confirmElement}
     </>

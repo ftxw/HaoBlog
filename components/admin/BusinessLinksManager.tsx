@@ -16,6 +16,7 @@ import type {
 } from "@/app/lib/mutations/business-links";
 import {
   Button,
+  Card,
   EmptyState,
   Field,
   Input,
@@ -71,13 +72,13 @@ function SortableLinkCard({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex cursor-grab items-center gap-3 border-b border-admin-border-soft px-4 py-2.5 last:border-b-0 hover:bg-admin-row-hover active:cursor-grabbing",
+        "flex cursor-grab items-center gap-3 rounded-[9px] border border-admin-border-soft bg-admin-surface p-3 active:cursor-grabbing",
         isDragging && "z-10 opacity-60 shadow-lg"
       )}
       {...attributes}
       {...listeners}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-admin-neutral text-sm text-admin-ink-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-admin-neutral text-sm text-admin-ink-4">
         {link.icon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={link.icon} alt="" className="h-6 w-6 rounded" />
@@ -242,8 +243,8 @@ export default function BusinessLinksManager() {
 
   return (
     <>
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-xs text-admin-ink-4">拖拽可调整显示顺序</p>
+      <Card className="p-4">
+        <div className="mb-3 flex justify-end">
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             添加链接
@@ -264,7 +265,7 @@ export default function BusinessLinksManager() {
             onDragCancel={handleDragCancel}
           >
             <SortableContext items={sortIds} strategy={strategy}>
-              <div className="-mx-4">
+              <div className="space-y-2">
                 {links.map((link) => (
                   <SortableLinkCard
                     key={link.id}
@@ -278,6 +279,7 @@ export default function BusinessLinksManager() {
             </SortableContext>
           </DndContext>
         )}
+      </Card>
 
       <Modal
         open={modalOpen}

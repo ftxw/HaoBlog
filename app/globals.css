@@ -174,130 +174,65 @@ html:has(.theme-light) {
 }
 
 @theme static {
-  /*
-    后台视觉体系：单层纸面（Single Sheet）
-    ------------------------------------------------------------
-    全站只有三层：画布(chrome) / 配色区分开的侧栏 / 一块主纸面(sheet)。
-    纸面内部一律用「分隔线 + 标题行」分区，禁止再出现 tile 卡片嵌套。
-    中性色偏冷灰（slate 家族）以与强调色同一色相，避免灰黄混杂。
-  */
-  --color-admin-canvas: #f7f8fa;
-  --color-admin-chrome: #fbfbfc;
+  /* 中性色板对齐逸刻设计规范：画布 #F6F6F8 / 卡片纯白 / 填充用画布灰 */
+  --color-admin-canvas: #f6f6f8;
   --color-admin-surface: #ffffff;
-  --color-admin-surface-muted: #f5f6f8;
-  --color-admin-neutral: #f2f3f5;
-  --color-admin-row-hover: #f6f7f9;
-  --color-admin-neutral-strong: #e8eaee;
-  --color-admin-overlay: rgb(255 255 255 / 0.94);
-  --color-admin-scrim: rgb(15 23 42 / 0.48);
+  --color-admin-surface-muted: #f6f6f8;
+  --color-admin-neutral: #f6f6f8;
+  --color-admin-row-hover: rgb(246 246 248 / 0.85);
+  --color-admin-neutral-strong: #ebebed;
+  --color-admin-overlay: rgb(255 255 255 / 0.92);
+  --color-admin-scrim: rgb(30 32 37 / 0.55);
 
-  /* 侧栏：与主纸面同底色，仅靠右分隔线切分，不再用色块堆叠 */
-  --color-admin-sidebar: #fbfbfc;
-  --color-admin-sidebar-hover: #f1f2f5;
-  --color-admin-sidebar-ink: #0f172a;
-  --color-admin-sidebar-ink-2: #475569;
-  --color-admin-sidebar-divider: #ebecef;
-  --color-admin-sidebar-active: #2f53d9;
+  /* 侧边栏无底色：直接落在画布上 */
+  --color-admin-sidebar: #f6f6f8;
+  --color-admin-sidebar-hover: #ececef;
+  --color-admin-sidebar-ink: #1e2025;
+  --color-admin-sidebar-ink-2: #3a3c40;
+  --color-admin-sidebar-divider: #ededee;
+  --color-admin-sidebar-active: #3758e4;
   --color-admin-sidebar-active-ink: #ffffff;
 
-  --color-admin-border: #e7e9ed;
-  --color-admin-border-soft: #f0f1f4;
-  --color-admin-border-control: #d9dce2;
+  --color-admin-border: #ededee;
+  --color-admin-border-soft: #f2f2f4;
+  --color-admin-border-control: #dcdcdf;
 
-  --color-admin-ink: #0f172a;
-  --color-admin-ink-2: #334155;
-  --color-admin-ink-3: #52606f;
-  --color-admin-ink-4: #7b8794;
-  --color-admin-ink-5: #a3adb9;
-  --color-admin-ink-none: #c2cad3;
+  --color-admin-ink: #1e2025;
+  --color-admin-ink-2: #3a3c40;
+  --color-admin-ink-3: #5d5e61;
+  --color-admin-ink-4: #949497;
+  --color-admin-ink-5: #b1b2b5;
+  --color-admin-ink-none: #c9c9cc;
 
-  --color-admin-accent: #2f53d9;
-  --color-admin-accent-hover: #2746bd;
+  --color-admin-accent: #3758e4;
+  --color-admin-accent-hover: #2f4ccd;
   --color-admin-accent-ink: #ffffff;
-  --color-admin-accent-soft: #eef2fe;
-  --color-admin-accent-soft-ink: #2f53d9;
-  --color-admin-accent-border: #9fb0ef;
-  --color-admin-accent-ring: #c7d2f9;
+  --color-admin-accent-soft: #eff2fd;
+  --color-admin-accent-soft-ink: #3758e4;
+  --color-admin-accent-border: #a8b6f0;
+  --color-admin-accent-ring: #c3ccf7;
 
-  --color-admin-fill: #f2f3f5;
-  --color-admin-chip: #eff0f3;
+  /* 次级填充：逸刻 bgColor3（搜索框，参考图实测 #f0f0f1）与 gray1（标签 chip / 次级按钮） */
+  --color-admin-fill: #f0f0f1;
+  --color-admin-chip: #ededee;
 
-  --color-admin-danger: #dc3b3b;
-  --color-admin-danger-hover: #bf3131;
-  --color-admin-danger-soft: #fdeeee;
+  /* 功能色：对齐逸刻 UI 组件库 basis.less 的 ecolor / scolor / wcolor */
+  --color-admin-danger: #fa5247;
+  --color-admin-danger-hover: #df4d43;
+  --color-admin-danger-soft: #feeeed;
 
-  --color-admin-success: #159f86;
-  --color-admin-success-strong: #0e7f6b;
-  --color-admin-success-soft: #eaf8f5;
+  --color-admin-success: #1fb4a2;
+  --color-admin-success-strong: #178e7f;
+  --color-admin-success-soft: #edf9f8;
 
-  --color-admin-warning: #d98b00;
-  --color-admin-warning-strong: #a86a00;
-  --color-admin-warning-soft: #fdf5e6;
+  --color-admin-warning: #ffaa1a;
+  --color-admin-warning-strong: #c07a00;
+  --color-admin-warning-soft: #fff8ed;
 
-  /* 版式令牌：纸面圆角 / 行圆角 / 统一节奏 */
-  --radius-admin-sheet: 14px;
-  --radius-admin-row: 8px;
-}
-
-/*
-  后台版式基元
-  ------------------------------------------------------------
-  .admin-sheet      页面唯一容器。一屏一个，不再嵌套。
-  .admin-sheet-head 纸面标题区：标题 + 说明 + 右侧操作，底部分隔线。
-  .admin-sheet-body 纸面主体：无内边距，由行/分组自行控制。
-  .admin-row        纸面内的一行：靠分隔线切分，无边框无圆角无阴影。
-  .admin-section    纸面内的纵向分区：标题 + 内容，靠分隔线切分。
-  规则：任何容器都不允许同时出现 bg + border + rounded + shadow。
-*/
-@layer components {
-  .admin-sheet {
-    border-radius: var(--radius-admin-sheet);
-    background-color: var(--color-admin-surface);
-    border: 1px solid var(--color-admin-border);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
-  }
-
-  .admin-sheet-flush {
-    border-radius: var(--radius-admin-sheet);
-    background-color: var(--color-admin-surface);
-    border: 1px solid var(--color-admin-border);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
-    overflow: hidden;
-  }
-
-  .admin-sheet-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    border-bottom: 1px solid var(--color-admin-border-soft);
-  }
-
-  .admin-section {
-    padding: 1.25rem;
-    border-bottom: 1px solid var(--color-admin-border-soft);
-  }
-
-  .admin-section:last-child {
-    border-bottom: 0;
-  }
-
-  .admin-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    border-bottom: 1px solid var(--color-admin-border-soft);
-  }
-
-  .admin-row:last-child {
-    border-bottom: 0;
-  }
-
-  .admin-row:hover {
-    background-color: var(--color-admin-row-hover);
-  }
+  /* 圆角阶梯：卡片 12 / 控件 9 / 小块 6，全站只用这三档 */
+  --radius-admin-card: 12px;
+  --radius-admin-control: 9px;
+  --radius-admin-chip: 6px;
 }
 
 @layer base {

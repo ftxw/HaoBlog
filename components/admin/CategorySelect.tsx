@@ -118,7 +118,7 @@ export default function CategorySelect({
             aria-hidden
             className="absolute -top-1.5 left-1/2 -ml-2 h-0 w-0 border-x-8 border-b-[6px] border-x-transparent border-b-admin-surface"
           />
-          <div className="min-w-[105px] rounded-md border border-admin-border bg-admin-surface px-4 py-1.5 shadow-lg shadow-slate-900/5">
+          <div className="min-w-[105px] rounded-[12px] bg-admin-surface px-4 py-1.5 shadow-[0_6px_18px_rgba(30,32,37,0.12)]">
             {creating ? (
               <div className="flex h-7 items-center">
                 <input

@@ -110,7 +110,7 @@ export default function ImageUploader({
           <div
             key={url}
             className={cn(
-              "group relative overflow-hidden rounded-lg bg-admin-surface-muted",
+              "group relative overflow-hidden rounded-[9px] bg-admin-surface-muted",
               height,
               mode === "single"
                 ? (boxSize ?? (square ? "w-28" : "w-full"))
@@ -144,7 +144,7 @@ export default function ImageUploader({
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
             className={cn(
-              "flex shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-admin-surface-muted text-admin-ink-4 transition-colors hover:bg-admin-neutral-strong hover:text-admin-accent cursor-pointer",
+              "flex shrink-0 flex-col items-center justify-center gap-1 rounded-[9px] bg-admin-surface-muted text-admin-ink-4 transition-colors hover:bg-admin-neutral-strong hover:text-admin-accent cursor-pointer",
               height,
               mode === "single"
                 ? (boxSize ?? (square ? "w-28" : "w-full"))

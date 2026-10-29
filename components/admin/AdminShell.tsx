@@ -15,7 +15,6 @@ import {
   Menu,
   X,
   Home,
-  ExternalLink,
 } from "lucide-react";
 import { logoutSession } from "@/components/admin/lib";
 import { cn } from "@/components/admin/ui";
@@ -45,11 +44,14 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   },
 ];
 
-const OVERVIEW: NavItem = {
-  href: "/admin",
-  label: "总览",
-  icon: LayoutDashboard,
-};
+const OVERVIEW: NavItem = { href: "/admin", label: "总览", icon: LayoutDashboard };
+
+/** 侧栏项底色/选中色与 Segmented、CapsuleFilter 共用同一套语言 */
+const ITEM_BASE =
+  "flex h-9 items-center gap-2.5 rounded-[9px] px-3 text-sm transition-colors";
+const ITEM_ACTIVE = "bg-admin-accent font-medium text-white";
+const ITEM_IDLE =
+  "text-admin-sidebar-ink-2 hover:bg-admin-sidebar-hover hover:text-admin-ink";
 
 export default function AdminShell({
   authorName,
@@ -88,51 +90,36 @@ export default function AdminShell({
         href={item.href}
         onClick={() => setSidebarOpen(false)}
         aria-current={active ? "page" : undefined}
-        className={cn(
-          "group relative flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors",
-          active
-            ? "bg-admin-neutral font-medium text-admin-ink"
-            : "text-admin-ink-3 hover:bg-admin-sidebar-hover hover:text-admin-ink"
-        )}
+        className={cn(ITEM_BASE, active ? ITEM_ACTIVE : ITEM_IDLE)}
       >
-        {active && (
-          <span className="absolute -left-2.5 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full bg-admin-accent" />
-        )}
-        <Icon
-          className={cn(
-            "h-4 w-4 shrink-0",
-            active ? "text-admin-accent" : "text-admin-ink-4 group-hover:text-admin-ink-3"
-          )}
-        />
+        <Icon className="h-4 w-4 shrink-0" />
         {item.label}
       </Link>
     );
   };
 
-  /** 侧栏：与纸面同底，只用一条右分隔线切分，无卡片、无色块 */
   const nav = (
     <div className="flex h-full flex-col">
       <div className="space-y-4">
         {navItem(OVERVIEW)}
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-admin-ink-5">
+            <p className="mb-1.5 px-3 text-xs font-medium text-admin-ink-4">
               {group.label}
             </p>
-            <div className="space-y-0.5">{group.items.map(navItem)}</div>
+            <div className="space-y-1">{group.items.map(navItem)}</div>
           </div>
         ))}
       </div>
-
-      <div className="mt-auto space-y-0.5 border-t border-admin-sidebar-divider pt-3">
+      <div className="mt-auto border-t border-admin-sidebar-divider pt-3">
         <Link
           prefetch={false}
           href="/"
           target="_blank"
-          className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] text-admin-ink-3 transition-colors hover:bg-admin-sidebar-hover hover:text-admin-ink"
+          className={cn(ITEM_BASE, ITEM_IDLE)}
         >
-          <ExternalLink className="h-4 w-4 shrink-0 text-admin-ink-4" />
-          查看站点
+          <Home className="h-4 w-4 shrink-0" />
+          回到前台
         </Link>
       </div>
     </div>
@@ -140,93 +127,86 @@ export default function AdminShell({
 
   return (
     <div className="theme-light flex min-h-screen flex-col bg-admin-canvas">
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col">
-        {/* 顶栏：与画布同底色，只留底部分隔线，避免与纸面抢层次 */}
-        <header className="sticky top-0 z-30 shrink-0 bg-admin-canvas/85 backdrop-blur-md">
-          <div className="flex h-14 items-center justify-between gap-3 border-b border-admin-sidebar-divider px-4 lg:px-6">
-            <div className="flex min-w-0 items-center gap-2">
-              <button
-                type="button"
-                className="cursor-pointer rounded-md p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink lg:hidden"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="打开菜单"
-              >
-                <Menu className="h-4.5 w-4.5" />
-              </button>
-              <Link href="/admin" className="flex min-w-0 items-center gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-admin-accent text-[11px] font-bold text-admin-accent-ink">
-                  管
-                </span>
-                <span className="truncate text-[13px] font-semibold text-admin-ink">
-                  博客后台
-                </span>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Link
-                prefetch={false}
-                href="/"
-                target="_blank"
-                title="查看站点"
-                aria-label="查看站点"
-                className="hidden rounded-md p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink sm:block"
-              >
-                <Home className="h-4 w-4" />
-              </Link>
-              {authorName && (
-                <span
-                  title={authorName}
-                  className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-full border border-admin-border bg-admin-surface text-[11px] font-medium text-admin-ink-2 sm:flex"
-                >
-                  {authorName.slice(0, 1)}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="ml-1 inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[13px] text-admin-ink-3 transition-colors hover:bg-admin-neutral hover:text-admin-ink"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                退出
-              </button>
-            </div>
+      <header className="sticky top-0 z-30 shrink-0 border-b border-admin-border bg-admin-surface">
+        <div className="mx-auto flex h-[60px] w-full max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <button
+              type="button"
+              className="cursor-pointer rounded-[9px] p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="打开菜单"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href="/admin" className="flex min-w-0 items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-admin-accent text-sm font-bold text-admin-accent-ink">
+                管
+              </span>
+              <span className="truncate text-[15px] font-bold text-admin-ink">
+                博客后台
+              </span>
+            </Link>
           </div>
-        </header>
 
-        {/* 移动端抽屉 */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div
-              className="absolute inset-0 bg-admin-scrim"
-              onClick={() => setSidebarOpen(false)}
-              aria-hidden="true"
-            />
-            <aside className="absolute inset-y-0 left-0 flex w-60 flex-col border-r border-admin-sidebar-divider bg-admin-sidebar px-3 py-3">
-              <div className="mb-3 flex justify-end">
-                <button
-                  type="button"
-                  className="cursor-pointer rounded-md p-1 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink"
-                  onClick={() => setSidebarOpen(false)}
-                  aria-label="关闭菜单"
-                >
-                  <X className="h-4.5 w-4.5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">{nav}</div>
-            </aside>
+          <div className="flex items-center gap-2">
+            <Link
+              prefetch={false}
+              href="/"
+              target="_blank"
+              title="回到前台"
+              aria-label="回到前台"
+              className="hidden rounded-[9px] p-1.5 text-admin-ink-4 transition-colors hover:bg-admin-neutral hover:text-admin-ink sm:block"
+            >
+              <Home className="h-4 w-4" />
+            </Link>
+            {authorName && (
+              <span
+                title={authorName}
+                className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-accent-soft text-xs font-semibold text-admin-accent-soft-ink sm:flex"
+              >
+                {authorName.slice(0, 1)}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-[9px] bg-admin-accent px-4 text-sm font-medium text-white transition-colors hover:bg-admin-accent-hover"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              退出
+            </button>
           </div>
-        )}
-
-        <div className="flex min-w-0 flex-1">
-          <aside className="hidden w-52 shrink-0 border-r border-admin-sidebar-divider lg:block">
-            <div className="sticky top-14 flex h-[calc(100dvh-3.5rem)] flex-col px-3 py-4">
-              {nav}
-            </div>
-          </aside>
-
-          <main className="min-w-0 flex-1 px-4 pb-16 pt-6 lg:px-6">{children}</main>
         </div>
+      </header>
+
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-admin-scrim"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 flex w-60 flex-col overflow-y-auto bg-admin-canvas px-3 py-4">
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                className="cursor-pointer rounded-[9px] p-1 text-admin-ink-4 transition-colors hover:bg-admin-sidebar-hover"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="关闭菜单"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {nav}
+          </aside>
+        </div>
+      )}
+
+      <div className="mx-auto grid w-full min-w-0 max-w-[1440px] flex-1 grid-cols-1 lg:grid-cols-[12rem_minmax(0,1fr)]">
+        <aside className="hidden lg:block">
+          <div className="sticky top-[60px] px-5 py-4 lg:pt-8 lg:pb-6">{nav}</div>
+        </aside>
+
+        <main className="min-w-0 px-4 py-6 lg:px-6 lg:pt-8 lg:pb-6">{children}</main>
       </div>
     </div>
   );

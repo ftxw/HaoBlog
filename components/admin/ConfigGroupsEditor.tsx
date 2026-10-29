@@ -8,11 +8,9 @@ import { runAction, useApi } from "@/components/admin/lib";
 import { saveSiteConfigAction } from "@/app/actions/site-config";
 import {
   Button,
-  Sheet,
-  SheetHeader,
-  AnchorNav,
-  EmptyState,
+  Card,
   Loading,
+  AnchorNav,
   PageHeader,
   Input,
   Textarea,
@@ -167,7 +165,7 @@ export default function ConfigGroupsEditor({
           <select
             value={value}
             onChange={(e) => setValues({ ...values, [def.key]: e.target.value })}
-            className="w-full rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm text-admin-ink-2 outline-none focus:border-admin-accent-ring"
+            className="w-full rounded-[9px] border border-admin-border bg-admin-surface px-3 py-2 text-sm text-admin-ink-2 outline-none focus:border-admin-accent-ring"
           >
             {(def.options ?? []).map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -251,104 +249,98 @@ export default function ConfigGroupsEditor({
       />
 
       {loading ? (
-        <Sheet>
+        <Card>
           <Loading />
-        </Sheet>
+        </Card>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
-          {/* 左侧分组导航：一张纸面，仅列表，不再包一层内边距容器 */}
-          <Sheet>
-            <SheetHeader title="设置分组" />
-            <div className="p-1.5">
-              <AnchorNav
+        <div className="grid gap-4 lg:grid-cols-4">
+          <Card className="h-fit p-2 lg:col-span-1">
+            <AnchorNav
                 items={groups.map((g) => ({ id: g.id, label: g.label }))}
                 activeId={activeGroup}
                 onSelect={setActiveGroup}
-              />
-            </div>
-          </Sheet>
+            />
+          </Card>
 
-          <Sheet>
+          <Card className="p-6 lg:col-span-3">
             {activeGroup === "business-links" ? (
-              <>
-                <SheetHeader
-                  title="业务链接"
-                  description="管理前台左下角悬浮按钮展示的链接"
-                />
-                <div className="p-4">
-                  <BusinessLinksManager />
-                </div>
-              </>
+              <BusinessLinksManager />
             ) : (
               <>
-                <SheetHeader
-                  title={groups.find((g) => g.id === activeGroup)?.label ?? "设置"}
-                  description={groups.find((g) => g.id === activeGroup)?.description}
-                  actions={
-                    <Button onClick={handleSave} loading={saving}>
-                      <Save className="h-3.5 w-3.5" />
-                      保存
-                    </Button>
-                  }
-                />
+                {(() => {
+                  const group = groups.find((g) => g.id === activeGroup);
+                  return (
+                    <div className="mb-4">
+                      <h2 className="text-base font-semibold text-admin-ink">
+                        {group?.label ?? ""}
+                      </h2>
+                      {group?.description && (
+                        <p className="mt-0.5 text-sm text-admin-ink-4">{group.description}</p>
+                      )}
+                    </div>
+                  );
+                })()}
 
-                <div className="divide-y divide-admin-border-soft">
+                <div className="space-y-5">
                   {(() => {
                     const NAV_ROW_KEYS = ["navTitle", "navSuffix", "navAfter"];
-                    const navKeys = groupDefs.filter((d) => NAV_ROW_KEYS.includes(d.key));
+                    const navRow = groupDefs.filter((d) => NAV_ROW_KEYS.includes(d.key));
                     return groupDefs.map((def) => {
                       if (def.key === "navTitle") {
                         return (
-                          <div key="nav-row" className="px-5 py-4">
-                            <div className="mb-1.5 flex items-baseline gap-2">
-                              <span className="text-[13px] font-medium text-admin-ink-2">
-                                导航标题
-                              </span>
-                              <span className="text-xs text-admin-ink-4">
-                                三段文字拼接为 Logo
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                              {navKeys.map((nd) => (
-                                <div key={nd.key} className="min-w-0">
-                                  <label className="mb-1 block text-xs text-admin-ink-4">
+                          <div key="nav-row" className="space-y-1.5">
+                            <div className="grid grid-cols-3 gap-4 items-end">
+                              {navRow.map((nd) => (
+                                <div key={nd.key} className="space-y-1.5 min-w-0">
+                                  <label className="block text-sm font-medium text-admin-ink-2">
                                     {nd.label}
+                                    <span className="ml-1.5 font-mono text-xs font-normal text-admin-ink-5">
+                                      {nd.key}
+                                    </span>
                                   </label>
                                   {renderField(nd)}
                                 </div>
                               ))}
                             </div>
+                            <p className="text-xs text-admin-ink-5">
+                              {navRow.map((nd) => nd.description).join("；")}
+                            </p>
                           </div>
                         );
                       }
                       if (NAV_ROW_KEYS.includes(def.key)) return null;
                       return (
-                        <div
-                          key={def.key}
-                          className="grid gap-1 px-5 py-3.5 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-6"
-                        >
-                          <div className="min-w-0 pt-1.5">
-                            <label className="block text-[13px] font-medium text-admin-ink-2">
-                              {def.label}
-                            </label>
-                            {def.description && (
-                              <p className="mt-0.5 text-xs leading-relaxed text-admin-ink-4">
-                                {def.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="min-w-0">{renderField(def)}</div>
+                        <div key={def.key} className="space-y-1.5">
+                          <label className="block text-sm font-medium text-admin-ink-2">
+                            {def.label}
+                            <span className="ml-1.5 font-mono text-xs font-normal text-admin-ink-5">
+                              {def.key}
+                            </span>
+                          </label>
+                          {renderField(def)}
+                          {def.description && (
+                            <p className="text-xs text-admin-ink-5">{def.description}</p>
+                          )}
                         </div>
                       );
                     });
                   })()}
                   {groupDefs.length === 0 && (
-                    <EmptyState text="该分组暂无配置项" />
+                    <p className="py-8 text-center text-sm text-admin-ink-5">
+                      该分组暂无配置项
+                    </p>
                   )}
+                </div>
+
+                <div className="mt-6 flex justify-end border-t border-admin-border-soft pt-4">
+                  <Button onClick={handleSave} loading={saving}>
+                    <Save className="h-4 w-4" />
+                    保存当前分组
+                  </Button>
                 </div>
               </>
             )}
-          </Sheet>
+          </Card>
         </div>
       )}
     </>
