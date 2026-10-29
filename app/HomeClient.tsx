@@ -21,6 +21,46 @@ const SiteDashboard = dynamic(() => import("@/components/widgets/SiteDashboard")
 
 let didInitialReset = false;
 
+/**
+ * 播放器骨架：与 CloudPlayer 三种状态共用同一外壳（同高度 / 圆角 / glass 底色）。
+ *
+ * 只替换内部结构、不动外壳尺寸，所以「骨架 → 真实卡片」不会引起任何布局位移。
+ * 内部用与真实内容相同的栅格（封面 56/80 + 右侧两行文字 + 底部一行），
+ * 因此连文字的落位都是稳的，不会出现「空块突然长出内容」的跳动。
+ */
+function CloudPlayerSkeleton() {
+  return (
+    <div className="glass relative flex h-full min-h-[220px] w-full flex-col justify-between overflow-hidden rounded-card p-4 md:h-[300px] md:p-6">
+      <div>
+        <div className="mt-1 mb-3 flex items-center gap-3 md:mt-2 md:mb-6 md:gap-5">
+          <div className="h-14 w-14 shrink-0 animate-pulse rounded-full bg-surface-strong md:h-20 md:w-20" />
+          <div className="w-full space-y-2">
+            <div className="h-4 w-24 animate-pulse rounded bg-surface-strong" />
+            <div className="h-5 w-3/4 animate-pulse rounded bg-surface-strong" />
+            <div className="h-3 w-1/2 animate-pulse rounded bg-surface-strong" />
+          </div>
+        </div>
+        <div className="h-5 w-2/3 animate-pulse rounded bg-surface-strong" />
+      </div>
+      <div className="h-1.5 w-full animate-pulse rounded-pill bg-surface-strong" />
+    </div>
+  );
+}
+
+/** 歌词条骨架：与 LyricBar 外壳同高（56 / 80），内部按左右两段栅格占位。 */
+function LyricBarSkeleton() {
+  return (
+    <div className="glass flex h-14 w-full items-center justify-between rounded-card p-3 md:h-20 md:p-5">
+      <div className="flex h-8 w-10 items-end justify-center gap-[4px] md:w-16">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span key={i} className="h-1 w-1.5 animate-pulse rounded-t-sm bg-surface-strong" />
+        ))}
+      </div>
+      <div className="mx-3 h-4 flex-1 animate-pulse rounded bg-surface-strong md:mx-8" />
+    </div>
+  );
+}
+
 export interface SearchPost {
   id: string;
   title: string;
@@ -62,13 +102,22 @@ export default function HomeClient({
 }) {
   const photoWallHasCover = !!photoWall.cover;
 
-  // 播放器与歌词条都在首屏之下、且非关键 —— 水合前不渲染，
+  // 播放器与歌词条在首屏之下、且非关键：水合前不渲染，
   // 让它们的 chunk 不进入首屏的预取范围（Lighthouse「减少未使用的 JavaScript」）。
-  // 用 rAF 而非直接 setState：避免在 effect 体内同步 setState 造成的级联渲染。
+  //
+  // 骨架（SSR 直接输出）与真实卡片共用完全相同的外壳：同高度、同圆角、同 glass 底。
+  // 因此替换时不产生布局位移，也不会出现「先空一帧再出现」的闪烁。
   const [showPlayer, setShowPlayer] = useState(false);
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setShowPlayer(true));
-    return () => cancelAnimationFrame(raf);
+    // 等待一帧再由浏览器执行后续绘制：让骨架先稳定绘制，避免同一帧内替换引发重排。
+    let raf = 0;
+    const id = window.setTimeout(() => {
+      raf = requestAnimationFrame(() => setShowPlayer(true));
+    }, 0);
+    return () => {
+      window.clearTimeout(id);
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -131,7 +180,7 @@ export default function HomeClient({
         .reveal-in 在元素首次绘制时即开始播放，不需要 JS，也不阻塞 LCP。
         见 reports/pagespeed-audit.html 的 P1 条目。
       */}
-      <div className="reveal-in" style={{ "--reveal-y": "-1.25rem" } as CSSProperties}>
+      <div className="reveal-in">
         <SearchBar posts={searchPosts} />
       </div>
 
@@ -144,8 +193,12 @@ export default function HomeClient({
             className="reveal-in col-span-1 flex flex-col lg:col-span-5"
             style={{ "--reveal-delay": "80ms" } as CSSProperties}
           >
-            {/* 水合前留同高占位，避免内容落下时布局跳动（CLS） */}
-            {showPlayer ? <CloudPlayer /> : <div className="glass h-full min-h-[280px] rounded-card" aria-hidden="true" />}
+            {/* 骨架与 CloudPlayer 外壳完全一致：同高度/圆角/底色，替换时无位移 */}
+            {showPlayer ? (
+              <CloudPlayer />
+            ) : (
+              <CloudPlayerSkeleton />
+            )}
           </div>
         </div>
 
@@ -153,7 +206,7 @@ export default function HomeClient({
           className="reveal-in w-full"
           style={{ "--reveal-delay": "140ms" } as CSSProperties}
         >
-          {showPlayer ? <LyricBar /> : <div className="h-14 rounded-pill" aria-hidden="true" />}
+          {showPlayer ? <LyricBar /> : <LyricBarSkeleton />}
         </div>
 
         <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">

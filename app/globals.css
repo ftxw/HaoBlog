@@ -567,14 +567,17 @@ html:has(.theme-light) {
     animation-delay: var(--reveal-delay, 0ms);
   }
 
+  /*
+    首屏只做透明度淡入，**不做位移**：
+    位移会让内容在水合后仍有一次整体平移，观感上就是「闪一下」。
+    需要位移的场景请改用 [data-reveal]（滚动到视口才播，不会落在首屏）。
+  */
   @keyframes reveal-in {
     from {
       opacity: 0.001;
-      transform: translateY(var(--reveal-y, 1rem));
     }
     to {
       opacity: 1;
-      transform: none;
     }
   }
 

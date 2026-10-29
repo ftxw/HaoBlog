@@ -22,7 +22,7 @@ export default function CloudPlayer() {
 
   if (isLoading) {
     return (
-      <div className="glass h-full w-full rounded-card p-6 flex items-center justify-center min-h-[220px] md:min-h-[300px]">
+      <div className="glass flex h-full min-h-[220px] w-full items-center justify-center rounded-card p-6 md:h-[300px]">
         <div className="text-sm text-ink-4 animate-pulse">加载音乐中...</div>
       </div>
     );
@@ -33,7 +33,7 @@ export default function CloudPlayer() {
       <button
         type="button"
         onClick={() => router.push("/music")}
-        className="glass h-full w-full appearance-none rounded-card p-6 flex flex-col items-center justify-center gap-4 min-h-[220px] md:min-h-[300px] cursor-pointer transition-all duration-700 hover:scale-[1.02] group"
+        className="glass group flex h-full min-h-[220px] w-full cursor-pointer appearance-none flex-col items-center justify-center gap-4 rounded-card p-6 transition-all duration-700 hover:scale-[1.02] md:h-[300px]"
       >
         <svg className="w-10 h-10 text-accent opacity-60" viewBox="0 0 24 24" fill="currentColor">
           <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5 3.871 3.871 0 01-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5 3.871 3.871 0 01-2.748-1.179z" />
@@ -89,7 +89,7 @@ export default function CloudPlayer() {
             router.push("/music");
           }
         }}
-        className="glass h-full w-full rounded-card p-4 md:p-6 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] relative group overflow-hidden cursor-pointer min-h-[220px] md:min-h-[300px]"
+        className="glass group relative flex h-full min-h-[220px] w-full cursor-pointer flex-col justify-between overflow-hidden rounded-card p-4 transition-all duration-700 hover:scale-[1.02] md:h-[300px] md:p-6"
       >
         <div className={`absolute -top-20 -right-20 w-48 h-48 bg-accent/20 blur-[50px] rounded-full transition-opacity duration-1000 ${isPlaying ? "opacity-100" : "opacity-30"}`} />
 

@@ -51,6 +51,7 @@ export default function LatestChatterCarousel({ chatters }: { chatters: Carousel
                 <SafeImage
                   src={thumbUrlOf(chatter.cover)}
                   fill
+                  priority
                   sizes={COVER_SIZES}
                   alt={chatter.title || 'Chatter Cover'}
                   className="object-cover opacity-80 transition-transform duration-1000 group-hover:scale-105"

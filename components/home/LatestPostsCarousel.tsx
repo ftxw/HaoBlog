@@ -53,7 +53,10 @@ export default function LatestPostsCarousel({ posts }: { posts: CarouselPost[] }
                 <SafeImage
                   src={thumbUrlOf(post.cover)}
                   fill
-                  priority={i === 0}
+                  /* 5 张同卡叠放、都是首屏候选：全部立即加载。
+                     只给第 0 张 priority 时，其余 4 张在水合后才陆续到位，
+                     卡片会经历「单图 → 图补齐」的视觉突变。 */
+                  priority
                   sizes={COVER_SIZES}
                   alt={post.title}
                   className="object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
