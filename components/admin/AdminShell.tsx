@@ -11,6 +11,7 @@ import {
   Images,
   Bookmark,
   Settings,
+  SlidersHorizontal,
   LogOut,
   Menu,
   X,
@@ -40,6 +41,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { href: "/admin/files", label: "媒体库", icon: FolderOpen },
       { href: "/admin/settings", label: "信息设置", icon: Settings },
+      { href: "/admin/system-settings", label: "站点设置", icon: SlidersHorizontal },
     ],
   },
 ];
@@ -73,8 +75,11 @@ export default function AdminShell({
     return () => window.removeEventListener("keydown", onKey);
   }, [sidebarOpen]);
 
+  // 精确到「路径段」匹配：/admin/settings 与 /admin/system-settings 互不误伤
   const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname === href || pathname.startsWith(href + "/");
 
   const handleLogout = async () => {
     await logoutSession();
