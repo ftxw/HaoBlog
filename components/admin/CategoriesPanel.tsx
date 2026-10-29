@@ -12,7 +12,6 @@ import {
 } from "@/app/actions/catalog";
 import {
   Button,
-  Card,
   EmptyState,
   Field,
   Input,
@@ -223,14 +222,13 @@ const CategoriesPanel = forwardRef<
 
   return (
     <>
-      <Card>
-        {loading && !data ? (
+{loading && !data ? (
           <Loading />
         ) : (data ?? []).length === 0 ? (
           <EmptyState text="暂无分类" />
         ) : (
           <div className={TABLE_SHELL}>
-            <div className="grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
+            <div className="grid grid-cols-[4%_20%_12%_26%_8%_16%_14%] border-b border-admin-border-soft bg-admin-surface-muted">
               <div className="h-11" />
               {["名称", "slug", "描述", "文章数", "创建时间", "操作"].map(
                 (h) => (
@@ -264,7 +262,6 @@ const CategoriesPanel = forwardRef<
             </DndContext>
           </div>
         )}
-      </Card>
 
       <Modal
         open={modalOpen}

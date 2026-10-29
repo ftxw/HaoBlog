@@ -9,7 +9,10 @@ import { thumbUrlOf, fallbackThumbToOriginal } from "@/app/lib/image-thumb";
 import { formatDateCN } from "@/app/lib/format";
 import {
   Button,
-  Card,
+  Sheet,
+  SheetHeader,
+  Section,
+  PageHeader,
   EmptyState,
   Field,
   Input,
@@ -19,7 +22,6 @@ import {
   cn,
   useConfirm,
 } from "@/components/admin/ui";
-import { EDITOR_SECTION } from "@/components/admin/styles";
 import ImageUploader from "@/components/admin/ImageUploader";
 import DateWheelPicker from "@/components/ui/DateWheelPicker";
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -377,96 +379,97 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-admin-ink">
-            {isNew ? "新建相册" : "编辑相册"}
-          </h1>
-          <p className="mt-0.5 text-sm text-admin-ink-4">
-            {updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => router.back()}>
-            返回
-          </Button>
-          <Button onClick={saveAlbum} loading={saving}>
-            {saving ? "保存中…" : "保存"}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={isNew ? "新建相册" : "编辑相册"}
+        description={updatedAt ? `最后更新于 ${formatDate(updatedAt)}` : "填写内容后保存"}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => router.back()}>
+              返回
+            </Button>
+            <Button onClick={saveAlbum} loading={saving}>
+              {saving ? "保存中…" : "保存"}
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="space-y-4 lg:col-span-3">
-          <Card className={EDITOR_SECTION}>
-            <Field label="标题" required>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="相册标题"
-              />
-            </Field>
-            <Field label="简介">
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                placeholder="相册简介（可选）"
-              />
-            </Field>
-          </Card>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+        <div className="space-y-4">
+          <Sheet>
+            <SheetHeader title="基本信息" />
+            <Section>
+              <div className="space-y-4">
+                <Field label="标题" required>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="相册标题"
+                  />
+                </Field>
+                <Field label="简介">
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={2}
+                    placeholder="相册简介（可选）"
+                  />
+                </Field>
+              </div>
+            </Section>
+          </Sheet>
 
-          <Card className="p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-base font-semibold text-admin-ink">照片列表</h2>
-                <p className="text-xs text-admin-ink-5">
-                  {photoCount} 张照片，按 sort 升序展示
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
-                  multiple
-                  className="hidden"
-                  onChange={(e) =>
-                    e.target.files && handleUploadPhotos(e.target.files)
-                  }
-                />
-                <Button
-                  onClick={() => photoInputRef.current?.click()}
-                  loading={photoUploading}
-                >
-                  <Plus className="h-4 w-4" />
-                  {photoUploading ? "上传中…" : "上传照片"}
-                </Button>
-              </div>
-            </div>
+          <Sheet>
+            <SheetHeader
+              title="照片列表"
+              description={`${photoCount} 张照片，按 sort 升序展示`}
+              actions={
+                <>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+                    multiple
+                    className="hidden"
+                    onChange={(e) =>
+                      e.target.files && handleUploadPhotos(e.target.files)
+                    }
+                  />
+                  <Button
+                    onClick={() => photoInputRef.current?.click()}
+                    loading={photoUploading}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {photoUploading ? "上传中…" : "上传照片"}
+                  </Button>
+                </>
+              }
+            />
 
             {photos.length === 0 ? (
               <EmptyState
                 text={
                   currentId
-                    ? "该相册还没有照片，点击右上角「上传照片」添加"
-                    : "点击右上角「上传照片」添加照片，未保存的相册会自动创建"
+                    ? "该相册还没有照片"
+                    : "还没有照片，未保存的相册会在首次上传时自动创建"
                 }
+                hint="支持多选批量上传，拖拽可调整顺序"
               />
             ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-                onDragCancel={handleDragCancel}
-              >
-                <SortableContext items={sortIds} strategy={strategy}>
-                  <div className="grid grid-cols-5 gap-3">
-                    {photos.map((photo) => (
-                      <SortablePhoto
-                        key={photo.id}
+              <div className="p-4">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={handleDragCancel}
+                >
+                  <SortableContext items={sortIds} strategy={strategy}>
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                      {photos.map((photo) => (
+                        <SortablePhoto
+                          key={photo.id}
                         photo={photo}
                         isCover={photo.url === cover}
                         onSetCover={setAsCover}
@@ -480,15 +483,19 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
                         onDelete={deletePhoto}
                       />
                     ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
             )}
-          </Card>
+          </Sheet>
         </div>
 
         <div className="space-y-4">
-          <Card className={EDITOR_SECTION}>
+          <Sheet>
+            <SheetHeader title="发布与展示" />
+            <Section>
+              <div className="space-y-4">
             <Field label="设置时间" hint="未设置时按最近更新时间显示">
               <DateWheelPicker
                 value={publishedAt}
@@ -502,10 +509,13 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
                 <option value="timeline">时间轴</option>
               </Select>
             </Field>
-          </Card>
+              </div>
+            </Section>
+          </Sheet>
 
-          <Card className="p-5">
-            <p className="mb-2 text-sm font-medium text-admin-ink-2">封面图片</p>
+          <Sheet>
+            <SheetHeader title="封面图片" />
+            <Section>
             <ImageUploader
               mode="single"
               value={cover}
@@ -518,7 +528,8 @@ export default function AlbumEditor({ albumId }: { albumId?: string }) {
             <p className="mt-2 text-xs text-admin-ink-5">
               可上传新图，也可在照片列表中把某张照片设为封面
             </p>
-          </Card>
+            </Section>
+          </Sheet>
         </div>
       </div>
 

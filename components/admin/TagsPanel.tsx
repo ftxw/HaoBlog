@@ -10,7 +10,6 @@ import {
 } from "@/app/actions/catalog";
 import {
   Button,
-  Card,
   EmptyState,
   Field,
   Input,
@@ -103,14 +102,13 @@ const TagsPanel = forwardRef<TagsPanelHandle, TagsPanelProps>(function TagsPanel
 
   return (
     <>
-      <Card>
-        {loading && !data ? (
+{loading && !data ? (
           <Loading />
         ) : (data ?? []).length === 0 ? (
           <EmptyState text="暂无标签" />
         ) : (
           <div className={TABLE_SHELL}>
-            <div className="grid grid-cols-[30%_25%_20%_25%] border-b border-admin-border bg-admin-surface-muted text-sm font-medium text-admin-ink-4">
+            <div className="grid grid-cols-[30%_25%_20%_25%] border-b border-admin-border-soft bg-admin-surface-muted">
               {["名称", "slug", "文章数", "操作"].map((h) => (
                 <div
                   key={h}
@@ -161,7 +159,6 @@ const TagsPanel = forwardRef<TagsPanelHandle, TagsPanelProps>(function TagsPanel
             ))}
           </div>
         )}
-      </Card>
 
       <Modal
         open={modalOpen}

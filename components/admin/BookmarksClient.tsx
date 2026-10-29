@@ -23,7 +23,9 @@ import {
 } from "@/app/actions/bookmarks";
 import {
   Button,
-  Card,
+  Sheet,
+  PageHeader,
+  SearchInput,
   CapsuleFilter,
   EmptyState,
   Field,
@@ -44,7 +46,6 @@ import {
   ContentCard,
   ListToolbar,
   PageTitleTabs,
-  SearchPill,
   ToolbarAction,
 } from "@/components/admin/ContentListShell";
 import {
@@ -411,8 +412,36 @@ export default function BookmarksClient({
 
   return (
     <>
-      {/* 标题行：大字 Tab（书签 | 友情链接） + 搜索 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <PageHeader
+        title="资源分享"
+        description="常用站点书签与友情链接"
+        actions={
+          tab === "sites" ? (
+            <>
+              <SearchInput
+                value={searchInput}
+                onChange={setSearchInput}
+                onSearch={() => {
+                  setSearchText(searchInput);
+                  setSitePage(1);
+                }}
+                placeholder="搜索名称或 URL"
+              />
+              <ToolbarAction
+                icon={<Settings2 className="h-3.5 w-3.5" />}
+                label="管理分组"
+                onClick={() => setCatModalOpen(true)}
+              />
+              <Button onClick={openNewSite}>
+                <CirclePlus className="h-3.5 w-3.5" />
+                新建站点
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
+
+      <div className="mb-4">
         <PageTitleTabs
           tabs={[
             { key: "sites", label: "书签" },
@@ -421,37 +450,11 @@ export default function BookmarksClient({
           active={tab}
           onChange={setTab}
         />
-        {tab === "sites" && (
-          <SearchPill
-            value={searchInput}
-            onChange={setSearchInput}
-            onSearch={() => {
-              setSearchText(searchInput);
-              setSitePage(1);
-            }}
-            placeholder="搜索名称 / URL"
-          />
-        )}
       </div>
 
       {tab === "sites" ? (
-        <>
-          <ListToolbar
-            actions={
-              <>
-                <ToolbarAction
-                  icon={<CirclePlus className="h-4 w-4" />}
-                  label="新建站点"
-                  onClick={openNewSite}
-                />
-                <ToolbarAction
-                  icon={<Settings2 className="h-4 w-4" />}
-                  label="管理分组"
-                  onClick={() => setCatModalOpen(true)}
-                />
-              </>
-            }
-          >
+        <Sheet>
+          <ListToolbar>
             <CapsuleFilter
               items={catItems}
               active={catFilter}
@@ -463,13 +466,17 @@ export default function BookmarksClient({
           </ListToolbar>
 
           {sites.loading && !sites.data ? (
-            <Card>
-              <Loading />
-            </Card>
+            <Loading />
           ) : filteredSites.length === 0 ? (
-            <Card>
-              <EmptyState text="暂无书签站点，点击右上角「新建站点」开始" />
-            </Card>
+            <EmptyState
+              text="还没有书签"
+              hint="把常用站点收进来，支持分组与拖拽排序"
+              action={
+                <Button variant="secondary" size="sm" onClick={openNewSite}>
+                  新建站点
+                </Button>
+              }
+            />
           ) : (
             <>
               <DndContext
@@ -481,28 +488,26 @@ export default function BookmarksClient({
                 onDragCancel={siteDrag.handleDragCancel}
               >
                 <SortableContext items={siteDrag.ids} strategy={siteDrag.strategy}>
-                  <div className="space-y-2">
-                    {siteList.map((site) => (
-                      <SortableSiteCard
-                        key={site.id}
-                        site={site}
-                        categoryName={catName(site.category_id)}
-                        onEdit={() => {
-                          setEditingSite(site);
-                          setSiteForm({
-                            category_id: String(site.category_id),
-                            name: site.name,
-                            url: site.url,
-                            icon: site.icon || "",
-                            description: site.description || "",
-                            platforms: (site.platforms ?? []).join(", "),
-                          });
-                          setSiteModalOpen(true);
-                        }}
-                        onDelete={() => deleteSite(site)}
-                      />
-                    ))}
-                  </div>
+                  {siteList.map((site) => (
+                    <SortableSiteCard
+                      key={site.id}
+                      site={site}
+                      categoryName={catName(site.category_id)}
+                      onEdit={() => {
+                        setEditingSite(site);
+                        setSiteForm({
+                          category_id: String(site.category_id),
+                          name: site.name,
+                          url: site.url,
+                          icon: site.icon || "",
+                          description: site.description || "",
+                          platforms: (site.platforms ?? []).join(", "),
+                        });
+                        setSiteModalOpen(true);
+                      }}
+                      onDelete={() => deleteSite(site)}
+                    />
+                  ))}
                 </SortableContext>
               </DndContext>
               <NumberPagination
@@ -513,9 +518,11 @@ export default function BookmarksClient({
               />
             </>
           )}
-        </>
+        </Sheet>
       ) : (
-        <BusinessLinksManager />
+        <Sheet>
+          <BusinessLinksManager />
+        </Sheet>
       )}
 
       {/* 管理分组（书签分类）弹窗 */}

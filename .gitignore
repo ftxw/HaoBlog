@@ -84,3 +84,9 @@ _tmp_*
 # 本地临时构建产物
 /tmp/
 /dev/
+
+# 本地后台样式验证产物（不应入库）
+/admin-preview/
+/admin-outline.png
+/admin-preview-1440.png
+/.box-agent/

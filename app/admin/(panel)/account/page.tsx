@@ -2,11 +2,17 @@
 
 
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
 import { runAction } from "@/components/admin/lib";
 import { changePasswordAction } from "@/app/actions/auth";
-import { Button, Card, Field, Input, PageHeader } from "@/components/admin/ui";
+import {
+  Button,
+  Sheet,
+  SheetHeader,
+  Field,
+  Input,
+  PageHeader,
+} from "@/components/admin/ui";
 
 export default function AdminAccountPage() {
   const { addToast } = useToast();
@@ -44,12 +50,9 @@ export default function AdminAccountPage() {
     <>
       <PageHeader title="账号设置" description="修改登录密码" />
 
-      <Card className="h-fit p-5 lg:max-w-xl">
-        <div className="mb-4 flex items-center gap-2">
-          <KeyRound className="h-4.5 w-4.5 text-admin-accent" />
-          <h2 className="text-base font-semibold text-admin-ink">修改密码</h2>
-        </div>
-        <div className="space-y-4">
+      <Sheet className="max-w-xl">
+        <SheetHeader title="修改密码" description="修改后需使用新密码重新登录" />
+        <div className="space-y-4 p-5">
           <Field label="旧密码" required>
             <Input
               type="password"
@@ -80,7 +83,7 @@ export default function AdminAccountPage() {
             </Button>
           </div>
         </div>
-      </Card>
+      </Sheet>
     </>
   );
 }

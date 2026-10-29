@@ -6,7 +6,9 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { runAction, useApi, formatDate } from "@/components/admin/lib";
 import {
   Button,
-  Card,
+  Sheet,
+  PageHeader,
+  SearchInput,
   EmptyState,
   Field,
   Loading,
@@ -20,7 +22,6 @@ import {
   CardAction,
   ContentCard,
   ListToolbar,
-  SearchPill,
   ToolbarAction,
 } from "@/components/admin/ContentListShell";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -150,77 +151,81 @@ export default function MomentsClient({
 
   return (
     <>
-      {/* 标题行：大字标题 + 评论入口 + 搜索 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-admin-accent">随笔辅记</h1>
-        <div className="flex items-center gap-1.5">
-          <ToolbarAction
-            icon={<MessageSquare className="h-4 w-4" />}
-            label={`评论${
-              commentsCount.data?.total ? ` ${commentsCount.data.total}` : ""
-            }`}
-            onClick={() => setCommentsOpen(true)}
-          />
-          <SearchPill
-            value={searchInput}
-            onChange={setSearchInput}
-            onSearch={() => {
-              setSearchText(searchInput);
-              setPage(1);
-            }}
-            placeholder="搜索说说内容"
-          />
-        </div>
-      </div>
-
-      <ListToolbar
+      <PageHeader
+        title="随笔辅记"
+        description="短想法、日常片段与配图记录"
         actions={
-          <ToolbarAction
-            icon={<CirclePlus className="h-4 w-4" />}
-            label="发布说说"
-            onClick={openNew}
-          />
+          <>
+            <ToolbarAction
+              icon={<MessageSquare className="h-3.5 w-3.5" />}
+              label={`评论${
+                commentsCount.data?.total ? ` · ${commentsCount.data.total}` : ""
+              }`}
+              onClick={() => setCommentsOpen(true)}
+            />
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              onSearch={() => {
+                setSearchText(searchInput);
+                setPage(1);
+              }}
+              placeholder="搜索内容"
+            />
+            <Button onClick={openNew}>
+              <CirclePlus className="h-3.5 w-3.5" />
+              发布说说
+            </Button>
+          </>
         }
-      >
-        <span className="text-sm text-admin-ink-4">共 {total} 条随笔</span>
-      </ListToolbar>
+      />
 
-      {loading && !data ? (
-        <Card>
+      <Sheet>
+        <ListToolbar>
+          <span className="text-xs text-admin-ink-4">共 {total} 条记录</span>
+        </ListToolbar>
+
+        {loading && !data ? (
           <Loading />
-        </Card>
-      ) : moments.length === 0 ? (
-        <Card>
-          <EmptyState text="暂无随笔，点击右上角「发布说说」开始记录" />
-        </Card>
-      ) : (
-        <>
-          <div className="space-y-2">
+        ) : moments.length === 0 ? (
+          <EmptyState
+            text="还没有记录"
+            hint="随手写下此刻的想法，支持多图"
+            action={
+              <Button variant="secondary" size="sm" onClick={openNew}>
+                发布说说
+              </Button>
+            }
+          />
+        ) : (
+          <>
             {moments.map((m) => {
               const mood = m.mood ? MOOD_META[m.mood] : undefined;
               return (
                 <ContentCard
                   key={m.id}
                   cover={m.images[0] || null}
-                  title={<span className="min-w-0 truncate">{m.content}</span>}
+                  title={
+                    <span className="min-w-0 truncate text-[14px] font-medium leading-6 text-admin-ink">
+                      {m.content}
+                    </span>
+                  }
                   meta={
                     <>
                       {mood && (
-                        <span className="text-xs">
+                        <span>
                           {mood.emoji} {mood.label}
                         </span>
                       )}
                       {m.images.length > 1 && (
-                        <span className="tabular-nums">
-                          {m.images.length} 张配图
-                        </span>
+                        <span className="tabular-nums">{m.images.length} 张配图</span>
                       )}
                       <span className="inline-flex items-center gap-1 tabular-nums">
-                        <Heart className="h-3.5 w-3.5" />
+                        <Heart className="h-3 w-3" />
                         {m.likes}
                       </span>
                       <span className="inline-flex items-center gap-1 tabular-nums">
-                        <MessageSquare className="h-3.5 w-3.5" />
+                        <MessageSquare className="h-3 w-3" />
                         {m.comments_count}
                       </span>
                       <span>{formatDate(m.created_at)}</span>
@@ -239,15 +244,15 @@ export default function MomentsClient({
                 />
               );
             })}
-          </div>
-          <NumberPagination
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={total}
-            onChange={setPage}
-          />
-        </>
-      )}
+            <NumberPagination
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={total}
+              onChange={setPage}
+            />
+          </>
+        )}
+      </Sheet>
 
       <Modal
         open={modalOpen}
