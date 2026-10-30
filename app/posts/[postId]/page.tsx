@@ -29,6 +29,7 @@ import {
 import { getDbSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
 import { formatDateCN } from "@/app/lib/format";
+import { buildPostJsonLd, serializeJsonLd } from "@/app/lib/json-ld";
 
 export async function generateStaticParams() {
   try {
@@ -119,8 +120,33 @@ export default async function PostPage({
   const authorName = pickConfigValue(dbConfig, "authorName");
   const authorBio = pickConfigValue(dbConfig, "bio");
 
+  const baseUrl = (await resolveSiteBaseUrl()).replace(/\/+$/, "");
+  const postUrl = `${baseUrl}/posts/${postId}`;
+  const jsonLd = serializeJsonLd(
+    buildPostJsonLd({
+      base: baseUrl,
+      url: postUrl,
+      title: post.title,
+      description: post.description || "",
+      image: cover
+        ? absoluteUrlOf(proxyUrlOf(cover, cdnDomain), baseUrl)
+        : undefined,
+      authorName,
+      publishedAt: post.published_at
+        ? new Date(post.published_at).toISOString()
+        : null,
+      updatedAt: post.updated_at ? new Date(post.updated_at).toISOString() : null,
+      tags,
+      siteName: pickConfigValue(dbConfig, "title"),
+    })
+  );
+
   return (
     <div className="relative pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
       <ViewCounter postId={postId} />
       <FadeIn className="container-page flex flex-col lg:flex-row gap-6 pb-6 pt-6 md:gap-8 md:pt-12 relative z-10">
         <article className="glass min-w-0 flex-1 overflow-hidden rounded-card">

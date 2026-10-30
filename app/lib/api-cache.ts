@@ -42,6 +42,23 @@ export interface CachedPublicGetOptions {
   keyParams?: readonly string[];
 }
 
+/**
+ * 只读接口的缓存头：
+ * - 数据本身已有 unstable_cache（PUBLIC_API_CACHE_TTL）兜底，这里让 CDN 也缓存同样时长、
+ *   并在过期后先给旧值（stale-while-revalidate），避免每次请求都打到函数。
+ * - 同时下发 CDN-Cache-Control，Vercel Edge 以它为准，浏览器侧保持较短 max-age。
+ * - next.config.ts 对 /api/* 下发的 no-store 会被这里的响应头覆盖（路由内设置优先）。
+ */
+function publicCacheHeaders(): Record<string, string> {
+  const swr = PUBLIC_API_CACHE_TTL * 5;
+  const value = `public, max-age=0, s-maxage=${PUBLIC_API_CACHE_TTL}, stale-while-revalidate=${swr}`;
+  return {
+    "Cache-Control": value,
+    "CDN-Cache-Control": value,
+    "Vercel-CDN-Cache-Control": value,
+  };
+}
+
 export async function cachedPublicGet<T>(
   namespace: string,
   req: Request | null,
@@ -57,7 +74,7 @@ export async function cachedPublicGet<T>(
     })()
   );
 
-  return ok(data);
+  return ok(data, { headers: publicCacheHeaders() });
 }
 
 export function invalidatePostCaches(): void {

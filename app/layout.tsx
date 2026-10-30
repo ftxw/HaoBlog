@@ -8,6 +8,7 @@ import SiteFrame from "@/components/layout/SiteFrame";
 import RevealObserver from "@/components/layout/RevealObserver";
 import { getDbSiteConfig, getPublicSiteConfig, pickConfigValue } from "@/app/lib/site-config-db";
 import { resolveSiteBaseUrl } from "@/app/lib/site-url";
+import { buildWebsiteJsonLd, serializeJsonLd } from "@/app/lib/json-ld";
 import {
   absoluteUrlOf,
   configureCdnDomain,
@@ -25,13 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const proxied = (url: string) =>
     absoluteUrlOf(proxyUrlOf(url, normalizeCdnDomain(dbConfig.imageCdnDomain)), base.toString());
   const ogImage = cover ? proxied(cover) : undefined;
-  const icon = avatar ? proxied(avatar) : undefined;
+  // 图标统一走 /icon/[size]（服务端转固定尺寸 PNG）：
+  // Apple 需要 180 的 apple-touch-icon，Android 与 manifest 用 192/512。
+  const icon = avatar
+    ? { icon: "/icon/192", apple: "/icon/180" }
+    : undefined;
 
   return {
     metadataBase: base,
     title,
     description,
-    icons: icon ? { icon, apple: icon } : undefined,
+    icons: icon,
     alternates: {
       types: {
         "application/rss+xml": "/feed",
@@ -64,6 +69,16 @@ export default async function RootLayout({
   const defaultTheme = pickConfigValue(dbConfig, "themeMode");
   const initialDark = defaultTheme !== "light";
 
+  // 全站 WebSite 结构化数据（含站内搜索），只输出站点自身的公开信息
+  const siteBase = (await resolveSiteBaseUrl()).replace(new RegExp("/+$", "g"), "");
+  const websiteJsonLd = serializeJsonLd(
+    buildWebsiteJsonLd({
+      base: siteBase,
+      name: pickConfigValue(dbConfig, "title"),
+      description: pickConfigValue(dbConfig, "bio"),
+    })
+  );
+
   const themeInitScript = `(function(){try{var stored=localStorage.getItem("theme");var fallback=${JSON.stringify(
     defaultTheme
   )};var mode=stored==="light"||stored==="dark"?stored:fallback==="light"?"light":fallback==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):"dark";var dark=mode==="dark";var el=document.documentElement;el.classList.toggle("dark",dark);el.dataset.theme=mode;el.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
@@ -78,6 +93,10 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: websiteJsonLd }}
+        />
         <noscript
           dangerouslySetInnerHTML={{
             __html:

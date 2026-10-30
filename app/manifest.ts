@@ -15,12 +15,16 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const title = pickConfigValue(dbConfig, "title");
   const avatar = pickConfigValue(dbConfig, "avatarUrl");
 
-  const icon = avatar
+  // 头像尺寸/格式都不固定，统一走 /icon/[size] 实时转成固定 PNG。
+  // 没有头像时不输出 icons，交给浏览器回落 favicon。
+  const iconBase = avatar
     ? absoluteUrlOf(
         proxyUrlOf(avatar, normalizeCdnDomain(dbConfig.imageCdnDomain)),
         base
       )
     : "";
+  const hasIcon = Boolean(iconBase);
+  const iconOf = (size: number) => `${base}/icon/${size}`;
 
   const canvas = pickConfigValue(dbConfig, "themeMode") === "light" ? "#f7f9fe" : "#070a17";
 
@@ -35,6 +39,17 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     theme_color: canvas,
     lang: "zh-CN",
     dir: "ltr",
-    icons: icon ? [{ src: icon, sizes: "any", purpose: "any" }] : undefined,
+    icons: hasIcon
+      ? [
+          { src: iconOf(192), sizes: "192x192", type: "image/png" },
+          { src: iconOf(512), sizes: "512x512", type: "image/png" },
+          {
+            src: iconOf(512),
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ]
+      : undefined,
   };
 }

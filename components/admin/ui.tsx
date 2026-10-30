@@ -27,7 +27,7 @@ const CONTROL_H = "h-9";
 const RADIUS_CARD = "rounded-[12px]";
 const RADIUS_CONTROL = "rounded-[9px]";
 
-type ButtonVariant = "primary" | "secondary" | "soft" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 export function Button({
   variant = "primary",
@@ -46,7 +46,6 @@ export function Button({
       "bg-admin-accent text-white hover:bg-admin-accent-hover focus-visible:outline-admin-accent",
     secondary:
       "border border-admin-border-control bg-admin-surface text-admin-ink-2 hover:bg-admin-neutral hover:text-admin-ink focus-visible:outline-admin-ink-5",
-    soft: "bg-admin-chip text-admin-ink hover:bg-admin-neutral-strong focus-visible:outline-admin-ink-5",
     ghost:
       "bg-transparent text-admin-ink-3 hover:bg-admin-neutral hover:text-admin-ink focus-visible:outline-admin-ink-5",
     danger:
@@ -449,9 +448,6 @@ export function NumberPagination({
   );
 }
 
-/** 兼容旧调用 */
-export const Pagination = NumberPagination;
-
 export function Loading({ text = "加载中…" }: { text?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16 text-admin-ink-5">
@@ -510,26 +506,6 @@ export function PageHeader({
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
-  );
-}
-
-/** @deprecated 与 Segmented 重复，统一用 Segmented */
-export function AdminTabBar<T extends string>({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: ReadonlyArray<{ key: T; label: React.ReactNode }>;
-  active: T;
-  onChange: (key: T) => void;
-  action?: React.ReactNode;
-}) {
-  return (
-    <Segmented
-      items={tabs.map((t) => ({ key: t.key, label: String(t.label) }))}
-      active={active}
-      onChange={onChange}
-    />
   );
 }
 
